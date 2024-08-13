@@ -1,4 +1,4 @@
-from haystack_integrations.document_stores.couchbase.auth import CouchbaseAuthenticator, CouchbasePasswordAuthenticator, CouchbaseCertificateAuthenticator
+from couchbase_haystack import CouchbasePasswordAuthenticator, CouchbaseCertificateAuthenticator
 from haystack.utils.auth import Secret
 
 class TestCouchbaseAuth:

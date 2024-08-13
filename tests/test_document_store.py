@@ -11,13 +11,13 @@ from typing import List
 from haystack.dataclasses.document import ByteStream, Document
 from haystack.testing.document_store import DocumentStoreBaseTests
 from haystack.utils import Secret
-from couchbase_haystack.document_stores import CouchbaseDocumentStore
+from couchbase_haystack import CouchbaseDocumentStore
 from pandas import DataFrame
 from couchbase.cluster import Cluster, ClusterOptions
 from couchbase.options import ClusterOptions, KnownConfigProfiles
 from couchbase.auth import PasswordAuthenticator
-from couchbase_haystack.document_stores import CouchbaseClusterOptions
-from couchbase_haystack.document_stores import CouchbasePasswordAuthenticator
+from couchbase_haystack import CouchbaseClusterOptions
+from couchbase_haystack import CouchbasePasswordAuthenticator
 from couchbase.management.logic.search_index_logic import SearchIndex
 from couchbase.exceptions import SearchIndexNotFoundException
 from datetime import timedelta

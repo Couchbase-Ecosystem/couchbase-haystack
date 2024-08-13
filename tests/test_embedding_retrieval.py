@@ -8,7 +8,7 @@ import pytest
 
 from haystack.dataclasses.document import  Document
 from haystack.utils import Secret
-from couchbase_haystack.document_stores import CouchbaseDocumentStore, CouchbasePasswordAuthenticator
+from couchbase_haystack import CouchbaseDocumentStore, CouchbasePasswordAuthenticator
 from pandas import DataFrame
 from couchbase.cluster import Cluster, ClusterOptions
 from couchbase.options import ClusterOptions

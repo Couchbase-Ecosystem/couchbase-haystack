@@ -24,7 +24,7 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
-dependencies = ["haystack-ai=2.3.*", "couchbase==4.*"]
+dependencies = ["haystack-ai==2.3.*", "couchbase==4.*"]
 
 [project.urls]
 Documentation = "https://github.com/Couchbase-Ecosystem/couchbase-haystack#readme"

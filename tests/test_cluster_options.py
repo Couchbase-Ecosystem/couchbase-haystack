@@ -1,4 +1,4 @@
-from couchbase_haystack.document_stores import CouchbaseClusterOptions
+from couchbase_haystack import CouchbaseClusterOptions
 from couchbase.options import Compression, IpProtocol, TLSVerifyMode
 from couchbase.auth import PasswordAuthenticator
 from datetime import timedelta

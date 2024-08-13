@@ -9,8 +9,8 @@ from typing import Dict, Any
 
 from haystack.dataclasses.document import Document
 from haystack.utils import Secret
-from couchbase_haystack.document_stores import CouchbaseDocumentStore
-from couchbase_haystack.document_stores import CouchbasePasswordAuthenticator
+from couchbase_haystack import CouchbaseDocumentStore
+from couchbase_haystack import CouchbasePasswordAuthenticator
 from couchbase.result import SearchResult
 
 from couchbase.management.logic.collections_logic import ScopeSpec, CollectionSpec
