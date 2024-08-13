@@ -133,7 +133,6 @@ class CouchbaseClusterOptions(dict):
             val = self.get(f)
             if val:
                 obj[f] =  val.value if isinstance(val, enum_cls) else val
-                print("enum",f, isinstance(val, enum_cls),obj[f])
 
                   
         return default_to_dict(self,**obj)
@@ -161,6 +160,5 @@ class CouchbaseClusterOptions(dict):
             if data["init_parameters"].get(f) != None:
                 obj[f] = enum_cls(data["init_parameters"].get(f))               
 
-        #print(obj)
         data["init_parameters"] = obj
         return default_from_dict(cls, data)

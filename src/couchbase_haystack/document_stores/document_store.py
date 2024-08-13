@@ -171,8 +171,6 @@ class CouchbaseDocumentStore:
         else: 
             sFilters = search.MatchAllQuery()
         logger.debug(sFilters.encodable)  
-        import json  
-        print("filter", json.dumps(sFilters.encodable))
         request = search.SearchRequest(sFilters)
         options = SearchOptions(fields=["*"], limit=10000)
         response = self.scope.search(self.vector_search_index, request, options)
@@ -222,7 +220,7 @@ class CouchbaseDocumentStore:
             else:
                 result = self.collection.upsert_multi(operations)       
         except Exception as e:
-            print("write error", e)
+            logger.error("write error", e)
             msg = f"Failed to write documents to Couchbase. Error: {e}"
             raise DocumentStoreError(msg) from e
         if not result.all_ok and result.exceptions:
@@ -239,7 +237,7 @@ class CouchbaseDocumentStore:
                     if len(other_errors)>0:
                         msg = f"Failed to write documents to couchbase. Errors:\n{other_errors}"
                         raise DocumentStoreError(msg)
-        print("date written")           
+        logger.debug("date written")           
         return written_docs
 
     def delete_documents(self, document_ids: List[str]) -> None:

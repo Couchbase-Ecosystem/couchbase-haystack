@@ -82,7 +82,6 @@ class TestDocumentStore(DocumentStoreBaseTests):
         try:
             sim.get_index(index_name= index_definition["name"])
         except SearchIndexNotFoundException as e:
-            #print("all clear ",e)
             search_index = SearchIndex(name=index_definition["name"],
                                 source_name=index_definition["sourceName"],
                                 source_type=index_definition["sourceType"],
