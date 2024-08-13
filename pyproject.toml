@@ -1,0 +1,87 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "couchbase-haystack"
+dynamic = ["version"]
+description = 'Couchbase haystack integration'
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+keywords = []
+authors = [
+  { name = "Shyam Venkat", email = "shyam.venkat@couchbase.com" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = ["haystack-ai=2.3.*", "couchbase==4.*"]
+
+[project.urls]
+Documentation = "https://github.com/Couchbase-Ecosystem/couchbase-haystack#readme"
+Issues = "https://github.com/Couchbase-Ecosystem/couchbase-haystack/issues"
+Source = "https://github.com/Couchbase-Ecosystem/couchbase-haystack"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/couchbase_haystack"]
+
+[tool.hatch.version]
+source = "vcs"
+tag-pattern = 'v(?P<version>.*)'
+
+[tool.hatch.version.raw-options]
+root = "./"
+git_describe_command = 'git describe --tags --match="v[0-9]*"'
+
+
+# Define environments for development and testing
+[tool.hatch.envs.default]
+extra-dependencies = [
+    "pytest",
+    "sentence-transformers",
+]
+
+[tool.hatch.envs.default.scripts]
+test = "pytest {args:tests}"
+test-cov = "coverage run -m pytest {args:tests}"
+cov-report = ["- coverage combine", "coverage html"]
+cov = ["test-cov", "cov-report"]
+
+[tool.hatch.envs.types]
+extra-dependencies = [
+  "mypy>=1.0.0",
+]
+
+
+[tool.coverage.run]
+source = ["couchbase_haystack", "tests"]
+branch = true
+parallel = false
+
+[tool.coverage.paths]
+couchbase_haystack = ["src/couchbase_haystack"]
+tests = ["tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
+
+[tool.pytest.ini_options]
+markers = [
+  "unit: unit tests",
+  "integration: integration tests",
+  "embedders: embedders tests",
+  "generators: generators tests",
+]
