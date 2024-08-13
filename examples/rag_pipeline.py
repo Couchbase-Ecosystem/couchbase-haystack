@@ -2,7 +2,7 @@ from haystack import GeneratedAnswer, Pipeline
 from haystack.components.builders.answer_builder import AnswerBuilder
 from haystack.components.builders.prompt_builder import PromptBuilder
 from haystack.components.embedders import SentenceTransformersTextEmbedder
-from haystack.components.generators import HuggingFaceTGIGenerator
+from haystack.components.generators import HuggingFaceAPIGenerator
 from haystack.utils import Secret
 
 from couchbase_haystack import CouchbaseDocumentStore, CouchbasePasswordAuthenticator, CouchbaseEmbeddingRetriever
@@ -50,7 +50,10 @@ rag_pipeline.add_component("retriever", CouchbaseEmbeddingRetriever(document_sto
 rag_pipeline.add_component("prompt_builder", PromptBuilder(template=prompt_template))
 rag_pipeline.add_component(
     "llm",
-    HuggingFaceTGIGenerator(model="mistralai/Mistral-7B-v0.1", token=HF_TOKEN),
+    HuggingFaceAPIGenerator( 
+        api_type="serverless_inference_api",
+        api_params={"model":"mistralai/Mistral-7B-v0.1"},
+    ),
 )
 rag_pipeline.add_component("answer_builder", AnswerBuilder())
 
