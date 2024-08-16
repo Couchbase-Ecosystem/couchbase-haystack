@@ -1,7 +1,8 @@
-from haystack_integrations.document_stores.couchbase.filters import _normalize_filters
+from couchbase_haystack.document_stores.filters import _normalize_filters
 import pytest
 from haystack.errors import FilterError
 
+@pytest.mark.unit
 class TestFilterEq:
     def test_filter_eq_condition_str(self):
        filter = {"field": "meta.years", "operator": "==", "value": "2019"}
@@ -54,6 +55,7 @@ class TestFilterEq:
             }
         } 
 
+@pytest.mark.unit
 class TestFilterNeq:
     def test_filter_neq_condition_str(self):
        filter = {"field": "meta.years", "operator": "!=", "value": "2011"}
@@ -95,7 +97,7 @@ class TestFilterNeq:
        normalized_filter = _normalize_filters(filter)
        assert normalized_filter.encodable == { 
           'must_not': {
-                'min': 1,
+                'min': 2,
                 'disjuncts':[
                     {'field': 'meta.years', 'match': '2011' }, 
                     {'field': 'meta.years', "match": '2012'}
@@ -108,7 +110,7 @@ class TestFilterNeq:
        normalized_filter = _normalize_filters(filter)
        assert normalized_filter.encodable == { 
           'must_not': {
-                'min': 1,
+                'min': 2,
                 'disjuncts':[
                     {'field': 'meta.years', 'start': "2011-10-05T14:48:00.000Z", "end": "2011-10-05T14:48:00.000Z", "inclusive_start": True, "inclusive_end": True }, 
                     {'field': 'meta.years', 'start': "2011-10-05T14:49:00.000Z", "end": "2011-10-05T14:49:00.000Z", "inclusive_start": True, "inclusive_end": True}
@@ -121,7 +123,7 @@ class TestFilterNeq:
        normalized_filter = _normalize_filters(filter)
        assert normalized_filter.encodable == { 
           'must_not': {
-                'min': 1,
+                'min': 2,
                 'disjuncts':[
                     {'field': 'meta.years', 'min': 2011, "max": 2011, "inclusive_min": True, "inclusive_max": True }, 
                     {'field': 'meta.years', 'min': 2012, "max": 2012, "inclusive_min": True, "inclusive_max": True}
@@ -129,6 +131,7 @@ class TestFilterNeq:
             }
         }    
 
+@pytest.mark.unit
 class TestFilterLT:
     # def test_filter_gt_condition_str(self):
     #    filter = {"field": "meta.years", "operator": "==", "value": "2019"}
@@ -164,6 +167,7 @@ class TestFilterLT:
        assert str(ex.value) == "Filter value can't be of type <class 'list'> using operators '>', '>=', '<', '<='"
 
 
+@pytest.mark.unit
 class TestFilterLTE:
    
     # def test_filter_gt_condition_str(self):
@@ -200,7 +204,7 @@ class TestFilterLTE:
        assert str(ex.value) == "Filter value can't be of type <class 'list'> using operators '>', '>=', '<', '<='"
 
 
-
+@pytest.mark.unit
 class TestFilterGT:
     # def test_filter_gt_condition_str(self):
     #    filter = {"field": "meta.years", "operator": "==", "value": "2019"}
@@ -236,6 +240,7 @@ class TestFilterGT:
        assert str(ex.value) == "Filter value can't be of type <class 'list'> using operators '>', '>=', '<', '<='"
 
 
+@pytest.mark.unit
 class TestFilterGTE:
     # def test_filter_gt_condition_str(self):
     #    filter = {"field": "meta.years", "operator": "==", "value": "2019"}
@@ -272,7 +277,7 @@ class TestFilterGTE:
 
 
 
-
+@pytest.mark.unit
 class TestFilterIN:
    def test_filter_in_condition_str(self):
       filter = {"field": "meta.years", "operator": "in", "value": ["2019"]}
@@ -350,7 +355,7 @@ class TestFilterIN:
          }
       }
 
-
+@pytest.mark.unit
 class TestFilterNIN:
    def test_filter_nin_condition_str(self):
       filter = {"field": "meta.years", "operator": "not in", "value": ["2019"]}
@@ -394,7 +399,7 @@ class TestFilterNIN:
       normalized_filter = _normalize_filters(filter)
       assert normalized_filter.encodable == {
          'must_not': {
-                  "min":1,
+                  "min":2,
                   'disjuncts':[
                      {'field': 'meta.years', 'match': '1'},
                      {'field': 'meta.years', 'match': '2'}
@@ -407,7 +412,7 @@ class TestFilterNIN:
       normalized_filter = _normalize_filters(filter)
       assert normalized_filter.encodable == {
          'must_not': {
-                  "min":1,
+                  "min":2,
                   'disjuncts':[
                      {'field': 'meta.years', 'start': "2011-10-05T14:48:00.000Z", 'end':  "2011-10-05T14:48:00.000Z", "inclusive_start": True,  "inclusive_end": True},
                      {'field': 'meta.years', 'start': "2011-10-05T14:49:00.000Z", 'end':  "2011-10-05T14:49:00.000Z", "inclusive_start": True,  "inclusive_end": True}
@@ -420,7 +425,7 @@ class TestFilterNIN:
       normalized_filter = _normalize_filters(filter)
       assert normalized_filter.encodable == { 
          'must_not': {
-                  "min":1,
+                  "min":2,
                   'disjuncts':[
                      {'field': 'meta.years', 'min': 1, 'max': 1, "inclusive_max": True, "inclusive_min": True},
                      {'field': 'meta.years', 'min': 2, 'max': 2, "inclusive_max": True, "inclusive_min": True}
@@ -428,6 +433,7 @@ class TestFilterNIN:
          }
       }   
 
+@pytest.mark.unit
 class TestFilterComplex:         
    def test_filter_nin_condition_array_of_number(self):
       filter = {

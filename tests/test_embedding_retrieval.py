@@ -15,15 +15,8 @@ from couchbase.options import ClusterOptions
 from couchbase.auth import PasswordAuthenticator
 from couchbase.management.logic.search_index_logic import SearchIndex
 from couchbase.exceptions import SearchIndexNotFoundException
-
-
-
 from datetime import timedelta
-from sentence_transformers import SentenceTransformer
-
 from .common import common
-
-import json
 
 @pytest.mark.skipif(
     "CONNECTION_STRING" not in os.environ,

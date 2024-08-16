@@ -79,7 +79,7 @@ def _parse_logical_condition(condition: Dict[str, Any]) -> SearchQuery:
     elif operator == "OR":
         return search.BooleanQuery(should=search.DisjunctionQuery(*conditions))
     elif operator == "NOT":
-        return search.BooleanQuery(must_not=search.DisjunctionQuery(*conditions, min= len(condition)))
+        return search.BooleanQuery(must_not=search.DisjunctionQuery(*conditions, min=len(conditions)))
     else:
         msg = f"Unknown logical operator '{operator}'"
         raise FilterError(msg)
