@@ -4,12 +4,14 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+from backports.datetime_fromisoformat import MonkeyPatch
 from couchbase import search
 from couchbase.logic.search_queries import SearchQuery
 from haystack.errors import FilterError
 from pandas import DataFrame
-from backports.datetime_fromisoformat import MonkeyPatch
+
 MonkeyPatch.patch_fromisoformat()
+
 
 class DateRangeQuery(search.DateRangeQuery):
     @property
