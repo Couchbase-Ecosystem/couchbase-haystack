@@ -90,7 +90,7 @@ The constructor supports various options for cluster configuration, including ti
   Returns a `ClusterOptions` object configured with the provided authenticator and options.
 
   ```python
-  def get_cluster_options(self, auth: Union[CouchbasePasswordAuthenticator | CouchbaseCertificateAuthenticator]) -> "ClusterOptions":
+  def get_cluster_options(self, auth: Union[CouchbasePasswordAuthenticator, CouchbaseCertificateAuthenticator]) -> "ClusterOptions":
       ...
   ```
 

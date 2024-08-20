@@ -146,7 +146,7 @@ class CouchbaseClusterOptions(dict):
         super().__init__(**kwargs)
 
     def get_cluster_options(
-        self, auth: Union[CouchbasePasswordAuthenticator | CouchbaseCertificateAuthenticator]
+        self, auth: Union[CouchbasePasswordAuthenticator, CouchbaseCertificateAuthenticator]
     ) -> "ClusterOptions":
         options = list(self.keys())
         obj = {}
