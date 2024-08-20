@@ -3,10 +3,11 @@ from couchbase.options import Compression, IpProtocol, TLSVerifyMode
 from couchbase.auth import PasswordAuthenticator
 from datetime import timedelta
 
+
 class TestCouchbaseClusterOptions:
-    def test(self):  
+    def test(self):
         def assert_output(opt):
-            #tracing_options
+            # tracing_options
             assert opt["bootstrap_timeout"] == bootstrap_timeout
             assert opt["resolve_timeout"] == resolve_timeout
             assert opt["connect_timeout"] == connect_timeout
@@ -21,8 +22,8 @@ class TestCouchbaseClusterOptions:
             assert opt["idle_http_connection_timeout"] == idle_http_connection_timeout
             assert opt["config_idle_redial_timeout"] == config_idle_redial_timeout
             assert opt["config_total_timeout"] == config_total_timeout
-            #timeout_options
-            #tracing_options
+            # timeout_options
+            # tracing_options
             assert opt["tracing_threshold_kv"] == tracing_threshold_kv
             assert opt["tracing_threshold_view"] == tracing_threshold_view
             assert opt["tracing_threshold_query"] == tracing_threshold_query
@@ -34,7 +35,7 @@ class TestCouchbaseClusterOptions:
             assert opt["tracing_threshold_queue_flush_interval"] == tracing_threshold_queue_flush_interval
             assert opt["tracing_orphaned_queue_size"] == tracing_orphaned_queue_size
             assert opt["tracing_orphaned_queue_flush_interval"] == tracing_orphaned_queue_flush_interval
-            #tracing_options
+            # tracing_options
 
             assert opt["enable_tls"] == enable_tls
             assert opt["enable_mutation_tokens"] == enable_mutation_tokens
@@ -50,7 +51,7 @@ class TestCouchbaseClusterOptions:
             assert opt["network"] == network
             assert opt["tls_verify"] == tls_verify
             assert opt["tcp_keep_alive_interval"] == tcp_keep_alive_interval
-            assert opt["config_poll_interval"] == config_poll_interval 
+            assert opt["config_poll_interval"] == config_poll_interval
             assert opt["config_poll_floor"] == config_poll_floor
             assert opt["max_http_connections"] == max_http_connections
             assert opt["user_agent_extra"] == user_agent_extra
@@ -63,7 +64,8 @@ class TestCouchbaseClusterOptions:
             assert opt["dns_port"] == dns_port
             assert opt["disable_mozilla_ca_certificates"] == disable_mozilla_ca_certificates
             assert opt["dump_configuration"] == dump_configuration
-        #timeout_options
+
+        # timeout_options
         bootstrap_timeout = timedelta(seconds=10)
         resolve_timeout = timedelta(seconds=11)
         connect_timeout = timedelta(seconds=12)
@@ -78,8 +80,8 @@ class TestCouchbaseClusterOptions:
         idle_http_connection_timeout = timedelta(seconds=21)
         config_idle_redial_timeout = timedelta(seconds=22)
         config_total_timeout = timedelta(seconds=23)
-        #timeout_options
-        #tracing_options
+        # timeout_options
+        # tracing_options
         tracing_threshold_kv = timedelta(seconds=24)
         tracing_threshold_view = timedelta(seconds=25)
         tracing_threshold_query = timedelta(seconds=26)
@@ -90,8 +92,8 @@ class TestCouchbaseClusterOptions:
         tracing_threshold_queue_size = 1
         tracing_threshold_queue_flush_interval = timedelta(seconds=31)
         tracing_orphaned_queue_size = 2
-        tracing_orphaned_queue_flush_interval  = timedelta(seconds=32)
-        #tracing_options
+        tracing_orphaned_queue_flush_interval = timedelta(seconds=32)
+        # tracing_options
 
         enable_tls = True
         enable_mutation_tokens = True
@@ -121,11 +123,11 @@ class TestCouchbaseClusterOptions:
         disable_mozilla_ca_certificates = True
         dump_configuration = True
         opts = CouchbaseClusterOptions(
-            #timeout_options
-            bootstrap_timeout = bootstrap_timeout,
-            resolve_timeout = resolve_timeout,
-            connect_timeout= connect_timeout,
-            kv_timeout= kv_timeout,
+            # timeout_options
+            bootstrap_timeout=bootstrap_timeout,
+            resolve_timeout=resolve_timeout,
+            connect_timeout=connect_timeout,
+            kv_timeout=kv_timeout,
             kv_durable_timeout=kv_durable_timeout,
             views_timeout=views_timeout,
             query_timeout=query_timeout,
@@ -136,8 +138,8 @@ class TestCouchbaseClusterOptions:
             idle_http_connection_timeout=idle_http_connection_timeout,
             config_idle_redial_timeout=config_idle_redial_timeout,
             config_total_timeout=config_total_timeout,
-            #timeout_options
-            #tracing_options
+            # timeout_options
+            # tracing_options
             tracing_threshold_kv=tracing_threshold_kv,
             tracing_threshold_view=tracing_threshold_view,
             tracing_threshold_query=tracing_threshold_query,
@@ -149,42 +151,40 @@ class TestCouchbaseClusterOptions:
             tracing_threshold_queue_flush_interval=tracing_threshold_queue_flush_interval,
             tracing_orphaned_queue_size=tracing_orphaned_queue_size,
             tracing_orphaned_queue_flush_interval=tracing_orphaned_queue_flush_interval,
-            #tracing_options
-
-            enable_tls = enable_tls,
-            enable_mutation_tokens = enable_mutation_tokens,
-            enable_tcp_keep_alive = enable_tcp_keep_alive,
-            ip_protocol = ip_protocol,
-            enable_dns_srv = enable_dns_srv,
-            show_queries = show_queries,
-            enable_unordered_execution = enable_unordered_execution,
-            enable_clustermap_notification = enable_clustermap_notification,
-            enable_compression = enable_compression,
-            enable_tracing = enable_tracing,
-            enable_metrics = enable_metrics,
-            network = network,
-            tls_verify = tls_verify,
-            tcp_keep_alive_interval = tcp_keep_alive_interval,
-            config_poll_interval = config_poll_interval,
-            config_poll_floor = config_poll_floor,
-            max_http_connections = max_http_connections,
-            user_agent_extra = user_agent_extra,
-            logging_meter_emit_interval = logging_meter_emit_interval,
-            log_redaction = log_redaction,
-            compression = compression,
-            compression_min_size = compression_min_size,
-            compression_min_ratio = compression_min_ratio,
-            dns_nameserver = dns_nameserver,
-            dns_port = dns_port,
-            disable_mozilla_ca_certificates = disable_mozilla_ca_certificates,
-            dump_configuration = dump_configuration
+            # tracing_options
+            enable_tls=enable_tls,
+            enable_mutation_tokens=enable_mutation_tokens,
+            enable_tcp_keep_alive=enable_tcp_keep_alive,
+            ip_protocol=ip_protocol,
+            enable_dns_srv=enable_dns_srv,
+            show_queries=show_queries,
+            enable_unordered_execution=enable_unordered_execution,
+            enable_clustermap_notification=enable_clustermap_notification,
+            enable_compression=enable_compression,
+            enable_tracing=enable_tracing,
+            enable_metrics=enable_metrics,
+            network=network,
+            tls_verify=tls_verify,
+            tcp_keep_alive_interval=tcp_keep_alive_interval,
+            config_poll_interval=config_poll_interval,
+            config_poll_floor=config_poll_floor,
+            max_http_connections=max_http_connections,
+            user_agent_extra=user_agent_extra,
+            logging_meter_emit_interval=logging_meter_emit_interval,
+            log_redaction=log_redaction,
+            compression=compression,
+            compression_min_size=compression_min_size,
+            compression_min_ratio=compression_min_ratio,
+            dns_nameserver=dns_nameserver,
+            dns_port=dns_port,
+            disable_mozilla_ca_certificates=disable_mozilla_ca_certificates,
+            dump_configuration=dump_configuration,
         )
-        opt_dict  = opts.to_dict()
+        opt_dict = opts.to_dict()
+        # print(opt_dict)
         opt_frm_dict = CouchbaseClusterOptions.from_dict(opt_dict)
         assert_output(opt_frm_dict)
         cb_cluster_opts = opts.get_cluster_options(auth=PasswordAuthenticator(username="username", password="password"))
         assert_output(cb_cluster_opts)
         cb_cluster_opts = opt_frm_dict.get_cluster_options(auth=PasswordAuthenticator(username="username", password="password"))
         assert_output(cb_cluster_opts)
-
-         

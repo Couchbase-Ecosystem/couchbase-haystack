@@ -4,49 +4,54 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+from couchbase import search
+from couchbase.logic.search_queries import SearchQuery
 from haystack.errors import FilterError
 from pandas import DataFrame
-import couchbase.search as search
-import couchbase.logic.search_queries as SearchQuery
 
 
 class DateRangeQuery(search.DateRangeQuery):
     @property
     def inclusive_start(self) -> Optional[bool]:
-        return self._json_.get('inclusive_start', None)
+        return self._json_.get("inclusive_start", None)
 
     @inclusive_start.setter
-    def inclusive_start(self, value  # type: bool
-                      ) -> None:
-        self.set_prop('inclusive_start', value)
+    def inclusive_start(
+        self, value  # type: bool
+    ) -> None:
+        self.set_prop("inclusive_start", value)
 
     @property
     def inclusive_end(self) -> Optional[bool]:
-        return self._json_.get('inclusive_end', None)
+        return self._json_.get("inclusive_end", None)
 
     @inclusive_end.setter
-    def inclusive_end(self, value  # type: bool
-                      ) -> None:
-        self.set_prop('inclusive_end', value)  
+    def inclusive_end(
+        self, value  # type: bool
+    ) -> None:
+        self.set_prop("inclusive_end", value)
+
 
 class NumericRangeQuery(search.NumericRangeQuery):
     @property
     def inclusive_min(self) -> Optional[bool]:
-        return self._json_.get('inclusive_min', None)
+        return self._json_.get("inclusive_min", None)
 
     @inclusive_min.setter
-    def inclusive_min(self, value  # type: bool
-                      ) -> None:
-        self.set_prop('inclusive_min', value)
+    def inclusive_min(
+        self, value  # type: bool
+    ) -> None:
+        self.set_prop("inclusive_min", value)
 
     @property
     def inclusive_max(self) -> Optional[bool]:
-        return self._json_.get('inclusive_max', None)
+        return self._json_.get("inclusive_max", None)
 
     @inclusive_max.setter
-    def inclusive_max(self, value  # type: bool
-                      ) -> None:
-        self.set_prop('inclusive_max', value)
+    def inclusive_max(
+        self, value  # type: bool
+    ) -> None:
+        self.set_prop("inclusive_max", value)
 
 
 def _normalize_filters(filters: Dict[str, Any]) -> SearchQuery:
@@ -89,11 +94,11 @@ def _equal(field: str, value: Any) -> Dict[str, Any]:
     if value is None:
         raise Exception("None value filter not supported")
     if isinstance(value, list):
-        conjunction = [ create_search_query(field=field,value=v) for v in value]
+        conjunction = [create_search_query(field=field, value=v) for v in value]
         return search.BooleanQuery(must=search.ConjunctionQuery(*conjunction))
-    if field == "dataframe" and isinstance(value,DataFrame):
+    if field == "dataframe" and isinstance(value, DataFrame):
         value = value.to_json()
-    return create_search_query(field=field,value=value)
+    return create_search_query(field=field, value=value)
 
 
 def _not_equal(field: str, value: Any) -> Dict[str, Any]:
@@ -101,11 +106,11 @@ def _not_equal(field: str, value: Any) -> Dict[str, Any]:
         raise Exception("None value filter not supported")
 
     if isinstance(value, list):
-        conjunction = [ create_search_query(field=field,value=v) for v in value]
-        return  search.BooleanQuery(must_not=search.DisjunctionQuery(*conjunction, min=len(conjunction)))
-    if field == "dataframe" and isinstance(value,DataFrame):
+        conjunction = [create_search_query(field=field, value=v) for v in value]
+        return search.BooleanQuery(must_not=search.DisjunctionQuery(*conjunction, min=len(conjunction)))
+    if field == "dataframe" and isinstance(value, DataFrame):
         value = value.to_json()
-    return search.BooleanQuery(must_not=search.DisjunctionQuery(create_search_query(field=field,value=value)))
+    return search.BooleanQuery(must_not=search.DisjunctionQuery(create_search_query(field=field, value=value)))
 
 
 def _greater_than(field: str, value: Any) -> Dict[str, Any]:
@@ -118,7 +123,7 @@ def _greater_than(field: str, value: Any) -> Dict[str, Any]:
     if isinstance(value, str):
         try:
             datetime.fromisoformat(value)
-            return search.DateRangeQuery(start=value,field=field)
+            return search.DateRangeQuery(start=value, field=field)
         except (ValueError, TypeError) as exc:
             msg = (
                 "Can't compare strings using operators '>', '>=', '<', '<='. "
@@ -128,7 +133,7 @@ def _greater_than(field: str, value: Any) -> Dict[str, Any]:
     if type(value) in [list, DataFrame]:
         msg = f"Filter value can't be of type {type(value)} using operators '>', '>=', '<', '<='"
         raise FilterError(msg)
-    return NumericRangeQuery(min=value,field=field)
+    return NumericRangeQuery(min=value, field=field)
 
 
 def _greater_than_equal(field: str, value: Any) -> Dict[str, Any]:
@@ -141,7 +146,7 @@ def _greater_than_equal(field: str, value: Any) -> Dict[str, Any]:
     if isinstance(value, str):
         try:
             datetime.fromisoformat(value)
-            filter = DateRangeQuery(start=value,field=field)
+            filter = DateRangeQuery(start=value, field=field)
             filter.inclusive_start = True
             return filter
         except (ValueError, TypeError) as exc:
@@ -153,7 +158,7 @@ def _greater_than_equal(field: str, value: Any) -> Dict[str, Any]:
     if type(value) in [list, DataFrame]:
         msg = f"Filter value can't be of type {type(value)} using operators '>', '>=', '<', '<='"
         raise FilterError(msg)
-    return NumericRangeQuery(min=value,field=field,inclusive_min=True)
+    return NumericRangeQuery(min=value, field=field, inclusive_min=True)
 
 
 def _less_than(field: str, value: Any) -> Dict[str, Any]:
@@ -166,7 +171,7 @@ def _less_than(field: str, value: Any) -> Dict[str, Any]:
     if isinstance(value, str):
         try:
             datetime.fromisoformat(value)
-            return search.DateRangeQuery(end=value,field=field)
+            return search.DateRangeQuery(end=value, field=field)
         except (ValueError, TypeError) as exc:
             msg = (
                 "Can't compare strings using operators '>', '>=', '<', '<='. "
@@ -176,7 +181,7 @@ def _less_than(field: str, value: Any) -> Dict[str, Any]:
     if type(value) in [list, DataFrame]:
         msg = f"Filter value can't be of type {type(value)} using operators '>', '>=', '<', '<='"
         raise FilterError(msg)
-    return NumericRangeQuery(max=value,field=field)
+    return NumericRangeQuery(max=value, field=field)
 
 
 def _less_than_equal(field: str, value: Any) -> Dict[str, Any]:
@@ -189,8 +194,8 @@ def _less_than_equal(field: str, value: Any) -> Dict[str, Any]:
     if isinstance(value, str):
         try:
             datetime.fromisoformat(value)
-            filter = DateRangeQuery(end=value,field=field)
-            filter.inclusive_end=True
+            filter = DateRangeQuery(end=value, field=field)
+            filter.inclusive_end = True
             return filter
         except (ValueError, TypeError) as exc:
             msg = (
@@ -201,21 +206,24 @@ def _less_than_equal(field: str, value: Any) -> Dict[str, Any]:
     if type(value) in [list, DataFrame]:
         msg = f"Filter value can't be of type {type(value)} using operators '>', '>=', '<', '<='"
         raise FilterError(msg)
-    return NumericRangeQuery(max=value,field=field,inclusive_max=True)
+    return NumericRangeQuery(max=value, field=field, inclusive_max=True)
 
 
 def _in(field: str, value: Any) -> Dict[str, Any]:
     if not isinstance(value, list):
         msg = f"{field}'s value must be a list when using 'in' or 'not in' comparators"
         raise FilterError(msg)
-    return search.BooleanQuery(should=search.DisjunctionQuery(*[create_search_query(field=field,value=v) for v in value]))
+    return search.BooleanQuery(should=search.DisjunctionQuery(*[create_search_query(field=field, value=v) for v in value]))
 
 
 def _not_in(field: str, value: List[Any]) -> Dict[str, Any]:
     if not isinstance(value, list):
         msg = f"{field}'s value must be a list when using 'in' or 'not in' comparators"
         raise FilterError(msg)
-    return search.BooleanQuery(must_not=search.DisjunctionQuery(*[create_search_query(field=field,value=v) for v in value], min = len(value)))
+    return search.BooleanQuery(
+        must_not=search.DisjunctionQuery(*[create_search_query(field=field, value=v) for v in value], min=len(value))
+    )
+
 
 COMPARISON_OPERATORS = {
     "==": _equal,
@@ -228,17 +236,17 @@ COMPARISON_OPERATORS = {
     "not in": _not_in,
 }
 
+
 def create_search_query(field: str, value: Any) -> SearchQuery:
     if isinstance(value, (int, float)):
-        numberFilter = NumericRangeQuery(min=value,max=value,field=field,inclusive_min=True, inclusive_max = True)
-        return numberFilter
+        number_filter = NumericRangeQuery(min=value, max=value, field=field, inclusive_min=True, inclusive_max=True)
+        return number_filter
     try:
         datetime.fromisoformat(value)
-        return DateRangeQuery(start=value, end=value, field=field, inclusive_start=True,inclusive_end=True)
-    except (ValueError, TypeError) as exc:
+        return DateRangeQuery(start=value, end=value, field=field, inclusive_start=True, inclusive_end=True)
+    except (ValueError, TypeError):
         pass
-    return search.MatchQuery(value,field=field)
-
+    return search.MatchQuery(value, field=field)
 
 
 def _parse_comparison_condition(condition: Dict[str, Any]) -> Dict[str, Any]:
@@ -247,7 +255,6 @@ def _parse_comparison_condition(condition: Dict[str, Any]) -> Dict[str, Any]:
         # We assume this is a logic dictionary since it's not present.
         return _parse_logical_condition(condition)
     field: str = condition["field"]
-
 
     if "operator" not in condition:
         msg = f"'operator' key missing in {condition}"
@@ -275,17 +282,16 @@ def _normalize_ranges(conditions: List[search.SearchQuery]) -> List[search.Searc
     """
     # Extract range conditions and associated field names
     range_conditions = [
-        (query.field, query) for query in conditions 
-        if isinstance(query, NumericRangeQuery) or isinstance(query, DateRangeQuery)
+        (query.field, query) for query in conditions if isinstance(query, NumericRangeQuery) or isinstance(query, DateRangeQuery)
     ]
 
     if range_conditions:
         # Remove range conditions from the original list
         conditions = [c for c in conditions if not isinstance(c, NumericRangeQuery) and not isinstance(c, DateRangeQuery)]
-        
+
         # Dictionary to hold merged range conditions
         range_conditions_dict: Dict[str, Dict[str, Any]] = {}
-        
+
         for field_name, query in range_conditions:
             encodable = query.encodable
             if field_name not in range_conditions_dict:
@@ -296,10 +302,10 @@ def _normalize_ranges(conditions: List[search.SearchQuery]) -> List[search.Searc
                 else:
                     range_conditions_dict[field_name].update({key: value})
 
-        for field_name, comparisons in range_conditions_dict.items():
-            if 'start' in comparisons or 'end' in comparisons:
+        for _field_name, comparisons in range_conditions_dict.items():
+            if "start" in comparisons or "end" in comparisons:
                 conditions.append(DateRangeQuery(**comparisons))
             else:
                 conditions.append(NumericRangeQuery(**comparisons))
-    
+
     return conditions

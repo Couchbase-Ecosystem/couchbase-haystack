@@ -1,12 +1,14 @@
 # SPDX-FileCopyrightText: 2023-present deepset GmbH <info@deepset.ai>
 #
 # SPDX-License-Identifier: Apache-2.0
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
+from couchbase.search import SearchQuery
 from haystack import component, default_from_dict, default_to_dict
 from haystack.dataclasses import Document
-from couchbase.search import SearchQuery
+
 from couchbase_haystack.document_stores import CouchbaseDocumentStore
+
 
 @component
 class CouchbaseEmbeddingRetriever:
@@ -49,8 +51,8 @@ class CouchbaseEmbeddingRetriever:
         """
         Create the CouchbaseDocumentStore component.
 
-        Note: Currently, the filter option is not supported with embedding queries. 
-        Instead, you can provide a couchbase search query while running the embedding query. 
+        Note: Currently, the filter option is not supported with embedding queries.
+        Instead, you can provide a couchbase search query while running the embedding query.
         The embedding query and search query are combined using an OR operation.
 
         :param document_store: An instance of CouchbaseDocumentStore.
@@ -88,9 +90,7 @@ class CouchbaseEmbeddingRetriever:
         :returns:
               Deserialized component.
         """
-        data["init_parameters"]["document_store"] = CouchbaseDocumentStore.from_dict(
-            data["init_parameters"]["document_store"]
-        )
+        data["init_parameters"]["document_store"] = CouchbaseDocumentStore.from_dict(data["init_parameters"]["document_store"])
         return default_from_dict(cls, data)
 
     @component.output_types(documents=List[Document])
@@ -107,20 +107,20 @@ class CouchbaseEmbeddingRetriever:
         :param query_embedding: Embedding of the query.
         :param filters: Filters applied to the retrieved Documents. The way runtime filters are applied depends on
                         the `filter_policy` chosen at document store initialization. See init method docstring for more
-                        details.              
-        :param top_k: Maximum number of Documents to be returned from vector query. Overrides the value specified at initialization.
-        :param search: Search filters param which is parsed to the Couchbase search query. The vector query and search query are ORed operation.
-        :param limit: Maximum number of Documents to be return by the couchbase fts search request. Default value is top_k. 
+                        details.
+        :param top_k: Maximum number of Documents to be returned from vector query. Overrides the value specified at
+        initialization.
+        :param search: Search filters param which is parsed to the Couchbase search query. The vector
+        query and search query are ORed operation.
+        :param limit: Maximum number of Documents to be return by the couchbase fts search request.
+        Default value is top_k.
         :returns: A dictionary with the following keys:
             - `documents`: List of Documents most similar to the given `query_embedding`
         """
-        
+
         top_k = top_k or self.top_k
 
         docs = self.document_store._embedding_retrieval(
-            query_embedding=query_embedding,
-            top_k=top_k,
-            search_query=search_query,
-            limit = limit
+            query_embedding=query_embedding, top_k=top_k, search_query=search_query, limit=limit
         )
         return {"documents": docs}

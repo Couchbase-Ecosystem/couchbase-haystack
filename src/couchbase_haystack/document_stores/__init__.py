@@ -1,9 +1,9 @@
 # SPDX-FileCopyrightText: 2023-present deepset GmbH <info@deepset.ai>
 #
 # SPDX-License-Identifier: Apache-2.0
-from .document_store import CouchbaseDocumentStore
-from .auth import CouchbaseAuthenticator, CouchbasePasswordAuthenticator, CouchbaseCertificateAuthenticator
+from .auth import CouchbaseAuthenticator, CouchbaseCertificateAuthenticator, CouchbasePasswordAuthenticator
 from .cluster_options import CouchbaseClusterOptions
+from .document_store import CouchbaseDocumentStore
 
 __all__ = [
     "CouchbaseDocumentStore",

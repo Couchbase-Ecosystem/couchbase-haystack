@@ -4,19 +4,15 @@ import zipfile
 from io import BytesIO
 from pathlib import Path
 
-from haystack.utils import Secret
-
 import requests
 from haystack import Pipeline
 from haystack.components.converters import TextFileToDocument
 from haystack.components.embedders import SentenceTransformersDocumentEmbedder
 from haystack.components.preprocessors import DocumentCleaner, DocumentSplitter
 from haystack.components.writers import DocumentWriter
+from haystack.utils import Secret
 
 from couchbase_haystack import CouchbaseDocumentStore, CouchbasePasswordAuthenticator
-      
-
-
 
 logger = logging.getLogger(__name__)
 
@@ -47,15 +43,12 @@ fetch_archive_from_http(
 #     couchbase:enterprise-7.6.2
 
 document_store = CouchbaseDocumentStore(
-    cluster_connection_string= Secret.from_token("localhost"),
-    authenticator=CouchbasePasswordAuthenticator(
-        username = Secret.from_token("username"),
-        password = Secret.from_token("password")
-    ),
-    bucket = "haystack_bucket_name",
+    cluster_connection_string=Secret.from_token("localhost"),
+    authenticator=CouchbasePasswordAuthenticator(username=Secret.from_token("username"), password=Secret.from_token("password")),
+    bucket="haystack_bucket_name",
     scope="haystack_scope_name",
     collection="haystack_collection_name",
-    vector_search_index = "vector_search_index"
+    vector_search_index="vector_search_index",
 )
 
 # Create components and an indexing pipeline that converts txt to documents, cleans and splits them, and
@@ -76,4 +69,5 @@ p.connect("embedder.documents", "writer.documents")
 file_paths = [docs_dir / Path(name) for name in os.listdir(docs_dir)]
 result = p.run({"text_file_converter": {"sources": file_paths}})
 
-# Assuming you have a Docker container running, navigate to <http://localhost:8091> to open the Couchbase Web Console and explore your data.
+# Assuming you have a Docker container running, navigate to <http://localhost:8091>
+# to open the Couchbase Web Console and explore your data.

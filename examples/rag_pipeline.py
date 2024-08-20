@@ -5,7 +5,7 @@ from haystack.components.embedders import SentenceTransformersTextEmbedder
 from haystack.components.generators import HuggingFaceAPIGenerator
 from haystack.utils import Secret
 
-from couchbase_haystack import CouchbaseDocumentStore, CouchbasePasswordAuthenticator, CouchbaseEmbeddingRetriever
+from couchbase_haystack import CouchbaseDocumentStore, CouchbaseEmbeddingRetriever, CouchbasePasswordAuthenticator
 
 # Load HF Token from environment variables.
 HF_TOKEN = Secret.from_env_var("HF_API_TOKEN")
@@ -19,15 +19,12 @@ HF_TOKEN = Secret.from_env_var("HF_API_TOKEN")
 #     couchbase:enterprise-7.6.2
 
 document_store = CouchbaseDocumentStore(
-    cluster_connection_string= Secret.from_token("localhost"),
-    authenticator=CouchbasePasswordAuthenticator(
-        username = Secret.from_token("username"),
-        password = Secret.from_token("password")
-    ),
-    bucket = "haystack_bucket_name",
+    cluster_connection_string=Secret.from_token("localhost"),
+    authenticator=CouchbasePasswordAuthenticator(username=Secret.from_token("username"), password=Secret.from_token("password")),
+    bucket="haystack_bucket_name",
     scope="haystack_scope_name",
     collection="haystack_collection_name",
-    vector_search_index = "vector_search_index"
+    vector_search_index="vector_search_index",
 )
 
 # Build a RAG pipeline with a Retriever to get relevant documents to the query and a HuggingFaceTGIGenerator
@@ -50,9 +47,9 @@ rag_pipeline.add_component("retriever", CouchbaseEmbeddingRetriever(document_sto
 rag_pipeline.add_component("prompt_builder", PromptBuilder(template=prompt_template))
 rag_pipeline.add_component(
     "llm",
-    HuggingFaceAPIGenerator( 
+    HuggingFaceAPIGenerator(
         api_type="serverless_inference_api",
-        api_params={"model":"mistralai/Mistral-7B-v0.1"},
+        api_params={"model": "mistralai/Mistral-7B-v0.1"},
     ),
 )
 rag_pipeline.add_component("answer_builder", AnswerBuilder())
