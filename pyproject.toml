@@ -1,0 +1,197 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "couchbase-haystack"
+dynamic = ["version"]
+description = 'Couchbase haystack integration'
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+keywords = []
+authors = [
+  { name = "Shyam Venkat", email = "shyam.venkat@couchbase.com" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = ["haystack-ai==2.3.*", "couchbase==4.*","backports-datetime-fromisoformat"]
+
+[project.urls]
+Documentation = "https://github.com/Couchbase-Ecosystem/couchbase-haystack#readme"
+Issues = "https://github.com/Couchbase-Ecosystem/couchbase-haystack/issues"
+Source = "https://github.com/Couchbase-Ecosystem/couchbase-haystack"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/couchbase_haystack"]
+
+[tool.hatch.version]
+source = "vcs"
+tag-pattern = 'v(?P<version>.*)'
+
+[tool.hatch.version.raw-options]
+root = "./"
+git_describe_command = 'git describe --tags --match="v[0-9]*"'
+
+
+# Define environments for development and testing
+[tool.hatch.envs.default]
+extra-dependencies = [
+    "pytest",
+    "sentence-transformers",
+]
+
+[tool.hatch.envs.default.scripts]
+test = "pytest {args:tests}"
+test-cov = "coverage run -m pytest {args:tests}"
+cov-report = ["- coverage combine", "coverage html"]
+cov = ["test-cov", "cov-report"]
+
+[tool.hatch.envs.types]
+extra-dependencies = [
+  "mypy>=1.0.0",
+]
+
+
+[tool.coverage.run]
+source = ["couchbase_haystack", "tests"]
+branch = true
+parallel = false
+
+[tool.coverage.paths]
+couchbase_haystack = ["src/couchbase_haystack"]
+tests = ["tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
+
+# Add linting environment
+[tool.hatch.envs.lint]
+detached = true
+dependencies = [
+  "black>=23.1.0",
+  "mypy>=1.0.0",
+  "ruff>=0.0.243",
+]
+
+[tool.hatch.envs.lint.scripts]
+typing = "mypy --install-types --non-interactive --explicit-package-bases {args:src/couchbase_haystack tests examples}"
+style = [
+  "ruff check {args:.}",
+  "black --check --diff {args:.}",
+]
+fmt = [
+  "black {args:.}",
+  "ruff check {args:.} --fix",
+  "style",
+]
+all = [
+  "style",
+  "typing",
+]
+
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.black]
+target-version = ["py37"]
+line-length = 130
+skip-string-normalization = true
+
+[tool.ruff]
+target-version = "py37"
+line-length = 130
+lint.select = [
+  "A",
+  "ARG",
+  "B",
+  "C",
+  "DTZ",
+  "E",
+  "EM",
+  "F",
+  "FBT",
+  "I",
+  "ICN",
+  "ISC",
+  "N",
+  "PLC",
+  "PLE",
+  "PLR",
+  "PLW",
+  "Q",
+  "RUF",
+  "S",
+  "T",
+  "TID",
+  "UP",
+  "W",
+  "YTT",
+]
+lint.ignore = [
+  #A001 Variable `filter` is shadowing a Python builtin
+  "A001", 
+  # Allow non-abstract empty methods in abstract base classes
+  "B027",
+  # Allow boolean positional values in function calls, like `dict.get(... True)`
+  "FBT003",
+  # Ignore checks for possible passwords
+  "S105", "S106", "S107",
+  # Ignore complexity
+  "C901", "PLR0911", "PLR0912", "PLR0913", "PLR0915",
+  
+  #Exception must not use a string literal, assign to variable first
+  "EM101",
+
+  #Too many arguments for `logging` format string
+  "PLE1205",
+
+  #Do not perform function call `Secret.from_env_var` in argument defaults; instead, perform the call within the function, or read the default from a module-level singleton variable
+  "B008"
+]
+lint.unfixable = [
+  # Don't touch unused imports
+  "F401",
+]
+
+lint.exclude = ["tests/**/*"]
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[tool.ruff.lint.isort]
+known-first-party = ["couchbase_haystack"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "parents"
+
+[tool.ruff.lint.per-file-ignores]
+# Tests can use magic values, assertions, and relative imports
+"tests/**/*" = ["PLR2004", "S101", "TID252"]
+
+
+
+
+
+
+[tool.pytest.ini_options]
+markers = [
+  "unit: unit tests",
+  "integration: integration tests",
+  "embedders: embedders tests",
+  "generators: generators tests",
+]
