@@ -8,7 +8,7 @@ slug: /
 
 A [Haystack](https://docs.haystack.deepset.ai/docs/document_store) Document Store for [Couchbase](https://www.couchbase.com).
 
-[![ci](https://github.com/Couchbase-Ecosystem/couchbase-haystack/workflows/ci/badge.svg)](https://github.com/Couchbase-Ecosystem/couchbase-haystack/actions?query=workflow%3Aci)
+[![ci](https://github.com/Couchbase-Ecosystem/couchbase-haystack/actions/workflows/ci.yml/badge.svg)](https://github.com/Couchbase-Ecosystem/couchbase-haystack/actions?query=workflow%3Aci)
 [![pypi version](https://img.shields.io/pypi/v/couchbase-haystack.svg)](https://pypi.org/project/couchbase-haystack/)
 [![haystack version](https://img.shields.io/pypi/v/haystack-ai.svg?label=haystack)](https://pypi.org/project/haystack-ai/)
 
