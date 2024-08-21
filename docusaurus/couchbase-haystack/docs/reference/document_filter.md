@@ -3,265 +3,154 @@ id: document_filter
 title: DocumentFilter
 ---
 
-## Classes
+# Couchbase Filter and Query Utilities
 
-### DateRangeQuery
+This module provides utilities for handling and normalizing filters and queries for use with Couchbase's search capabilities, specifically tailored for integration with the Haystack framework. The utilities include custom classes and functions to handle date range and numeric range queries, as well as functions to normalize filters into Couchbase-compatible search queries.
 
-This class extends the `DateRangeQuery` from Couchbase to add support for inclusive start and end properties.
+## Class Overview
 
-```python
-from datetime import datetime
-from typing import Optional
+### `DateRangeQuery`
 
-class DateRangeQuery(search.DateRangeQuery):
-    @property
-    def inclusive_start(self) -> Optional[bool]:
-        return self._json_.get('inclusive_start', None)
+The `DateRangeQuery` class extends Couchbase's `DateRangeQuery` to provide additional properties for inclusive start and end dates.
 
-    @inclusive_start.setter
-    def inclusive_start(self, value: bool) -> None:
-        self.set_prop('inclusive_start', value)
+#### Properties
 
-    @property
-    def inclusive_end(self) -> Optional[bool]:
-        return self._json_.get('inclusive_end', None)
+- `inclusive_start` (Optional[bool]): Indicates whether the start of the date range is inclusive.
+- `inclusive_end` (Optional[bool]): Indicates whether the end of the date range is inclusive.
 
-    @inclusive_end.setter
-    def inclusive_end(self, value: bool) -> None:
-        self.set_prop('inclusive_end', value)
-```
-
-[Source on GitHub](https://github.com/your-repo/your-project/blob/main/path/to/your/file.py#L10)
-
-### NumericRangeQuery
-
-This class extends the `NumericRangeQuery` from Couchbase to add support for inclusive min and max properties.
+**Example Usage:**
 
 ```python
-class NumericRangeQuery(search.NumericRangeQuery):
-    @property
-    def inclusive_min(self) -> Optional[bool]:
-        return self._json_.get('inclusive_min', None)
-
-    @inclusive_min.setter
-    def inclusive_min(self, value: bool) -> None:
-        self.set_prop('inclusive_min', value)
-
-    @property
-    def inclusive_max(self) -> Optional[bool]:
-        return self._json_.get('inclusive_max', None)
-
-    @inclusive_max.setter
-    def inclusive_max(self, value: bool) -> None:
-        self.set_prop('inclusive_max', value)
+date_query = DateRangeQuery(start="2024-01-01T00:00:00Z", end="2024-12-31T23:59:59Z", field="created_at")
+date_query.inclusive_start = True
+date_query.inclusive_end = True
 ```
 
-[Source on GitHub](https://github.com/your-repo/your-project/blob/main/path/to/your/file.py#L26)
+### `NumericRangeQuery`
 
-## Functions
+The `NumericRangeQuery` class extends Couchbase's `NumericRangeQuery` to provide additional properties for inclusive minimum and maximum values.
+
+#### Properties
+
+- `inclusive_min` (Optional[bool]): Indicates whether the minimum value is inclusive.
+- `inclusive_max` (Optional[bool]): Indicates whether the maximum value is inclusive.
+
+**Example Usage:**
+
+```python
+numeric_query = NumericRangeQuery(min=10, max=100, field="price")
+numeric_query.inclusive_min = True
+numeric_query.inclusive_max = True
+```
+
+## Function Overview
 
 ### `_normalize_filters`
 
-Converts Haystack filters into Couchbase-compatible filters.
-
-- **Input**: 
-  - `filters` (Dict[str, Any]): A dictionary of filters to normalize.
-- **Output**: 
-  - `SearchQuery`: A Couchbase-compatible search query object.
-
 ```python
-def _normalize_filters(filters: Dict[str, Any]) -> SearchQuery:
-    """
-    Converts Haystack filters in Couchbase compatible filters.
-    """
-    # Function body...
+def _normalize_filters(filters: Dict[str, Any]) -> SearchQuery
 ```
 
-[Source on GitHub](https://github.com/your-repo/your-project/blob/main/path/to/your/file.py#L40)
+**Description:**
+- Converts Haystack-style filters into Couchbase-compatible search queries.
+
+**Input Parameters:**
+- `filters` (Dict[str, Any]): A dictionary representing the filters to be normalized.
+
+**Response:**
+- Returns a `SearchQuery` object that can be used in Couchbase search operations.
+
+**Raises:**
+- `FilterError`: If the filters provided are not in the expected format.
+
+**Example Usage:**
+
+```python
+filters = {
+    "operator": "AND",
+    "conditions": [
+        {"field": "price", "operator": ">=", "value": 10},
+        {"field": "created_at", "operator": "<=", "value": "2024-12-31T23:59:59Z"}
+    ]
+}
+search_query = _normalize_filters(filters)
+```
 
 ### `_parse_logical_condition`
 
-Parses logical conditions (AND, OR, NOT) in filters.
-
-- **Input**: 
-  - `condition` (Dict[str, Any]): A dictionary representing the logical condition to parse.
-- **Output**: 
-  - `SearchQuery`: A Couchbase-compatible search query object representing the logical condition.
-
 ```python
-def _parse_logical_condition(condition: Dict[str, Any]) -> SearchQuery:
-    # Function body...
+def _parse_logical_condition(condition: Dict[str, Any]) -> SearchQuery
 ```
 
-[Source on GitHub](https://github.com/your-repo/your-project/blob/main/path/to/your/file.py#L51)
+**Description:**
+- Parses a logical condition (AND, OR, NOT) into a Couchbase `SearchQuery`.
 
-### `_equal`
+**Input Parameters:**
+- `condition` (Dict[str, Any]): A dictionary representing the logical condition.
 
-Handles equality conditions in filters.
+**Response:**
+- Returns a `SearchQuery` object that represents the logical condition.
 
-- **Input**: 
-  - `field` (str): The field name to apply the equality condition on.
-  - `value` (Any): The value to compare the field against.
-- **Output**: 
-  - `Dict[str, Any]`: A Couchbase-compatible search query object representing the equality condition.
-
-```python
-def _equal(field: str, value: Any) -> Dict[str, Any]:
-    # Function body...
-```
-
-[Source on GitHub](https://github.com/your-repo/your-project/blob/main/path/to/your/file.py#L71)
-
-### `_not_equal`
-
-Handles inequality conditions in filters.
-
-- **Input**: 
-  - `field` (str): The field name to apply the inequality condition on.
-  - `value` (Any): The value to compare the field against.
-- **Output**: 
-  - `Dict[str, Any]`: A Couchbase-compatible search query object representing the inequality condition.
+**Example Usage:**
 
 ```python
-def _not_equal(field: str, value: Any) -> Dict[str, Any]:
-    # Function body...
+logical_condition = {
+    "operator": "AND",
+    "conditions": [
+        {"field": "status", "operator": "==", "value": "active"},
+        {"field": "price", "operator": "<", "value": 50}
+    ]
+}
+search_query = _parse_logical_condition(logical_condition)
 ```
-
-[Source on GitHub](https://github.com/your-repo/your-project/blob/main/path/to/your/file.py#L84)
-
-### `_greater_than`
-
-Handles "greater than" conditions in filters.
-
-- **Input**: 
-  - `field` (str): The field name to apply the "greater than" condition on.
-  - `value` (Any): The value to compare the field against.
-- **Output**: 
-  - `Dict[str, Any]`: A Couchbase-compatible search query object representing the "greater than" condition.
-
-```python
-def _greater_than(field: str, value: Any) -> Dict[str, Any]:
-    # Function body...
-```
-
-[Source on GitHub](https://github.com/your-repo/your-project/blob/main/path/to/your/file.py#L98)
-
-### `_greater_than_equal`
-
-Handles "greater than or equal to" conditions in filters.
-
-- **Input**: 
-  - `field` (str): The field name to apply the "greater than or equal to" condition on.
-  - `value` (Any): The value to compare the field against.
-- **Output**: 
-  - `Dict[str, Any]`: A Couchbase-compatible search query object representing the "greater than or equal to" condition.
-
-```python
-def _greater_than_equal(field: str, value: Any) -> Dict[str, Any]:
-    # Function body...
-```
-
-[Source on GitHub](https://github.com/your-repo/your-project/blob/main/path/to/your/file.py#L117)
-
-### `_less_than`
-
-Handles "less than" conditions in filters.
-
-- **Input**: 
-  - `field` (str): The field name to apply the "less than" condition on.
-  - `value` (Any): The value to compare the field against.
-- **Output**: 
-  - `Dict[str, Any]`: A Couchbase-compatible search query object representing the "less than" condition.
-
-```python
-def _less_than(field: str, value: Any) -> Dict[str, Any]:
-    # Function body...
-```
-
-[Source on GitHub](https://github.com/your-repo/your-project/blob/main/path/to/your/file.py#L139)
-
-### `_less_than_equal`
-
-Handles "less than or equal to" conditions in filters.
-
-- **Input**: 
-  - `field` (str): The field name to apply the "less than or equal to" condition on.
-  - `value` (Any): The value to compare the field against.
-- **Output**: 
-  - `Dict[str, Any]`: A Couchbase-compatible search query object representing the "less than or equal to" condition.
-
-```python
-def _less_than_equal(field: str, value: Any) -> Dict[str, Any]:
-    # Function body...
-```
-
-[Source on GitHub](https://github.com/your-repo/your-project/blob/main/path/to/your/file.py#L156)
-
-### `_in`
-
-Handles "in" conditions in filters.
-
-- **Input**: 
-  - `field` (str): The field name to apply the "in" condition on.
-  - `value` (Any): The list of values to compare the field against.
-- **Output**: 
-  - `Dict[str, Any]`: A Couchbase-compatible search query object representing the "in" condition.
-
-```python
-def _in(field: str, value: Any) -> Dict[str, Any]:
-    # Function body...
-```
-
-[Source on GitHub](https://github.com/your-repo/your-project/blob/main/path/to/your/file.py#L179)
-
-### `_not_in`
-
-Handles "not in" conditions in filters.
-
-- **Input**: 
-  - `field` (str): The field name to apply the "not in" condition on.
-  - `value` (List[Any]): The list of values to compare the field against.
-- **Output**: 
-  - `Dict[str, Any]`: A Couchbase-compatible search query object representing the "not in" condition.
-
-```python
-def _not_in(field: str, value: List[Any]) -> Dict[str, Any]:
-    # Function body...
-```
-
-[Source on GitHub](https://github.com/your-repo/your-project/blob/main/path/to/your/file.py#L189)
-
-### `create_search_query`
-
-Creates a search query from the given field and value.
-
-- **Input**: 
-  - `field` (str): The field name to apply the search query on.
-  - `value` (Any): The value to search for in the specified field.
-- **Output**: 
-  - `SearchQuery`: A Couchbase-compatible search query object.
-
-```python
-def create_search_query(field: str, value: Any) -> SearchQuery:
-    # Function body...
-```
-
-[Source on GitHub](https://github.com/your-repo/your-project/blob/main/path/to/your/file.py#L203)
 
 ### `_parse_comparison_condition`
 
-Parses comparison conditions in filters.
-
-- **Input**: 
-  - `condition` (Dict[str, Any]): A dictionary representing the comparison condition to parse.
-- **Output**
-
-: 
-  - `Dict[str, Any]`: A Couchbase-compatible search query object representing the comparison condition.
-
 ```python
-def _parse_comparison_condition(condition: Dict[str, Any]) -> Dict[str, Any]:
-    # Function body...
+def _parse_comparison_condition(condition: Dict[str, Any]) -> Dict[str, Any]
 ```
 
-[Source on GitHub](https://github.com/your-repo/your-project/blob/main/path/to/your/file.py#L221)
+**Description:**
+- Parses a comparison condition (e.g., `==`, `>`, `<=`) into a Couchbase `SearchQuery`.
+
+**Input Parameters:**
+- `condition` (Dict[str, Any]): A dictionary representing the comparison condition.
+
+**Response:**
+- Returns a `SearchQuery` object that represents the comparison condition.
+
+**Raises:**
+- `FilterError`: If the condition is not properly formatted or contains unsupported types.
+
+**Example Usage:**
+
+```python
+comparison_condition = {
+    "field": "created_at",
+    "operator": ">=",
+    "value": "2024-01-01T00:00:00Z"
+}
+search_query = _parse_comparison_condition(comparison_condition)
+```
+
+### `create_search_query`
+
+```python
+def create_search_query(field: str, value: Any) -> SearchQuery
+```
+
+**Description:**
+- Creates a Couchbase `SearchQuery` based on the field and value provided.
+
+**Input Parameters:**
+- `field` (str): The name of the field to query.
+- `value` (Any): The value to query for. Can be a number, date, or string.
+
+**Response:**
+- Returns a `SearchQuery` object that matches the field and value provided.
+
+**Example Usage:**
+
+```python
+search_query = create_search_query("price", 25)
+```

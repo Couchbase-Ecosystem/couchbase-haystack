@@ -10,141 +10,165 @@ title: CouchbaseDocumentStore
 
 ## Installation
 
+To use the `CouchbaseDocumentStore`, make sure you have the necessary dependencies installed:
+
 ```bash
 pip install couchbase-haystack
 ```
 
-## Class: `CouchbaseDocumentStore`
+## Getting Started
 
-### `__init__`
+### Initialization
+
+To create an instance of `CouchbaseDocumentStore`, you need to provide connection details, authentication credentials, and specify the bucket, scope, collection, and vector search index.
+
+```python
+from haystack.document_stores.couchbase import CouchbaseDocumentStore
+from haystack.utils.auth import Secret
+from couchbase.options import ClusterOptions
+from couchbase.auth import PasswordAuthenticator
+
+# Initialize CouchbaseDocumentStore
+document_store = CouchbaseDocumentStore(
+    cluster_connection_string=Secret.from_env_var("CB_CONNECTION_STRING"),
+    authenticator=PasswordAuthenticator(username="username", password="password"),
+    bucket="my_bucket",
+    scope="my_scope",
+    collection="my_collection",
+    vector_search_index="my_vector_index"
+)
+```
+
+### Method Overview
+
+#### `__init__`
 
 ```python
 def __init__(
     self,
     *,
-    cluster_connection_string: Secret = Secret.from_env_var("CB_CONNECTION_STRING"), 
+    cluster_connection_string: Secret = Secret.from_env_var("CB_CONNECTION_STRING"),
     authenticator: Union[CouchbasePasswordAuthenticator, CouchbaseCertificateAuthenticator],
     cluster_options: CouchbaseClusterOptions = CouchbaseClusterOptions(),
     bucket: str,
     scope: str,
     collection: str,
     vector_search_index: str,
-    **kwargs: Dict[str, Any]
-) -> None
+    **kwargs: Dict[str, Any],
+):
 ```
 
-Creates a new `CouchbaseDocumentStore` instance.
-
-**Parameters:**
-
-- `cluster_connection_string` (Secret): The connection string for the Couchbase cluster.
-- `authenticator` (Union[CouchbasePasswordAuthenticator, CouchbaseCertificateAuthenticator]): The authenticator to use.
-- `cluster_options` (CouchbaseClusterOptions): The options for the Couchbase cluster.
-- `bucket` (str): The bucket name.
-- `scope` (str): The scope name.
-- `collection` (str): The collection name.
-- `vector_search_index` (str): The index for vector search.
+**Input Parameters:**
+- `cluster_connection_string` (Secret): Connection string for the Couchbase cluster.
+- `authenticator` (Union[CouchbasePasswordAuthenticator, CouchbaseCertificateAuthenticator]): Authenticator for Couchbase.
+- `cluster_options` (CouchbaseClusterOptions): Additional options for the Couchbase cluster.
+- `bucket` (str): The name of the bucket to connect to.
+- `scope` (str): The name of the scope within the bucket.
+- `collection` (str): The name of the collection within the scope.
+- `vector_search_index` (str): The index name for vector search.
 
 **Raises:**
-
 - `ValueError`: If the collection name contains invalid characters.
 
-### `to_dict`
+#### `write_documents`
 
 ```python
-def to_dict(self) -> Dict[str, Any]:
+def write_documents(
+    documents: List[Document],
+    policy: DuplicatePolicy = DuplicatePolicy.NONE
+) -> int:
 ```
 
-Serializes the component to a dictionary.
+**Input Parameters:**
+- `documents` (List[Document]): A list of `Document` objects to be written to the Couchbase collection.
+- `policy` (DuplicatePolicy): The policy for handling duplicate documents. Can be:
+  - `DuplicatePolicy.FAIL`: Raises an error if a document with the same ID already exists.
+  - `DuplicatePolicy.OVERWRITE`: Overwrites any existing documents with the same ID.
+  - `DuplicatePolicy.NONE`: Equivalent to `FAIL`.
 
-**Returns:**
-
-- `Dict[str, Any]`: Dictionary with serialized data.
-
-### `from_dict`
-
-```python
-@classmethod
-def from_dict(cls, data: Dict[str, Any]) -> "CouchbaseDocumentStore":
-```
-
-Deserializes the component from a dictionary.
-
-**Parameters:**
-
-- `data` (Dict[str, Any]): Dictionary to deserialize from.
-
-**Returns:**
-
-- `CouchbaseDocumentStore`: Deserialized component.
-
-### `count_documents`
-
-```python
-def count_documents(self) -> int:
-```
-
-Returns how many documents are present in the document store.
-
-**Returns:**
-
-- `int`: The number of documents in the document store.
-
-### `filter_documents`
-
-```python
-def filter_documents(self, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
-```
-
-Returns the documents that match the filters provided.
-
-**Parameters:**
-
-- `filters` (Optional[Dict[str, Any]]): The filters to apply.
-
-**Returns:**
-
-- `List[Document]`: A list of Documents that match the given filters.
-
-### `write_documents`
-
-```python
-def write_documents(self, documents: List[Document], policy: DuplicatePolicy = DuplicatePolicy.NONE) -> int:
-```
-
-Writes documents into the Couchbase collection.
-
-**Parameters:**
-
-- `documents` (List[Document]): A list of Documents to write to the document store.
-- `policy` (DuplicatePolicy): The duplicate policy to use when writing documents.
+**Response:**
+- Returns an `int` representing the number of documents successfully written to the document store.
 
 **Raises:**
+- `DuplicateDocumentError`: If a document with the same ID already exists and the policy is set to `FAIL`.
+- `ValueError`: If the documents are not of type `Document`.
+- `DocumentStoreError`: For other errors encountered during the write operation.
 
-- `DuplicateDocumentError`: If a document with the same ID already exists and the policy is `DuplicatePolicy.FAIL`.
-- `ValueError`: If the documents are not of type Document.
-
-**Returns:**
-
-- `int`: The number of documents written to the document store.
-
-### `delete_documents`
+**Example Usage:**
 
 ```python
-def delete_documents(self, document_ids: List[str]) -> None:
+documents = [
+    Document(content="Document 1 content", id="doc1"),
+    Document(content="Document 2 content", id="doc2"),
+]
+
+written_count = document_store.write_documents(documents, policy=DuplicatePolicy.OVERWRITE)
 ```
 
-Deletes all documents with matching `document_ids` from the document store.
+#### `filter_documents`
 
-**Parameters:**
+```python
+def filter_documents(filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+```
 
-- `document_ids` (List[str]): The document IDs to delete.
+**Input Parameters:**
+- `filters` (Optional[Dict[str, Any]]): A dictionary of filters to apply when retrieving documents. The keys should correspond to metadata fields, and the values should be lists of acceptable values.
 
-### `_embedding_retrieval`
+**Response:**
+- Returns a `List[Document]` containing documents that match the provided filters.
+
+**Example Usage:**
+
+```python
+filters = {"author": ["John Doe"], "year": ["2024"]}
+documents = document_store.filter_documents(filters=filters)
+```
+
+**Output:**
+- A list of `Document` objects that match the specified filters.
+
+#### `count_documents`
+
+```python
+def count_documents() -> int:
+```
+
+**Response:**
+- Returns an `int` representing the number of documents present in the document store.
+
+**Example Usage:**
+
+```python
+doc_count = document_store.count_documents()
+```
+
+**Output:**
+- The total number of documents in the document store.
+
+#### `delete_documents`
+
+```python
+def delete_documents(document_ids: List[str]) -> None:
+```
+
+**Input Parameters:**
+- `document_ids` (List[str]): A list of document IDs to delete from the document store.
+
+**Response:**
+- This method does not return any value (`None`).
+
+**Example Usage:**
+
+```python
+document_store.delete_documents(document_ids=["doc1", "doc2"])
+```
+
+**Note:** If `document_ids` is an empty list, no action will be taken.
+
+#### `_embedding_retrieval`
 
 ```python
 def _embedding_retrieval(
-    self,
     query_embedding: List[float],
     top_k: int = 10,
     search_query: SearchQuery = None,
@@ -152,36 +176,61 @@ def _embedding_retrieval(
 ) -> List[Document]:
 ```
 
-Finds the documents most similar to the provided `query_embedding` by using a vector similarity metric.
+**Input Parameters:**
+- `query_embedding` (List[float]): A list of float values representing the query embedding.
+- `top_k` (int): The number of top documents to return based on similarity to the query embedding. Default is 10.
+- `search_query` (Optional[SearchQuery]): Additional search filters to apply along with the vector search. Default is `None`.
+- `limit` (Optional[int]): Maximum number of documents to return. Default is `top_k`.
 
-**Parameters:**
-
-- `query_embedding` (List[float]): Embedding of the query.
-- `top_k` (int): How many documents to be returned by the vector query.
-- `search_query` (SearchQuery): Search filters parsed to the Couchbase search query.
-- `limit` (Optional[int]): Maximum number of Documents to return.
-
-**Returns:**
-
-- `List[Document]`: A list of Documents most similar to the given `query_embedding`.
+**Response:**
+- Returns a `List[Document]` containing the documents most similar to the provided `query_embedding`.
 
 **Raises:**
+- `ValueError`: If the `query_embedding` is empty.
+- `DocumentStoreError`: If there is an error retrieving documents from Couchbase.
 
-- `ValueError`: If `query_embedding` is empty.
-- `DocumentStoreError`: If the retrieval of documents from Couchbase fails.
-
-### `__getDocFromKV`
+**Example Usage:**
 
 ```python
-def __getDocFromKV(self, response: SearchResult) -> List[Document]:
+query_embedding = [0.1, 0.2, 0.3, ...]  # Example embedding vector
+similar_documents = document_store._embedding_retrieval(query_embedding=query_embedding, top_k=5)
 ```
 
-Retrieves documents from Couchbase Key-Value store based on a search response.
+**Output:**
+- A list of `Document` objects that are most similar to the given `query_embedding`.
 
-**Parameters:**
+### Serialization Methods
 
-- `response` (SearchResult): The search result from Couchbase.
+#### `to_dict`
 
-**Returns:**
+```python
+def to_dict() -> Dict[str, Any]:
+```
 
-- `List[Document]`: A list of Documents retrieved from the Key-Value store.
+**Response:**
+- Returns a `Dict[str, Any]` containing the serialized state of the `CouchbaseDocumentStore` instance.
+
+**Example Usage:**
+
+```python
+serialized_data = document_store.to_dict()
+```
+
+#### `from_dict`
+
+```python
+@classmethod
+def from_dict(cls, data: Dict[str, Any]) -> "CouchbaseDocumentStore":
+```
+
+**Input Parameters:**
+- `data` (Dict[str, Any]): A dictionary containing the serialized state of a `CouchbaseDocumentStore`.
+
+**Response:**
+- Returns a `CouchbaseDocumentStore` instance reconstructed from the provided dictionary.
+
+**Example Usage:**
+
+```python
+new_document_store = CouchbaseDocumentStore.from_dict(serialized_data)
+```

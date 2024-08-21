@@ -3,138 +3,145 @@ id: cluster_options
 title: ClusterOptions
 ---
 
-## Overview
+# Couchbase Cluster Options
 
-The `CouchbaseClusterOptions` class configures various cluster-level options in Couchbase, including timeout settings, tracing configurations, and more.
+This module provides the `CouchbaseClusterOptions` class, which allows for the configuration and management of cluster-level options in a Couchbase environment. This class is designed to be flexible, supporting a wide range of configuration parameters and enabling serialization and deserialization for easy storage and retrieval of configurations.
 
-## Classes
+## Class Overview
 
 ### `CouchbaseClusterOptions`
 
-This class provides methods for initializing, serializing, and deserializing Couchbase cluster options.
+The `CouchbaseClusterOptions` class inherits from `dict` and encapsulates various cluster-level configuration options for a Couchbase cluster. It supports a wide range of settings including timeouts, tracing, and network configurations.
 
-#### Constructor
+#### Initialization
 
 ```python
 @overload
-    def __init__(
-        self,
-        profile=None, # type: Optional[KnownConfigProfiles]
-        #timeout_options
-        bootstrap_timeout=None,  # type: Optional[timedelta]
-        resolve_timeout=None,  # type: Optional[timedelta]
-        connect_timeout=None,  # type: Optional[timedelta]
-        kv_timeout=None,  # type: Optional[timedelta]
-        kv_durable_timeout=None,  # type: Optional[timedelta]
-        views_timeout=None,  # type: Optional[timedelta]
-        query_timeout=None,  # type: Optional[timedelta]
-        analytics_timeout=None,  # type: Optional[timedelta]
-        search_timeout=None,  # type: Optional[timedelta]
-        management_timeout=None,  # type: Optional[timedelta]
-        dns_srv_timeout=None,  # type: Optional[timedelta]
-        idle_http_connection_timeout=None,  # type: Optional[timedelta]
-        config_idle_redial_timeout=None,  # type: Optional[timedelta]
-        config_total_timeout=None,  # type: Optional[timedelta]
-        #timeout_options
-
-        #tracing_options
-        tracing_threshold_kv=None,  # type: Optional[timedelta]
-        tracing_threshold_view=None,  # type: Optional[timedelta]
-        tracing_threshold_query=None,  # type: Optional[timedelta]
-        tracing_threshold_search=None,  # type: Optional[timedelta]
-        tracing_threshold_analytics=None,  # type: Optional[timedelta]
-        tracing_threshold_eventing=None,  # type: Optional[timedelta]
-        tracing_threshold_management=None,  # type: Optional[timedelta]
-        tracing_threshold_queue_size=None,  # type: Optional[int]
-        tracing_threshold_queue_flush_interval=None,  # type: Optional[timedelta]
-        tracing_orphaned_queue_size=None,  # type: Optional[int]
-        tracing_orphaned_queue_flush_interval=None,  # type: Optional[timedelta]
-        #tracing_options
-
-        enable_tls=None,    # type: Optional[bool]
-        enable_mutation_tokens=None,    # type: Optional[bool]
-        enable_tcp_keep_alive=None,    # type: Optional[bool]
-        ip_protocol=None,    # type: Optional[Union[IpProtocol, str]]
-        enable_dns_srv=None,    # type: Optional[bool]
-        show_queries=None,    # type: Optional[bool]
-        enable_unordered_execution=None,    # type: Optional[bool]
-        enable_clustermap_notification=None,    # type: Optional[bool]
-        enable_compression=None,    # type: Optional[bool]
-        enable_tracing=None,    # type: Optional[bool]
-        enable_metrics=None,    # type: Optional[bool]
-        network=None,    # type: Optional[str]
-        tls_verify=None,    # type: Optional[Union[TLSVerifyMode, str]]
-        tcp_keep_alive_interval=None,  # type: Optional[timedelta]
-        config_poll_interval=None,  # type: Optional[timedelta]
-        config_poll_floor=None,  # type: Optional[timedelta]
-        max_http_connections=None,  # type: Optional[int]
-        user_agent_extra=None,  # type: Optional[str]
-        logging_meter_emit_interval=None,  # type: Optional[timedelta]
-        log_redaction=None,  # type: Optional[bool]
-        compression=None,  # type: Optional[Compression]
-        compression_min_size=None,  # type: Optional[int]
-        compression_min_ratio=None,  # type: Optional[float]
-        dns_nameserver=None,  # type: Optional[str]
-        dns_port=None,  # type: Optional[int]
-        disable_mozilla_ca_certificates=None,  # type: Optional[bool]
-        dump_configuration=None,  # type: Optional[bool]
-    )
+def __init__(
+    self,
+    profile: Optional[KnownConfigProfiles] = None,
+    # Various timeout options
+    bootstrap_timeout: Optional[timedelta] = None,
+    resolve_timeout: Optional[timedelta] = None,
+    connect_timeout: Optional[timedelta] = None,
+    kv_timeout: Optional[timedelta] = None,
+    kv_durable_timeout: Optional[timedelta] = None,
+    views_timeout: Optional[timedelta] = None,
+    query_timeout: Optional[timedelta] = None,
+    analytics_timeout: Optional[timedelta] = None,
+    search_timeout: Optional[timedelta] = None,
+    management_timeout: Optional[timedelta] = None,
+    dns_srv_timeout: Optional[timedelta] = None,
+    idle_http_connection_timeout: Optional[timedelta] = None,
+    config_idle_redial_timeout: Optional[timedelta] = None,
+    config_total_timeout: Optional[timedelta] = None,
+    # Tracing options
+    tracing_threshold_kv: Optional[timedelta] = None,
+    tracing_threshold_view: Optional[timedelta] = None,
+    tracing_threshold_query: Optional[timedelta] = None,
+    tracing_threshold_search: Optional[timedelta] = None,
+    tracing_threshold_analytics: Optional[timedelta] = None,
+    tracing_threshold_eventing: Optional[timedelta] = None,
+    tracing_threshold_management: Optional[timedelta] = None,
+    tracing_threshold_queue_size: Optional[int] = None,
+    tracing_threshold_queue_flush_interval: Optional[timedelta] = None,
+    tracing_orphaned_queue_size: Optional[int] = None,
+    tracing_orphaned_queue_flush_interval: Optional[timedelta] = None,
+    # Other options
+    enable_tls: Optional[bool] = None,
+    enable_mutation_tokens: Optional[bool] = None,
+    enable_tcp_keep_alive: Optional[bool] = None,
+    ip_protocol: Optional[Union[IpProtocol, str]] = None,
+    enable_dns_srv: Optional[bool] = None,
+    show_queries: Optional[bool] = None,
+    enable_unordered_execution: Optional[bool] = None,
+    enable_clustermap_notification: Optional[bool] = None,
+    enable_compression: Optional[bool] = None,
+    enable_tracing: Optional[bool] = None,
+    enable_metrics: Optional[bool] = None,
+    network: Optional[str] = None,
+    tls_verify: Optional[Union[TLSVerifyMode, str]] = None,
+    tcp_keep_alive_interval: Optional[timedelta] = None,
+    config_poll_interval: Optional[timedelta] = None,
+    config_poll_floor: Optional[timedelta] = None,
+    max_http_connections: Optional[int] = None,
+    user_agent_extra: Optional[str] = None,
+    logging_meter_emit_interval: Optional[timedelta] = None,
+    log_redaction: Optional[bool] = None,
+    compression: Optional[Compression] = None,
+    compression_min_size: Optional[int] = None,
+    compression_min_ratio: Optional[float] = None,
+    dns_nameserver: Optional[str] = None,
+    dns_port: Optional[int] = None,
+    disable_mozilla_ca_certificates: Optional[bool] = None,
+    dump_configuration: Optional[bool] = None,
+)
 ```
 
-The constructor supports various options for cluster configuration, including timeouts, tracing, and network settings. These options are initialized via the constructor arguments.
+- This initializer accepts a wide range of optional parameters, covering various aspects of Couchbase cluster configuration including timeouts, tracing, TLS, network settings, and more.
 
-#### Methods
 
-- **`get_cluster_options(auth: Union[CouchbasePasswordAuthenticator, CouchbaseCertificateAuthenticator]) -> ClusterOptions`**: 
-
-  Returns a `ClusterOptions` object configured with the provided authenticator and options.
-
-  ```python
-  def get_cluster_options(self, auth: Union[CouchbasePasswordAuthenticator, CouchbaseCertificateAuthenticator]) -> "ClusterOptions":
-      ...
-  ```
-
-- **`to_dict() -> Dict[str, Any]`**: 
-
-  Serializes the cluster options to a dictionary format. This method flattens timeout and tracing fields and converts enum fields to their corresponding values.
-
-  ```python
-  def to_dict(self) -> Dict[str, Any]:
-      """
-      Serializes the component to a dictionary.
-  
-      :returns:
-          Dictionary with serialized data.
-      """
-      ...
-  ```
-
-- **`from_dict(data: Dict[str, Any]) -> "ClusterOptions"`**: 
-
-  Deserializes the cluster options from a dictionary format. This method reconstructs timeout and tracing fields from seconds and maps enum fields back to their respective classes.
-
-  ```python
-  @classmethod
-  def from_dict(cls, data: Dict[str, Any]) -> "ClusterOptions":
-      """
-      Deserializes the component from a dictionary.
-  
-      :param data:
-          Dictionary to deserialize from.
-      :returns:
-            Deserialized component.
-      """
-      ...
-  ```
-
-## Usage
-
-Here’s an example of how to use the `CouchbaseClusterOptions` class:
+**Example Usage:**
 
 ```python
-from couchbase_haystack.document_stores import CouchbaseClusterOptions, CouchbasePasswordAuthenticator
+options = CouchbaseClusterOptions(
+    enable_tls=True,
+    kv_timeout=timedelta(seconds=2.5),
+    max_http_connections=10,
+)
+```
 
+#### `get_cluster_options`
+
+```python
+def get_cluster_options(
+    self, auth: Union[CouchbasePasswordAuthenticator, CouchbaseCertificateAuthenticator]
+) -> "ClusterOptions"
+```
+
+**Input Parameters:**
+- `auth` (Union[CouchbasePasswordAuthenticator, CouchbaseCertificateAuthenticator]): The authentication mechanism to be used with the cluster.
+
+**Response:**
+- Returns a `ClusterOptions` instance, initialized with the authentication method and the provided configuration options.
+
+**Example Usage:**
+
+```python
 auth = CouchbasePasswordAuthenticator(username="user", password="pass")
-options = CouchbaseClusterOptions(enable_tls=True, network="default")
-cluster_options = options.get_cluster_options(auth)
+cluster_options = options.get_cluster_options(auth=auth)
+```
+
+#### `to_dict`
+
+```python
+def to_dict() -> Dict[str, Any]
+```
+
+**Response:**
+- Returns a dictionary containing the serialized state of the `CouchbaseClusterOptions` instance. The method ensures that all supported fields are converted appropriately, including converting `timedelta` objects to seconds.
+
+**Example Usage:**
+
+```python
+options_dict = options.to_dict()
+```
+
+#### `from_dict`
+
+```python
+@classmethod
+def from_dict(cls, data: Dict[str, Any]) -> "CouchbaseClusterOptions"
+```
+
+**Input Parameters:**
+- `data` (Dict[str, Any]): A dictionary containing the serialized state of a `CouchbaseClusterOptions`.
+
+**Response:**
+- Returns a `CouchbaseClusterOptions` instance reconstructed from the provided dictionary.
+
+**Example Usage:**
+
+```python
+options_instance = CouchbaseClusterOptions.from_dict(options_dict)
 ```
