@@ -92,8 +92,6 @@ pip install sentence-transformers # required in order to run pipeline examples g
 pip install couchbase-haystack
 ```
 
-# Couchbase Integration with Haystack
-
 ## Usage
 
 ### Running Couchbase
