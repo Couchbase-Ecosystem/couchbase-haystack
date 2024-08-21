@@ -6,6 +6,9 @@
   <a href="https://github.com/Couchbase-Ecosystem/couchbase-haystack/actions?query=workflow%3Aci">
     <img alt="ci" src="https://github.com/Couchbase-Ecosystem/couchbase-haystack/actions/workflows/ci.yml/badge.svg" />
   </a>
+  <a href="https://couchbase-ecosystem.github.io/couchbase-haystack/">
+    <img alt="documentation" src="https://img.shields.io/badge/docs-mkdocs%20material-blue.svg?style=flat" />
+  </a>
   <a href="https://pypi.org/project/couchbase-haystack/">
     <img alt="pypi version" src="https://img.shields.io/pypi/v/couchbase-haystack.svg" />
   </a>
