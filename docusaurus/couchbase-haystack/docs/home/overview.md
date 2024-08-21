@@ -202,7 +202,7 @@ The data from the dictionary will be used to create a document in Couchbase afte
 }
 ```
 
-The full list of parameters accepted by `CouchbaseDocumentStore` can be found in [API documentation](test.com).
+The full list of parameters accepted by `CouchbaseDocumentStore` can be found in [API documentation](/reference/couchbase_document_store).
 
 ### Indexing Documents
 
@@ -310,10 +310,10 @@ documents: List[Document] = result["retriever"]["documents"]
 
 ### More Examples
 
-You can find more examples in the implementation [repository](examples):
+You can find more examples in the implementation [repository](https://github.com/Couchbase-Ecosystem/couchbase-haystack/blob/main/examples):
 
-- [indexing_pipeline.py](https://github.com/Couchbase-Ecosystem/couchbase-haystack/examples/indexing_pipeline.py) - Indexing text files (documents) from a remote HTTP location.
-- [rag_pipeline.py](https://github.com/Couchbase-Ecosystem/couchbase-haystack/examples/rag_pipeline.py) - Generative question answering RAG pipeline using `CouchbaseEmbeddingRetriever` to fetch documents from Couchbase document store and answer questions using [HuggingFaceTGIGenerator](https://docs.haystack.deepset.ai/v2.0/docs/huggingfacetgigenerator).
+- [indexing_pipeline.py](https://github.com/Couchbase-Ecosystem/couchbase-haystack/blob/main/examples/indexing_pipeline.py) - Indexing text files (documents) from a remote HTTP location.
+- [rag_pipeline.py](https://github.com/Couchbase-Ecosystem/couchbase-haystack/blob/main/examples/rag_pipeline.py) - Generative question answering RAG pipeline using `CouchbaseEmbeddingRetriever` to fetch documents from Couchbase document store and answer questions using [HuggingFaceTGIGenerator](https://docs.haystack.deepset.ai/v2.0/docs/huggingfacetgigenerator).
 
 ## License
 
