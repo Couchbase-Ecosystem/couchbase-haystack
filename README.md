@@ -211,7 +211,7 @@ The data from the dictionary will be used to create a document in COuchbase afte
 ```
 
 The full list of parameters accepted by `CouchbaseDocumentStore` can be found in
-[API documentation]().
+[API documentation](https://couchbase-ecosystem.github.io/couchbase-haystack/reference/couchbase_document_store).
 
 ### Indexing documents
 
