@@ -8,13 +8,14 @@ import pytest
 
 from haystack.dataclasses.document import Document
 from haystack.utils import Secret
-from couchbase_haystack import CouchbaseDocumentStore, CouchbasePasswordAuthenticator
-from pandas import DataFrame
+from couchbase_haystack import CouchbaseDocumentStore, CouchbasePasswordAuthenticator, CouchbaseClusterOptions
 from couchbase.cluster import Cluster, ClusterOptions
-from couchbase.options import ClusterOptions
+from couchbase.options import ClusterOptions, KnownConfigProfiles
 from couchbase.auth import PasswordAuthenticator
 from couchbase.management.logic.search_index_logic import SearchIndex
 from couchbase.exceptions import SearchIndexNotFoundException
+from couchbase import search
+from couchbase_haystack.document_stores.filters import NumericRangeQuery
 from datetime import timedelta
 from .common import common
 
@@ -38,13 +39,13 @@ class TestEmbeddingRetrieval:
         bucket_name = "haystack_integration_test"
         scope_name = "haystack_test_scope"
         collection_name = "haystack_collection"
-        cluster = Cluster(
-            os.environ["CONNECTION_STRING"],
-            ClusterOptions(
-                authenticator=PasswordAuthenticator(username=os.environ["USER_NAME"], password=os.environ["PASSWORD"]),
-                enable_tcp_keep_alive=True,
-            ),
+        cluster_opts = ClusterOptions(
+            authenticator=PasswordAuthenticator(username=os.environ["USER_NAME"], password=os.environ["PASSWORD"]),
+            enable_tcp_keep_alive=True,
         )
+        cluster_opts.apply_profile(KnownConfigProfiles.WanDevelopment)
+
+        cluster = Cluster(os.environ["CONNECTION_STRING"], cluster_opts)
         cluster.wait_until_ready(timeout=timedelta(seconds=30))
         bucket = cluster.bucket(bucket_name=bucket_name)
         collection_manager = bucket.collections()
@@ -71,12 +72,11 @@ class TestEmbeddingRetrieval:
             sim.upsert_index(search_index)
 
         store = CouchbaseDocumentStore(
-            cluster_connection_string=os.environ["CONNECTION_STRING"],
-            cluster_options=ClusterOptions(
-                authenticator=CouchbasePasswordAuthenticator(
-                    username=Secret.from_env_var("USER_NAME"), password=Secret.from_env_var("PASSWORD")
-                )
+            cluster_connection_string=Secret.from_env_var("CONNECTION_STRING"),
+            authenticator=CouchbasePasswordAuthenticator(
+                username=Secret.from_env_var("USER_NAME"), password=Secret.from_env_var("PASSWORD")
             ),
+            cluster_options=CouchbaseClusterOptions(profile=KnownConfigProfiles.WanDevelopment),
             bucket=bucket_name,
             scope=scope_name,
             collection=collection_name,
@@ -96,13 +96,13 @@ class TestEmbeddingRetrieval:
         result = scope.search_indexes().drop_index(index_definition["name"])
         # print("dropped index successfully",result)
         result = cluster.query
-        (f"drop collection {bucket_name}.{scope_name}.{collection_name}").execute()
+        cluster.query(f"drop collection {bucket_name}.{scope_name}.{collection_name}").execute()
         # print("dropped collection successfully",result)
         cluster.close()
 
     def test_embedding_retrieval(self, document_store: CouchbaseDocumentStore):
         query_embedding = [0.9, 0.1, 0.0]
-        results = document_store._embedding_retrieval(query_embedding=query_embedding, top_k=3, filters={})
+        results = document_store._embedding_retrieval(query_embedding=query_embedding, top_k=3)
         assert len(results) == 3
         assert results[0].content == "red color"
         assert results[1].content == "blue color"
@@ -111,8 +111,7 @@ class TestEmbeddingRetrieval:
     def test_embedding_retrieval_with_filter(self, document_store: CouchbaseDocumentStore):
         query_embedding = [0.9, 0.0, 0.0]
         results = document_store._embedding_retrieval(
-            query_embedding=query_embedding, top_k=1, search={"field": "meta.number", "operator": "==", "value": 3}
-        )
+            query_embedding=query_embedding, top_k=1, limit=2,search_query=NumericRangeQuery(min=3,max=3,inclusive_min= True,inclusive_max=True,field= "meta.number"))
         assert len(results) == 2
         assert results[0].content == "red color"
         assert results[1].content == "grey color"

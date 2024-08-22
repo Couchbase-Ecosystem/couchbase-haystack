@@ -228,7 +228,7 @@ class CouchbaseDocumentStore:
             else:
                 result = self.collection.upsert_multi(operations)
         except Exception as e:
-            logger.error("write error", e)
+            logger.error("write error {e}")
             msg = f"Failed to write documents to Couchbase. Error: {e}"
             raise DocumentStoreError(msg) from e
         if not result.all_ok and result.exceptions:
