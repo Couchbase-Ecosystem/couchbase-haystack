@@ -1,0 +1,18 @@
+template: |
+  ## Changelog
+
+  {{CHANGELOG}}
+  
+categories:
+  - title: "🚀 feature"
+    labels:
+      - "enhancement"
+  - title: "🐛 Bug Fixes"
+    labels:
+      - "fix"
+  - title: "🧹 Maintenance"
+    labels:
+      - "chore"
+  - title: "📝 Documentation"
+    labels:
+      - "docs"
