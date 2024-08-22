@@ -1,0 +1,16 @@
+title: Changelog
+repository: https://github.com/Couchbase-Ecosystem/couchbase-haystack
+style: angular
+sections:
+  - title: Features
+    labels: [feature]
+  - title: Bug Fixes
+    labels: [bug, fix]
+  - title: Documentation
+    labels: [documentation, docs]
+  - title: Refactoring
+    labels: [refactor]
+  - title: Tests
+    labels: [test, tests]
+  - title: CI/CD
+    labels: [ci, cd]

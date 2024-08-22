@@ -20,30 +20,50 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      # - name: Set up Python
-      #   uses: actions/setup-python@v4
-      #   with:
-      #     python-version: 3.x
-
-      # - name: Install dependencies
-      #   run: |
-      #     pip install --upgrade pip 
-      #     pip install hatch
-
-      # - name: Build package
-      #   run: hatch build
-
-      # - name: Publish package distributions to PyPI
-      #   uses: pypa/gh-action-pypi-publish@release/v1
-
-      - name: Generate changelog
-        uses: mikepenz/release-changelog-builder-action@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          configuration: .github/release-changelog-config.yml
+          python-version: 3.x
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip 
+          pip install hatch
+
+          - name: Download the latest release tarball
+          run: |
+            curl -s https://api.github.com/repos/git-chglog/git-chglog/releases/latest \
+            | grep "browser_download_url.*linux_amd64.tar.gz" \
+            | cut -d '"' -f 4 \
+            | wget -qi - -O /tmp/git-chglog_linux_amd64.tar.gz
+  
+      - name: Extract the tarball
+        run: |
+          tar -xzf /tmp/git-chglog_linux_amd64.tar.gz -C /tmp
+
+      - name: Move the binary to a directory in your PATH
+        run: sudo mv /tmp/git-chglog /usr/local/bin/
+
+      - name: Clean up
+        run: rm /tmp/git-chglog_linux_amd64.tar.gz
+
+      - name: Generate Changelog
+        run: |
+          go install github.com/git-chglog/git-chglog/cmd/git-chglog@v0.15.4
+          # Generate the changelog using git-chglog and store it in a temporary file
+          git-chglog -c ./.chglog/config-action.yml -o /tmp/changelog.md  
+
+
+      - name: Build package
+        run: hatch build
+
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
+          body_path: /tmp/changelog.md
           files: dist/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
