@@ -30,12 +30,12 @@ jobs:
           pip install --upgrade pip 
           pip install hatch
 
-          - name: Download the latest release tarball
-          run: |
-            curl -s https://api.github.com/repos/git-chglog/git-chglog/releases/latest \
-            | grep "browser_download_url.*linux_amd64.tar.gz" \
-            | cut -d '"' -f 4 \
-            | wget -qi - -O /tmp/git-chglog_linux_amd64.tar.gz
+      - name: Download the latest release tarball
+        run: |
+          curl -s https://api.github.com/repos/git-chglog/git-chglog/releases/latest \
+          | grep "browser_download_url.*linux_amd64.tar.gz" \
+          | cut -d '"' -f 4 \
+          | wget -qi - -O /tmp/git-chglog_linux_amd64.tar.gz
   
       - name: Extract the tarball
         run: |
