@@ -17,7 +17,8 @@ const sidebars: SidebarsConfig = {
     collapsible: false,
     collapsed: false,
     items: [
-      "home/overview"
+      "home/overview",
+      "home/changelog"
         // Correct document ID
     ],
   }],

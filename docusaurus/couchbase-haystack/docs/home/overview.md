@@ -88,8 +88,8 @@ pip install couchbase-haystack
 
 You will need a running instance of Couchbase to use the components from this package. There are several options available:
 
-- [Docker](https://docs.couchbase.com/server/current/getting-started/do-a-quick-install.html)
 - [Couchbase Cloud](https://www.couchbase.com/products/capella) - a fully managed cloud service
+- [Docker](https://docs.couchbase.com/server/current/getting-started/do-a-quick-install.html)
 - [Couchbase Server](https://www.couchbase.com/downloads) - installable on various operating systems
 
 The simplest way to start the database locally is with a Docker container:
@@ -133,7 +133,7 @@ Assuming there is a list of documents available and a running Couchbase database
 ```python
 from haystack import Document
 
-documents = [Document(content="My name is Morgan and I live in Paris.")]
+documents = [Document(content="Alice has been living in New York City for the past 5 years.")]
 
 document_store.write_documents(documents)
 ```
@@ -166,8 +166,8 @@ It is important to understand how Haystack Documents are stored in Couchbase aft
 from random import random
 
 sample_embedding = [random() for _ in range(384)]  # using fake/random embedding for brevity here to simplify example
-document = Document(
-    content="My name is Morgan and I live in Paris.", embedding=sample_embedding, meta={"num_of_years": 3}
+Document(
+    content="Alice has been living in New York City for the past 5 years.", embedding=sample_embedding, meta={"num_of_years": 5}
 )
 document.to_dict()
 ```
@@ -177,15 +177,13 @@ The above code converts a Document to a dictionary and will render the following
 ```bash
 >>> output:
 {
-    "id": "11c255ad10bff4286781f596a5afd9ab093ed056d41bca4120
-
-c849058e52f24d",
-    "content": "My name is Morgan and I live in Paris.",
+    "id": "11c255ad10bff4286781f596a5afd9ab093ed056d41bca4120c849058e52f24d",
+    "content": "Alice has been living in New York City for the past 5 years.",
     "dataframe": None,
     "blob": None,
     "score": None,
     "embedding": [0.025010755222666936, 0.27502931836911926, 0.22321073814882275, ...], # vector of size 384
-    "num_of_years": 3,
+    "num_of_years": 5,
 }
 ```
 
@@ -195,9 +193,9 @@ The data from the dictionary will be used to create a document in Couchbase afte
 {
   "id": "11c255ad10bff4286781f596a5afd9ab093ed056d41bca4120c849058e52f24d",
   "embedding": [0.6394268274307251, 0.02501075528562069,0.27502933144569397, ...], // vector of size 384
-  "content": "My name is Morgan and I live in Paris.",
+  "content": "Alice has been living in New York City for the past 5 years.",
   "meta": {
-    "num_of_years": 3
+    "num_of_years": 5
   }
 }
 ```
@@ -271,8 +269,8 @@ document_store = CouchbaseDocumentStore(
 )
 
 documents = [
-    Document(content="My name is Morgan and I live in Paris.", meta={"num_of_years": 3}),
-    Document(content="I am Susan and I live in Berlin.", meta={"num_of_years": 7}),
+    Document(content="Alice has been living in New York City for the past 5 years.", meta={"num_of_years": 5, "city": "New York"}),
+    Document(content="John moved to Los Angeles 2 years ago and loves the sunny weather.", meta={"num_of_years": 2, "city": "Los Angeles"}),
 ]
 
 # Same model is used for both query and Document embeddings
@@ -305,7 +303,7 @@ documents: List[Document] = result["retriever"]["documents"]
 
 ```bash
 >>> output:
-[Document(id=3930326edabe6d172031557556999e2f8ba258ccde3c876f5e3ac7e66ed3d53a, content: 'My name is Morgan and I live in Paris.', meta: {'num_of_years': 3}, score: 0.8348373770713806)]
+[Document(id=3e35fa03aff6e3c45e6560f58adc4fde3c436c111a8809c30133b5cb492e8694, content: 'Alice has been living in New York City for the past 5 years.', meta: {'num_of_years': 5, 'city': 'New York'}, score: 0.36796408891677856, embedding: "embedding": vector of size 384), Document(id=ca4d7d7d7ff6c13b950a88580ab134b2dc15b48a47b8f571a46b354b5344e5fa, content: 'John moved to Los Angeles 2 years ago and loves the sunny weather.', meta: {'num_of_years': 2, 'city': 'Los Angeles'}, score: 0.3126790523529053, embedding: vector of size 384)]
 ```
 
 ### More Examples
@@ -313,7 +311,7 @@ documents: List[Document] = result["retriever"]["documents"]
 You can find more examples in the implementation [repository](https://github.com/Couchbase-Ecosystem/couchbase-haystack/blob/main/examples):
 
 - [indexing_pipeline.py](https://github.com/Couchbase-Ecosystem/couchbase-haystack/blob/main/examples/indexing_pipeline.py) - Indexing text files (documents) from a remote HTTP location.
-- [rag_pipeline.py](https://github.com/Couchbase-Ecosystem/couchbase-haystack/blob/main/examples/rag_pipeline.py) - Generative question answering RAG pipeline using `CouchbaseEmbeddingRetriever` to fetch documents from Couchbase document store and answer questions using [HuggingFaceTGIGenerator](https://docs.haystack.deepset.ai/v2.0/docs/huggingfacetgigenerator).
+- [rag_pipeline.py](https://github.com/Couchbase-Ecosystem/couchbase-haystack/blob/main/examples/rag_pipeline.py) - Generative question answering RAG pipeline using `CouchbaseEmbeddingRetriever` to fetch documents from Couchbase document store and answer questions using [HuggingFaceAPIGenerator](https://docs.haystack.deepset.ai/v2.0/docs/huggingfacetgigenerator).
 
 ## License
 
