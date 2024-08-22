@@ -111,7 +111,11 @@ class TestEmbeddingRetrieval:
     def test_embedding_retrieval_with_filter(self, document_store: CouchbaseDocumentStore):
         query_embedding = [0.9, 0.0, 0.0]
         results = document_store._embedding_retrieval(
-            query_embedding=query_embedding, top_k=1, limit=2,search_query=NumericRangeQuery(min=3,max=3,inclusive_min= True,inclusive_max=True,field= "meta.number"))
+            query_embedding=query_embedding,
+            top_k=1,
+            limit=2,
+            search_query=NumericRangeQuery(min=3, max=3, inclusive_min=True, inclusive_max=True, field="meta.number"),
+        )
         assert len(results) == 2
         assert results[0].content == "red color"
         assert results[1].content == "grey color"
