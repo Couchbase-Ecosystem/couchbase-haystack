@@ -72,6 +72,11 @@ const config: Config = {
           label: 'Code Reference',
         },
         {
+          href: 'https://docs.haystack.deepset.ai/docs/intro',
+          label: 'Haystack Documentation',
+          position: 'left',
+        },
+        {
           href: 'https://github.com/Couchbase-Ecosystem/couchbase-haystack',
           label: 'GitHub',
           position: 'right',
@@ -80,35 +85,35 @@ const config: Config = {
     },
     footer: {
       style: 'dark',
-      links: [
-        {
-          title: 'Community',
-          items: [
-            {
-              label: 'Stack Overflow',
-              href: 'https://stackoverflow.com/questions/tagged/docusaurus',
-            },
-            {
-              label: 'Discord',
-              href: 'https://discordapp.com/invite/docusaurus',
-            },
-            {
-              label: 'Twitter',
-              href: 'https://twitter.com/docusaurus',
-            },
-          ],
-        },
-        {
-          title: 'More',
-          items: [
-            {
-              label: 'GitHub',
-              href: 'https://github.com/facebook/docusaurus',
-            },
-          ],
-        },
-      ],
-      copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+      // links: [
+      //   {
+      //     title: 'Community',
+      //     items: [
+      //       {
+      //         label: 'Stack Overflow',
+      //         href: 'https://stackoverflow.com/questions/tagged/docusaurus',
+      //       },
+      //       {
+      //         label: 'Discord',
+      //         href: 'https://discordapp.com/invite/docusaurus',
+      //       },
+      //       {
+      //         label: 'Twitter',
+      //         href: 'https://twitter.com/docusaurus',
+      //       },
+      //     ],
+      //   },
+      //   {
+      //     title: 'More',
+      //     items: [
+      //       {
+      //         label: 'GitHub',
+      //         href: 'https://github.com/facebook/docusaurus',
+      //       },
+      //     ],
+      //   },
+      // ],
+      copyright: `Copyright © ${new Date().getFullYear()} Couchbase, Inc.`,
     },
     prism: {
       theme: prismThemes.github,
