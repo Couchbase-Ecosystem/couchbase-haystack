@@ -22,7 +22,7 @@ class CouchbaseEmbeddingRetriever:
     Usage example:
     ```python
     import numpy as np
-    from couchbase_haystack import CouchbaseDocumentStore, CouchbaseEmbeddingRetriever
+    from couchbase_haystack import CouchbaseDocumentStore, CouchbaseEmbeddingRetriever, CouchbasePasswordAuthenticator
 
     store = CouchbaseDocumentStore(cluster_connection_string=Secret.from_env_var("CB_CONNECTION_STRING"),
         authenticator=CouchbasePasswordAuthenticator(
