@@ -35,9 +35,10 @@ def __init__(
 ```python
 import numpy as np
 from couchbase_haystack import CouchbaseDocumentStore, CouchbaseEmbeddingRetriever
+from haystack.utils.auth import Secret
 
 store = CouchbaseDocumentStore(
-    cluster_connection_string="couchbases://localhost",
+    cluster_connection_string=Secret.from_env_var("CB_CONNECTION_STRING"),,
     cluster_options=CouchbaseClusterOptions(),
     authenticator=CouchbasePasswordAuthenticator(),
     bucket="haystack_test_bucket",

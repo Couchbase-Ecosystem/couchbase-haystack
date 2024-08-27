@@ -26,7 +26,7 @@ To create an instance of `CouchbaseDocumentStore`, you need to provide connectio
 from haystack.document_stores.couchbase import CouchbaseDocumentStore
 from haystack.utils.auth import Secret
 from couchbase.options import ClusterOptions
-from couchbase.auth import PasswordAuthenticator
+from couchbase.auth import CouchbasePasswordAuthenticator
 
 # Initialize CouchbaseDocumentStore
 document_store = CouchbaseDocumentStore(
