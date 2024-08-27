@@ -126,10 +126,10 @@ Once you have the package installed and the database running, you can start usin
 from couchbase_haystack import CouchbaseDocumentStore
 
 document_store = CouchbaseDocumentStore(
-    cluster_connection_string= Secret.from_token("localhost"),
+    cluster_connection_string=Secret.from_env_var("CB_CONNECTION_STRING"),
     authenticator=CouchbasePasswordAuthenticator(
-        username = Secret.from_token("username"),
-        password = Secret.from_token("password")
+      username=Secret.from_env_var("CB_USERNAME"),
+      password=Secret.from_env_var("CB_PASSWORD")
     ),
     bucket = "haystack_bucket_name",
     scope="haystack_scope_name",
@@ -228,10 +228,10 @@ from couchbase_haystack import CouchbaseDocumentStore, CouchbasePasswordAuthenti
 documents = [Document(content="This is document 1"), Document(content="This is document 2")]
 
 document_store = CouchbaseDocumentStore(
-    cluster_connection_string= Secret.from_token("localhost"),
+    cluster_connection_string=Secret.from_env_var("CB_CONNECTION_STRING"),
     authenticator=CouchbasePasswordAuthenticator(
-        username = Secret.from_token("username"),
-        password = Secret.from_token("password")
+      username=Secret.from_env_var("CB_USERNAME"),
+      password=Secret.from_env_var("CB_PASSWORD")
     ),
     bucket = "haystack_bucket_name",
     scope="haystack_scope_name",
@@ -268,10 +268,10 @@ from couchbase_haystack.document_store import CouchbaseDocumentStore, CouchbaseP
 from couchbase_haystack.component.retriever import CouchbaseEmbeddingRetriever
 
 document_store = CouchbaseDocumentStore(
-    cluster_connection_string= Secret.from_token("localhost"),
+    cluster_connection_string=Secret.from_env_var("CB_CONNECTION_STRING"),
     authenticator=CouchbasePasswordAuthenticator(
-        username = Secret.from_token("username"),
-        password = Secret.from_token("password")
+      username=Secret.from_env_var("CB_USERNAME"),
+      password=Secret.from_env_var("CB_PASSWORD")
     ),
     bucket = "haystack_bucket_name",
     scope="haystack_scope_name",

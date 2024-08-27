@@ -31,7 +31,10 @@ from couchbase.auth import PasswordAuthenticator
 # Initialize CouchbaseDocumentStore
 document_store = CouchbaseDocumentStore(
     cluster_connection_string=Secret.from_env_var("CB_CONNECTION_STRING"),
-    authenticator=PasswordAuthenticator(username="username", password="password"),
+    authenticator=CouchbasePasswordAuthenticator(
+            username=Secret.from_env_var("CB_USERNAME"),
+            password=Secret.from_env_var("CB_PASSWORD")
+    ),
     bucket="my_bucket",
     scope="my_scope",
     collection="my_collection",

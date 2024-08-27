@@ -24,9 +24,11 @@ class CouchbaseEmbeddingRetriever:
     import numpy as np
     from couchbase_haystack import CouchbaseDocumentStore, CouchbaseEmbeddingRetriever
 
-    store = CouchbaseDocumentStore(cluster_connection_string="couchbases://localhost",
-        cluster_options=CouchbaseClusterOptions(),
-        authenticator=CouchbasePasswordAuthenticator(),
+    store = CouchbaseDocumentStore(cluster_connection_string=Secret.from_env_var("CB_CONNECTION_STRING"),
+        authenticator=CouchbasePasswordAuthenticator(
+            username=Secret.from_env_var("CB_USERNAME"),
+            password=Secret.from_env_var("CB_PASSWORD")
+        ),
         bucket="haystack_test_bucket",
         scope="scope_name",
         collection="collection_name",
