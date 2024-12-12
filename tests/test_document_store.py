@@ -25,6 +25,7 @@ from sentence_transformers import SentenceTransformer
 from couchbase.management.logic.collections_logic import ScopeSpec, CollectionSpec
 from couchbase.result import SearchResult
 
+from .common.common import IS_GLOBAL_LEVEL_INDEX
 from .common import common
 
 
@@ -41,6 +42,7 @@ def test_init_is_lazy(_mock_cluster):
         scope="scope_name",
         collection="collection_name",
         vector_search_index="vector_index",
+        is_global_level_index=IS_GLOBAL_LEVEL_INDEX,
     )
     _mock_cluster.assert_not_called()
 
@@ -81,7 +83,10 @@ class TestDocumentStore(DocumentStoreBaseTests):
         collection = scope.collection(collection_name)
         index_definition = common.load_json_file("./tests/vector_index.json")
 
-        sim = scope.search_indexes()
+        if IS_GLOBAL_LEVEL_INDEX:
+            sim = cluster.search_indexes()
+        else:
+            sim = scope.search_indexes()
         try:
             sim.get_index(index_name=index_definition["name"])
         except SearchIndexNotFoundException as e:
@@ -104,9 +109,10 @@ class TestDocumentStore(DocumentStoreBaseTests):
             scope=scope_name,
             collection=collection_name,
             vector_search_index=index_definition["name"],
+            is_global_level_index=IS_GLOBAL_LEVEL_INDEX,
         )
         yield store
-        result = scope.search_indexes().drop_index(index_definition["name"])
+        result = sim.drop_index(index_definition["name"])
         # print("dropped index successfully",result)
         result = cluster.query(f"drop collection {bucket_name}.{scope_name}.{collection_name}").execute()
         # print("dropped collection successfully",result)
@@ -265,6 +271,7 @@ class TestDocumentStoreUnit:
                 scope="haystack_test_scope",
                 collection="haystack_collection",
                 vector_search_index="vector_search",
+                is_global_level_index=IS_GLOBAL_LEVEL_INDEX,
             )
             client = DocumentStore(document_store=store, cluster=cluster, scope=scope, collection=collection)
             yield client
@@ -292,6 +299,7 @@ class TestDocumentStoreUnit:
                 'scope': 'haystack_test_scope',
                 'collection': 'haystack_collection',
                 'vector_search_index': 'vector_search',
+                'is_global_level_index': IS_GLOBAL_LEVEL_INDEX,
             },
         }
 
@@ -317,6 +325,7 @@ class TestDocumentStoreUnit:
                     'scope': 'haystack_test_scope',
                     'collection': 'haystack_collection',
                     'vector_search_index': 'vector_search',
+                    'is_global_level_index': IS_GLOBAL_LEVEL_INDEX,
                 },
             }
         )
@@ -326,18 +335,24 @@ class TestDocumentStoreUnit:
         assert docstore.collection_name == "haystack_collection"
         assert docstore.vector_search_index == "vector_search"
         assert docstore.cluster_options["profile"] == KnownConfigProfiles.WanDevelopment
+        assert docstore.is_global_level_index == IS_GLOBAL_LEVEL_INDEX
 
     def test_init_default(self, document_store: DocumentStore, monkeypatch):
         monkeypatch.setenv("CONNECTION_STRING", "value_one")
         monkeypatch.setenv("USER_NAME", "value_one")
         monkeypatch.setenv("PASSWORD", "value_one")
-        scope = document_store.scope
-
-        scope.search.return_value = SearchResult(search_request=[Row(id="1a")])
+        cluster = document_store.document_store.connection
+        if IS_GLOBAL_LEVEL_INDEX:
+            cluster.search.return_value = SearchResult(search_request=[Row(id="1a")])
+        else:
+            cluster.bucket.return_value.scope.return_value.search.return_value = SearchResult(search_request=[Row(id="1a")])
         document_store.collection.get_multi.return_value = MultiResult(
             all_ok=True, results={"1a": GetResult(success=True, value={"content": "text"})}
         )
         doc = document_store.document_store.filter_documents({})
-
-        document_store.cluster.bucket.return_value.scope.assert_called_once_with("haystack_test_scope")
+        if IS_GLOBAL_LEVEL_INDEX:
+            document_store.cluster.search.assert_called_once()
+        else:   
+            document_store.cluster.bucket.return_value.scope.assert_called_once_with("haystack_test_scope")
+            document_store.cluster.bucket.return_value.scope.return_value.search.assert_called_once()
         assert doc == [Document(id="1a", content="text", score=1)]

@@ -1,5 +1,17 @@
 import json
+import os
 from couchbase.management.collections import CollectionManager
+
+
+def get_is_global_level_index():
+    is_global = os.getenv("IS_GLOBAL_LEVEL_INDEX")
+    if is_global is None:
+        msg = "Environment variable IS_GLOBAL_LEVEL_INDEX must be set to either 'true' or 'false'"
+        raise ValueError(msg)
+    return is_global.lower() == "true"
+
+
+IS_GLOBAL_LEVEL_INDEX = get_is_global_level_index()
 
 
 # Function to create scope if it doesn't exist

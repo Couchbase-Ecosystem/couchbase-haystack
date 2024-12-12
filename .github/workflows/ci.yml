@@ -57,6 +57,13 @@ jobs:
       - name: Install Hatch
         run: pip install --upgrade hatch
 
-      - name: Run tests
+      - name: Run tests with IS_GLOBAL_LEVEL_INDEX="true" 
         run: |
           hatch run test -m unit -vv
+        env:
+          IS_GLOBAL_LEVEL_INDEX: true
+      - name: Run tests with IS_GLOBAL_LEVEL_INDEX="false" 
+        run: |
+          hatch run test -m unit -vv
+        env:
+          IS_GLOBAL_LEVEL_INDEX: false

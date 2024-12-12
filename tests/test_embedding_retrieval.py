@@ -17,6 +17,7 @@ from couchbase.exceptions import SearchIndexNotFoundException
 from couchbase import search
 from couchbase_haystack.document_stores.filters import NumericRangeQuery
 from datetime import timedelta
+from .common.common import IS_GLOBAL_LEVEL_INDEX
 from .common import common
 
 
@@ -57,11 +58,15 @@ class TestEmbeddingRetrieval:
         index_definition["params"]["mapping"]["types"]["haystack_test_scope.haystack_collection"]["properties"]["embedding"][
             "fields"
         ][0]["dims"] = 3
-        sim = scope.search_indexes()
+
+        if IS_GLOBAL_LEVEL_INDEX:
+            sim = cluster.search_indexes()
+        else:
+            sim = scope.search_indexes()
+
         try:
             sim.get_index(index_name=index_definition["name"])
         except SearchIndexNotFoundException as e:
-            # print("all clear ",e)
             search_index = SearchIndex(
                 name=index_definition["name"],
                 source_name=index_definition["sourceName"],
@@ -81,6 +86,7 @@ class TestEmbeddingRetrieval:
             scope=scope_name,
             collection=collection_name,
             vector_search_index=index_definition["name"],
+            is_global_level_index=IS_GLOBAL_LEVEL_INDEX,
         )
 
         store.write_documents(
@@ -93,11 +99,9 @@ class TestEmbeddingRetrieval:
         )
 
         yield store
-        result = scope.search_indexes().drop_index(index_definition["name"])
-        # print("dropped index successfully",result)
+        result = sim.drop_index(index_definition["name"])
         result = cluster.query
         cluster.query(f"drop collection {bucket_name}.{scope_name}.{collection_name}").execute()
-        # print("dropped collection successfully",result)
         cluster.close()
 
     def test_embedding_retrieval(self, document_store: CouchbaseDocumentStore):

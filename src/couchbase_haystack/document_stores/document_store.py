@@ -47,11 +47,21 @@ class CouchbaseDocumentStore:
         scope: str,
         collection: str,
         vector_search_index: str,
+        is_global_level_index: bool = False,
         **kwargs: Dict[str, Any],
     ):
         """
         Creates a new CouchbaseDocumentStore instance.
 
+        :param cluster_connection_string: Connection string for the Couchbase cluster
+        :param authenticator: Authentication method (password or certificate based)
+        :param cluster_options: Options for configuring the cluster connection
+        :param bucket: Name of the Couchbase bucket to use
+        :param scope: Name of the scope within the bucket
+        :param collection: Name of the collection within the scope
+        :param vector_search_index: Name of the vector search index to use
+        :param is_global_level_index: Whether the search index is at global level (True) or scope level (False)
+        :param kwargs: Additional keyword arguments passed to the Cluster constructor
 
         :raises ValueError: If the collection name contains invalid characters.
         """
@@ -66,10 +76,13 @@ class CouchbaseDocumentStore:
         self.scope_name = scope
         self.collection_name = collection
         self.vector_search_index = vector_search_index
+        self.is_global_level_index = is_global_level_index
         self._connection: Optional[Cluster] = None
         self._scope: Optional[Scope] = None
         self._collection: Optional[Collection] = None
         self._kwargs = kwargs
+
+        print("is_global_level_index", self.is_global_level_index)
 
     @property
     def connection(self) -> Cluster:
@@ -129,6 +142,7 @@ class CouchbaseDocumentStore:
             scope=self.scope_name,
             collection=self.collection_name,
             vector_search_index=self.vector_search_index,
+            is_global_level_index=self.is_global_level_index,
             **self._kwargs,
         )
 
@@ -160,7 +174,10 @@ class CouchbaseDocumentStore:
 
         :returns: The number of documents in the document store.
         """
-        return self.scope.search_indexes().get_indexed_documents_count(self.vector_search_index)
+        if not self.is_global_level_index:
+            return self.scope.search_indexes().get_indexed_documents_count(self.vector_search_index)
+        else:
+            return self.connection.search_indexes().get_indexed_documents_count(self.vector_search_index)
 
     def filter_documents(self, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
         """
@@ -181,7 +198,12 @@ class CouchbaseDocumentStore:
         logger.debug(search_filters.encodable)
         request = search.SearchRequest(search_filters)
         options = SearchOptions(fields=["*"], limit=10000)
-        response = self.scope.search(self.vector_search_index, request, options)
+
+        if not self.is_global_level_index:
+            response = self.scope.search(self.vector_search_index, request, options)
+        else:
+            response = self.connection.search(self.vector_search_index, request, options)
+
         return self.__get_doc_from_kv(response)
 
     def write_documents(self, documents: List[Document], policy: DuplicatePolicy = DuplicatePolicy.NONE) -> int:
@@ -291,7 +313,12 @@ class CouchbaseDocumentStore:
         if limit is None:
             limit = top_k
         options = SearchOptions(fields=["*"], limit=limit)
-        response = self.scope.search(self.vector_search_index, request, options)
+        
+        if not self.is_global_level_index:
+            response = self.scope.search(self.vector_search_index, request, options)
+        else:
+            response = self.connection.search(self.vector_search_index, request, options)
+        
         return self.__get_doc_from_kv(response)
 
     def __get_doc_from_kv(self, response: SearchResult) -> List[Document]:
