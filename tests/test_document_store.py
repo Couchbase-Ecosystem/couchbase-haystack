@@ -352,7 +352,7 @@ class TestDocumentStoreUnit:
         doc = document_store.document_store.filter_documents({})
         if IS_GLOBAL_LEVEL_INDEX:
             document_store.cluster.search.assert_called_once()
-        else:   
+        else:
             document_store.cluster.bucket.return_value.scope.assert_called_once_with("haystack_test_scope")
             document_store.cluster.bucket.return_value.scope.return_value.search.assert_called_once()
         assert doc == [Document(id="1a", content="text", score=1)]

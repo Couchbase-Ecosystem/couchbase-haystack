@@ -82,8 +82,6 @@ class CouchbaseDocumentStore:
         self._collection: Optional[Collection] = None
         self._kwargs = kwargs
 
-        print("is_global_level_index", self.is_global_level_index)
-
     @property
     def connection(self) -> Cluster:
         if self._connection is None:
@@ -313,12 +311,12 @@ class CouchbaseDocumentStore:
         if limit is None:
             limit = top_k
         options = SearchOptions(fields=["*"], limit=limit)
-        
+
         if not self.is_global_level_index:
             response = self.scope.search(self.vector_search_index, request, options)
         else:
             response = self.connection.search(self.vector_search_index, request, options)
-        
+
         return self.__get_doc_from_kv(response)
 
     def __get_doc_from_kv(self, response: SearchResult) -> List[Document]:
