@@ -6,9 +6,9 @@ from .cluster_options import CouchbaseClusterOptions
 from .document_store import CouchbaseDocumentStore
 
 __all__ = [
-    "CouchbaseDocumentStore",
     "CouchbaseAuthenticator",
-    "CouchbasePasswordAuthenticator",
     "CouchbaseCertificateAuthenticator",
     "CouchbaseClusterOptions",
+    "CouchbaseDocumentStore",
+    "CouchbasePasswordAuthenticator",
 ]

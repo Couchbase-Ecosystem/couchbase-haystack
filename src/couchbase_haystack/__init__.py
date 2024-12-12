@@ -8,10 +8,10 @@ from couchbase_haystack.document_stores import (
 )
 
 __all__ = [
-    "CouchbaseEmbeddingRetriever",
-    "CouchbaseDocumentStore",
     "CouchbaseAuthenticator",
-    "CouchbasePasswordAuthenticator",
     "CouchbaseCertificateAuthenticator",
     "CouchbaseClusterOptions",
+    "CouchbaseDocumentStore",
+    "CouchbaseEmbeddingRetriever",
+    "CouchbasePasswordAuthenticator",
 ]
