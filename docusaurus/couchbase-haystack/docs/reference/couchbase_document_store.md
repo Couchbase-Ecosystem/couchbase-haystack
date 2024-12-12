@@ -38,7 +38,8 @@ document_store = CouchbaseDocumentStore(
     bucket="my_bucket",
     scope="my_scope",
     collection="my_collection",
-    vector_search_index="my_vector_index"
+    vector_search_index="my_vector_index",
+    is_global_level_index=False  # Set to True if using a global-level search index
 )
 ```
 
@@ -57,6 +58,7 @@ def __init__(
     scope: str,
     collection: str,
     vector_search_index: str,
+    is_global_level_index: bool = False,
     **kwargs: Dict[str, Any],
 ):
 ```
@@ -69,6 +71,7 @@ def __init__(
 - `scope` (str): The name of the scope within the bucket.
 - `collection` (str): The name of the collection within the scope.
 - `vector_search_index` (str): The index name for vector search.
+- `is_global_level_index` (bool): Whether the search index is at global level (True) or scope level (False). Defaults to False.
 
 **Raises:**
 - `ValueError`: If the collection name contains invalid characters.
