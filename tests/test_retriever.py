@@ -14,6 +14,7 @@ from haystack.components.embedders import SentenceTransformersTextEmbedder
 from haystack.components.generators import HuggingFaceAPIGenerator
 import couchbase.search as search
 from couchbase.search import SearchQuery
+from tests.common.common import IS_GLOBAL_LEVEL_INDEX
 
 
 @pytest.mark.unit
@@ -29,6 +30,7 @@ class TestRetrieverUnit:
             scope="haystack_test_scope",
             collection="haystack_collection",
             vector_search_index="vector_search",
+            is_global_level_index=IS_GLOBAL_LEVEL_INDEX,
         )
         doc_store.to_dict.return_value = ac_doc_store.to_dict()
         retriever = CouchbaseEmbeddingRetriever(document_store=doc_store, top_k=15)
@@ -58,6 +60,7 @@ class TestRetrieverUnit:
                         "scope": "haystack_test_scope",
                         "collection": "haystack_collection",
                         "vector_search_index": "vector_search",
+                        'is_global_level_index': IS_GLOBAL_LEVEL_INDEX,
                     },
                 },
             },
