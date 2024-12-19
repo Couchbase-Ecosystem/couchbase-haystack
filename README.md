@@ -44,7 +44,10 @@ In addition to the `CouchbaseDocumentStore` the library includes the following h
 
 The `couchbase-haystack` library uses [Python Driver](https://docs.couchbase.com/python-sdk/current/hello-world/start-using-sdk.html).
 
-`CouchbaseDocumentStore` will store Documents as JSON documents in Couchbase. Embeddings are stored as part of the document, with indexing and querying of vector embeddings managed by Couchbase's dedicated [Vector Search Index](https://docs.couchbase.com/server/current/vector-search/vector-search.html).
+`CouchbaseDocumentStore` will store Documents as JSON documents in Couchbase. Embeddings are stored as part of the document, with indexing and querying of vector embeddings managed by Couchbase's dedicated [Vector Search Index](https://docs.couchbase.com/server/current/vector-search/vector-search.html). The document store supports both scope-level and global-level vector search indexes:
+
+- Scope-level indexes (default): The vector search index is created at the scope level and only searches documents within that scope
+- Global-level indexes: The vector search index is created at the bucket level and can search across all scopes and collections in the bucket
 
 ```text
                                    +-----------------------------+
@@ -135,7 +138,8 @@ document_store = CouchbaseDocumentStore(
     bucket = "haystack_bucket_name",
     scope="haystack_scope_name",
     collection="haystack_collection_name",
-    vector_search_index = "vector_search_index"
+    vector_search_index = "vector_search_index",
+    is_global_level_index=False  # Enables scope-level vector search index by default
 )
 ```
 

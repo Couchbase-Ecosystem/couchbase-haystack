@@ -35,6 +35,15 @@ class CouchbaseDocumentStore:
     """
     CouchbaseDocumentStore is a DocumentStore implementation that uses
     [Couchbase capella](https://cloud.couchbase.com) service that is easy to deploy, operate, and scale.
+
+    The document store supports both scope-level and global-level vector search indexes:
+    
+    - Scope-level indexes (default): The vector search index is created at the scope level and only searches 
+      documents within that scope
+    - Global-level indexes: The vector search index is created at the bucket level and can search across all
+      scopes and collections in the bucket
+
+    The index level is specified using the `is_global_level_index` parameter during initialization.
     """
 
     def __init__(
@@ -60,7 +69,8 @@ class CouchbaseDocumentStore:
         :param scope: Name of the scope within the bucket
         :param collection: Name of the collection within the scope
         :param vector_search_index: Name of the vector search index to use
-        :param is_global_level_index: Whether the search index is at global level (True) or scope level (False)
+        :param is_global_level_index: If True, uses a global (bucket-level) vector search index that can search across all
+            scopes and collections. If False (default), uses a scope-level index that only searches within the specified scope.
         :param kwargs: Additional keyword arguments passed to the Cluster constructor
 
         :raises ValueError: If the collection name contains invalid characters.
@@ -166,16 +176,24 @@ class CouchbaseDocumentStore:
         deserialize_secrets_inplace(data["init_parameters"], keys=["cluster_connection_string"])
         return default_from_dict(cls, data)
 
+    def _get_search_interface(self):
+        """
+        Returns the appropriate search interface based on the index level configuration.
+        
+        :returns: Either scope.search_indexes() for scope-level or connection.search_indexes() for global-level
+        """
+        if not self.is_global_level_index:
+            return self.scope.search_indexes()
+        return self.connection.search_indexes()
+
     def count_documents(self) -> int:
         """
         Returns how many documents are present in the document store.
 
         :returns: The number of documents in the document store.
         """
-        if not self.is_global_level_index:
-            return self.scope.search_indexes().get_indexed_documents_count(self.vector_search_index)
-        else:
-            return self.connection.search_indexes().get_indexed_documents_count(self.vector_search_index)
+        search_interface = self._get_search_interface()
+        return search_interface.get_indexed_documents_count(self.vector_search_index)
 
     def filter_documents(self, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
         """
@@ -188,7 +206,6 @@ class CouchbaseDocumentStore:
         :returns: A list of Documents that match the given filters.
         """
         search_filters: SearchQuery
-        # sort:str
         if filters:
             search_filters = _normalize_filters(filters)
         else:
@@ -289,13 +306,13 @@ class CouchbaseDocumentStore:
         Find the documents that are most similar to the provided `query_embedding` by using a vector similarity metric.
 
         :param query_embedding: Embedding of the query
-        :param top_k: How many documents to be returned by the vector query.
-        :param search: Search filters param which is parsed to the Couchbase search query. The vector query and
+        :param top_k: How many documents to be returned by the vector query
+        :param search_query: Search filters param which is parsed to the Couchbase search query. The vector query and
         search query are ORed operation.
-        :param limit: Maximum number of Documents to be return by the couchbase fts search request. Default value is top_k.
+        :param limit: Maximum number of Documents to return. Defaults to top_k if not specified.
         :returns: A list of Documents that are most similar to the given `query_embedding`
-        :raises ValueError: If `query_embedding` is empty.
-        :raises Document StoreError: If the retrieval of documents from Couchbase  fails.
+        :raises ValueError: If `query_embedding` is empty
+        :raises DocumentStoreError: If the retrieval of documents from Couchbase fails
         """
         if not query_embedding:
             msg = "Query embedding must not be empty"
