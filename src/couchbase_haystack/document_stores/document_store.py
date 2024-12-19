@@ -37,8 +37,8 @@ class CouchbaseDocumentStore:
     [Couchbase capella](https://cloud.couchbase.com) service that is easy to deploy, operate, and scale.
 
     The document store supports both scope-level and global-level vector search indexes:
-    
-    - Scope-level indexes (default): The vector search index is created at the scope level and only searches 
+
+    - Scope-level indexes (default): The vector search index is created at the scope level and only searches
       documents within that scope
     - Global-level indexes: The vector search index is created at the bucket level and can search across all
       scopes and collections in the bucket
@@ -179,7 +179,7 @@ class CouchbaseDocumentStore:
     def _get_search_interface(self):
         """
         Returns the appropriate search interface based on the index level configuration.
-        
+
         :returns: Either scope.search_indexes() for scope-level or connection.search_indexes() for global-level
         """
         if not self.is_global_level_index:
