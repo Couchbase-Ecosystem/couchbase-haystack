@@ -24,7 +24,7 @@ class CouchbaseSearchEmbeddingRetriever:
     import numpy as np
     from couchbase_haystack import CouchbaseSearchDocumentStore, CouchbaseSearchEmbeddingRetriever, CouchbasePasswordAuthenticator
     from haystack.utils import Secret
-    
+
     store = CouchbaseSearchDocumentStore(cluster_connection_string=Secret.from_env_var("CB_CONNECTION_STRING"),
         authenticator=CouchbasePasswordAuthenticator(
             username=Secret.from_env_var("CB_USERNAME"),
@@ -93,7 +93,9 @@ class CouchbaseSearchEmbeddingRetriever:
         :returns:
               Deserialized component.
         """
-        data["init_parameters"]["document_store"] = CouchbaseSearchDocumentStore.from_dict(data["init_parameters"]["document_store"])
+        data["init_parameters"]["document_store"] = CouchbaseSearchDocumentStore.from_dict(
+            data["init_parameters"]["document_store"]
+        )
         return default_from_dict(cls, data)
 
     @component.output_types(documents=List[Document])

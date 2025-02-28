@@ -98,6 +98,21 @@ class TestDocumentStore(DocumentStoreBaseTests):
                 plan_params=index_definition["planParams"],
             )
             sim.upsert_index(search_index)
+        # Wait for the index to be ready
+        max_retries = 10
+        retry_interval = 1  # seconds
+        for attempt in range(max_retries):
+            try:
+                # Check if index exists and is ready by getting document count
+                count = sim.get_indexed_documents_count(index_definition["name"])
+                # If we can get the count, the index is ready
+                break
+            except Exception as e:
+                pass
+            
+            time.sleep(retry_interval)
+            if attempt == max_retries - 1:
+                pytest.skip(f"Index {index_definition['name']} not ready after {max_retries} attempts")
 
         store = CouchbaseSearchDocumentStore(
             cluster_connection_string=Secret.from_env_var("CONNECTION_STRING"),
@@ -306,7 +321,7 @@ class TestDocumentStoreUnit:
     def test_from_dict(self):
         docstore = CouchbaseSearchDocumentStore.from_dict(
             {
-                'type': 'couchbase_haystack.document_stores.document_store.CouchbaseSearch DocumentStore',
+                'type': 'couchbase_haystack.document_stores.document_store.CouchbaseSearchDocumentStore',
                 'init_parameters': {
                     'cluster_connection_string': {'type': 'env_var', 'env_vars': ['CONNECTION_STRING'], 'strict': True},
                     'authenticator': {

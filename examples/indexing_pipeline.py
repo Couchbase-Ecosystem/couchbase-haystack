@@ -12,7 +12,7 @@ from haystack.components.preprocessors import DocumentCleaner, DocumentSplitter
 from haystack.components.writers import DocumentWriter
 from haystack.utils import Secret
 
-from couchbase_haystack import CouchbaseSearchDocumentStore, CouchbasePasswordAuthenticator
+from couchbase_haystack import CouchbasePasswordAuthenticator, CouchbaseSearchDocumentStore
 
 logger = logging.getLogger(__name__)
 

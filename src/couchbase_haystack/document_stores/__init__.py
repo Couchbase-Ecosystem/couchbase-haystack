@@ -9,6 +9,6 @@ __all__ = [
     "CouchbaseAuthenticator",
     "CouchbaseCertificateAuthenticator",
     "CouchbaseClusterOptions",
-    "CouchbaseSearchDocumentStore",
     "CouchbasePasswordAuthenticator",
+    "CouchbaseSearchDocumentStore",
 ]
