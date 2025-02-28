@@ -2,9 +2,11 @@ import os
 
 from unittest.mock import MagicMock, Mock, patch
 import pytest
-from couchbase_haystack import CouchbaseDocumentStore
-from couchbase_haystack import CouchbaseEmbeddingRetriever, CouchbaseDocumentStore
-from couchbase_haystack import CouchbasePasswordAuthenticator
+from couchbase_haystack import (
+    CouchbaseSearchDocumentStore,
+    CouchbaseSearchEmbeddingRetriever,
+    CouchbasePasswordAuthenticator,
+)
 
 from haystack.dataclasses import Document
 from haystack import GeneratedAnswer, Pipeline
@@ -21,10 +23,10 @@ from tests.common.common import IS_GLOBAL_LEVEL_INDEX
 class TestRetrieverUnit:
     @pytest.fixture
     def doc_store(self):
-        yield MagicMock(spec=CouchbaseDocumentStore)
+        yield MagicMock(spec=CouchbaseSearchDocumentStore)
 
     def test_to_dict(self, doc_store: MagicMock):
-        ac_doc_store = CouchbaseDocumentStore(
+        ac_doc_store = CouchbaseSearchDocumentStore(
             authenticator=CouchbasePasswordAuthenticator(),
             bucket="haystack_integration_test",
             scope="haystack_test_scope",
@@ -33,15 +35,15 @@ class TestRetrieverUnit:
             is_global_level_index=IS_GLOBAL_LEVEL_INDEX,
         )
         doc_store.to_dict.return_value = ac_doc_store.to_dict()
-        retriever = CouchbaseEmbeddingRetriever(document_store=doc_store, top_k=15)
+        retriever = CouchbaseSearchEmbeddingRetriever(document_store=doc_store, top_k=15)
         serialized_retriever = retriever.to_dict()
         # assert serialized_store["init_parameters"].pop("collection_name").startswith("test_collection_")
         assert serialized_retriever == {
-            "type": "couchbase_haystack.components.retrievers.embedding_retriever.CouchbaseEmbeddingRetriever",
+            "type": "couchbase_haystack.components.retrievers.embedding_retriever.CouchbaseSearchEmbeddingRetriever",
             "init_parameters": {
                 "top_k": 15,
                 "document_store": {
-                    "type": "couchbase_haystack.document_stores.document_store.CouchbaseDocumentStore",
+                    "type": "couchbase_haystack.document_stores.document_store.CouchbaseSearchDocumentStore",
                     "init_parameters": {
                         "cluster_connection_string": {"type": "env_var", "env_vars": ["CB_CONNECTION_STRING"], "strict": True},
                         "authenticator": {
@@ -67,13 +69,13 @@ class TestRetrieverUnit:
         }
 
     def test_from_dict(self):
-        retriever = CouchbaseEmbeddingRetriever.from_dict(
+        retriever = CouchbaseSearchEmbeddingRetriever.from_dict(
             {
-                "type": "couchbase_haystack.components.retrievers.embedding_retriever.CouchbaseEmbeddingRetriever",
+                "type": "couchbase_haystack.components.retrievers.embedding_retriever.CouchbaseSearchEmbeddingRetriever",
                 "init_parameters": {
                     "top_k": 15,
                     "document_store": {
-                        "type": "couchbase_haystack.document_stores.document_store.CouchbaseDocumentStore",
+                        "type": "couchbase_haystack.document_stores.document_store.CouchbaseSearchDocumentStore",
                         "init_parameters": {
                             "cluster_connection_string": {
                                 "type": "env_var",
@@ -110,7 +112,7 @@ class TestRetrieverUnit:
 
     def test_run(self, doc_store: MagicMock):
         doc_store._embedding_retrieval.return_value = [Document(content="Who created the Dothraki vocabulary?")]
-        retriever = CouchbaseEmbeddingRetriever(document_store=doc_store, top_k=15)
+        retriever = CouchbaseSearchEmbeddingRetriever(document_store=doc_store, top_k=15)
         rag_pipeline = Pipeline()
         rag_pipeline.add_component(
             "query_embedder",

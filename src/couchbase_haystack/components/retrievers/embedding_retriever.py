@@ -7,24 +7,25 @@ from couchbase.search import SearchQuery
 from haystack import component, default_from_dict, default_to_dict
 from haystack.dataclasses import Document
 
-from couchbase_haystack.document_stores import CouchbaseDocumentStore
+from couchbase_haystack.document_stores import CouchbaseSearchDocumentStore
 
 
 @component
-class CouchbaseEmbeddingRetriever:
+class CouchbaseSearchEmbeddingRetriever:
     """
-    Retrieves documents from the CouchbaseDocumentStore by embedding similarity.
+    Retrieves documents from the CouchbaseSearchDocumentStore by embedding similarity.
 
-    The similarity is dependent on the vector_search_index used in the CouchbaseDocumentStore and the chosen metric
-    during the creation of the index (i.e. dot product, or l2 norm). See CouchbaseDocumentStore for more
+    The similarity is dependent on the vector_search_index used in the CouchbaseSearchDocumentStore and the chosen metric
+    during the creation of the index (i.e. dot product, or l2 norm). See CouchbaseSearchDocumentStore for more
     information.
 
     Usage example:
     ```python
     import numpy as np
-    from couchbase_haystack import CouchbaseDocumentStore, CouchbaseEmbeddingRetriever, CouchbasePasswordAuthenticator
-
-    store = CouchbaseDocumentStore(cluster_connection_string=Secret.from_env_var("CB_CONNECTION_STRING"),
+    from couchbase_haystack import CouchbaseSearchDocumentStore, CouchbaseSearchEmbeddingRetriever, CouchbasePasswordAuthenticator
+    from haystack.utils import Secret
+    
+    store = CouchbaseSearchDocumentStore(cluster_connection_string=Secret.from_env_var("CB_CONNECTION_STRING"),
         authenticator=CouchbasePasswordAuthenticator(
             username=Secret.from_env_var("CB_USERNAME"),
             password=Secret.from_env_var("CB_PASSWORD")
@@ -33,37 +34,37 @@ class CouchbaseEmbeddingRetriever:
         scope="scope_name",
         collection="collection_name",
         vector_search_index="vector_index")
-    retriever = CouchbaseEmbeddingRetriever(document_store=store)
+    retriever = CouchbaseSearchEmbeddingRetriever(document_store=store)
 
     results = retriever.run(query_embedding=np.random.random(768).tolist())
     print(results["documents"])
     ```
 
     The example above retrieves the 10 most similar documents to a random query embedding from the
-    CouchbaseDocumentStore. Note that dimensions of the query_embedding must match the dimensions of the embeddings
-    stored in the CouchbaseDocumentStore.
+    CouchbaseSearchDocumentStore. Note that dimensions of the query_embedding must match the dimensions of the embeddings
+    stored in the CouchbaseSearchDocumentStore.
     """
 
     def __init__(
         self,
         *,
-        document_store: CouchbaseDocumentStore,
+        document_store: CouchbaseSearchDocumentStore,
         top_k: int = 10,
     ):
         """
-        Create the CouchbaseDocumentStore component.
+        Create the CouchbaseSearchDocumentStore component.
 
         Note: Currently, the filter option is not supported with embedding queries.
         Instead, you can provide a couchbase search query while running the embedding query.
         The embedding query and search query are combined using an OR operation.
 
-        :param document_store: An instance of CouchbaseDocumentStore.
+        :param document_store: An instance of CouchbaseSearchDocumentStore.
         :param top_k: Maximum number of Documents to return.
 
-        :raises ValueError: If `document_store` is not an instance of `CouchbaseDocumentStore`.
+        :raises ValueError: If `document_store` is not an instance of `CouchbaseSearchDocumentStore`.
         """
-        if not isinstance(document_store, CouchbaseDocumentStore):
-            msg = "document_store must be an instance of CouchbaseDocumentStore"
+        if not isinstance(document_store, CouchbaseSearchDocumentStore):
+            msg = "document_store must be an instance of CouchbaseSearchDocumentStore"
             raise ValueError(msg)
 
         self.document_store = document_store
@@ -83,7 +84,7 @@ class CouchbaseEmbeddingRetriever:
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "CouchbaseEmbeddingRetriever":
+    def from_dict(cls, data: Dict[str, Any]) -> "CouchbaseSearchDocumentStore":
         """
         Deserializes the component from a dictionary.
 
@@ -92,7 +93,7 @@ class CouchbaseEmbeddingRetriever:
         :returns:
               Deserialized component.
         """
-        data["init_parameters"]["document_store"] = CouchbaseDocumentStore.from_dict(data["init_parameters"]["document_store"])
+        data["init_parameters"]["document_store"] = CouchbaseSearchDocumentStore.from_dict(data["init_parameters"]["document_store"])
         return default_from_dict(cls, data)
 
     @component.output_types(documents=List[Document])
@@ -104,7 +105,7 @@ class CouchbaseEmbeddingRetriever:
         limit: Optional[int] = None,
     ) -> Dict[str, List[Document]]:
         """
-        Retrieve documents from the CouchbaseDocumentStore, based on the provided embedding similarity.
+        Retrieve documents from the CouchbaseSearchDocumentStore, based on the provided embedding similarity.
 
         :param query_embedding: Embedding of the query.
         :param filters: Filters applied to the retrieved Documents. The way runtime filters are applied depends on

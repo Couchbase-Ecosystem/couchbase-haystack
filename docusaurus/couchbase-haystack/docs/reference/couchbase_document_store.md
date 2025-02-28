@@ -1,16 +1,16 @@
 ---
-id: couchbase_document_store
-title: CouchbaseDocumentStore
+id: couchbase_search_document_store
+title: CouchbaseSearchDocumentStore
 ---
 
-# CouchbaseDocumentStore
+# CouchbaseSearchDocumentStore
 
-`CouchbaseDocumentStore` is a DocumentStore implementation designed to interact with the [Couchbase Capella](https://cloud.couchbase.com) service or [Couchbase server](https://www.couchbase.com/products/server). This implementation allows you to efficiently store and retrieve documents, taking advantage of Couchbase’s scalable and high-performance capabilities. Document properties are stored within Couchbase collections, and embeddings for dense retrievals can be stored as part of the document attributes. This implementation is based on the [Couchbase Python SDK](https://docs.couchbase.com/python-sdk/current/hello-world/start-using-sdk.html), ensuring smooth integration and operation.
+`CouchbaseSearchDocumentStore` is a DocumentStore implementation designed to interact with the [Couchbase Capella](https://cloud.couchbase.com) service or [Couchbase server](https://www.couchbase.com/products/server). This implementation allows you to efficiently store and retrieve documents, taking advantage of Couchbase’s scalable and high-performance capabilities. Document properties are stored within Couchbase collections, and embeddings for dense retrievals can be stored as part of the document attributes. This implementation is based on the [Couchbase Python SDK](https://docs.couchbase.com/python-sdk/current/hello-world/start-using-sdk.html), ensuring smooth integration and operation.
 
 
 ## Installation
 
-To use the `CouchbaseDocumentStore`, make sure you have the necessary dependencies installed:
+To use the `CouchbaseSearchDocumentStore`, make sure you have the necessary dependencies installed:
 
 ```bash
 pip install couchbase-haystack
@@ -20,16 +20,16 @@ pip install couchbase-haystack
 
 ### Initialization
 
-To create an instance of `CouchbaseDocumentStore`, you need to provide connection details, authentication credentials, and specify the bucket, scope, collection, and vector search index.
+To create an instance of `CouchbaseSearchDocumentStore`, you need to provide connection details, authentication credentials, and specify the bucket, scope, collection, and vector search index.
 
 ```python
-from haystack.document_stores.couchbase import CouchbaseDocumentStore
+from haystack.document_stores.couchbase import CouchbaseSearchDocumentStore
 from haystack.utils.auth import Secret
 from couchbase.options import ClusterOptions
 from couchbase.auth import CouchbasePasswordAuthenticator
 
-# Initialize CouchbaseDocumentStore
-document_store = CouchbaseDocumentStore(
+# Initialize CouchbaseSearchDocumentStore
+document_store = CouchbaseSearchDocumentStore(
     cluster_connection_string=Secret.from_env_var("CB_CONNECTION_STRING"),
     authenticator=CouchbasePasswordAuthenticator(
             username=Secret.from_env_var("CB_USERNAME"),
@@ -214,7 +214,7 @@ def to_dict() -> Dict[str, Any]:
 ```
 
 **Response:**
-- Returns a `Dict[str, Any]` containing the serialized state of the `CouchbaseDocumentStore` instance.
+- Returns a `Dict[str, Any]` containing the serialized state of the `CouchbaseSearchDocumentStore` instance.
 
 **Example Usage:**
 
@@ -226,17 +226,17 @@ serialized_data = document_store.to_dict()
 
 ```python
 @classmethod
-def from_dict(cls, data: Dict[str, Any]) -> "CouchbaseDocumentStore":
+def from_dict(cls, data: Dict[str, Any]) -> "CouchbaseSearchDocumentStore":
 ```
 
 **Input Parameters:**
-- `data` (Dict[str, Any]): A dictionary containing the serialized state of a `CouchbaseDocumentStore`.
+- `data` (Dict[str, Any]): A dictionary containing the serialized state of a `CouchbaseSearchDocumentStore`.
 
 **Response:**
-- Returns a `CouchbaseDocumentStore` instance reconstructed from the provided dictionary.
+- Returns a `CouchbaseSearchDocumentStore` instance reconstructed from the provided dictionary.
 
 **Example Usage:**
 
 ```python
-new_document_store = CouchbaseDocumentStore.from_dict(serialized_data)
+new_document_store = CouchbaseSearchDocumentStore.from_dict(serialized_data)
 ```

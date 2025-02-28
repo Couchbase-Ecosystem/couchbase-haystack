@@ -11,7 +11,7 @@ from typing import List, Dict, Any, Optional
 from haystack.dataclasses.document import ByteStream, Document
 from haystack.testing.document_store import DocumentStoreBaseTests
 from haystack.utils import Secret
-from couchbase_haystack import CouchbaseDocumentStore
+from couchbase_haystack import CouchbaseSearchDocumentStore
 from pandas import DataFrame
 from couchbase.cluster import Cluster, ClusterOptions
 from couchbase.options import ClusterOptions, KnownConfigProfiles
@@ -34,7 +34,7 @@ model = SentenceTransformer('all-MiniLM-L6-v2')
 
 @patch("couchbase_haystack.document_stores.document_store.Cluster")
 def test_init_is_lazy(_mock_cluster):
-    store = CouchbaseDocumentStore(
+    store = CouchbaseSearchDocumentStore(
         cluster_connection_string="couchbases://localhost",
         cluster_options=CouchbaseClusterOptions(),
         authenticator=CouchbasePasswordAuthenticator(),
@@ -99,7 +99,7 @@ class TestDocumentStore(DocumentStoreBaseTests):
             )
             sim.upsert_index(search_index)
 
-        store = CouchbaseDocumentStore(
+        store = CouchbaseSearchDocumentStore(
             cluster_connection_string=Secret.from_env_var("CONNECTION_STRING"),
             cluster_options=CouchbaseClusterOptions(profile=KnownConfigProfiles.WanDevelopment),
             authenticator=CouchbasePasswordAuthenticator(
@@ -132,7 +132,7 @@ class TestDocumentStore(DocumentStoreBaseTests):
         # print([doc.to_dict(flatten=False) for doc in expected])
         super().assert_documents_are_equal(received, expected)
 
-    def test_no_filters(self, document_store: CouchbaseDocumentStore):
+    def test_no_filters(self, document_store: CouchbaseSearchDocumentStore):
         """Test filter_documents() with empty filters"""
         self.assert_documents_are_equal(document_store.filter_documents(), [])
         self.assert_documents_are_equal(document_store.filter_documents(filters={}), [])
@@ -141,7 +141,7 @@ class TestDocumentStore(DocumentStoreBaseTests):
         self.assert_documents_are_equal(document_store.filter_documents(), docs)
         self.assert_documents_are_equal(document_store.filter_documents(filters={}), docs)
 
-    def test_write_documents(self, document_store: CouchbaseDocumentStore):
+    def test_write_documents(self, document_store: CouchbaseSearchDocumentStore):
         documents = [
             Document(id=uuid1().hex, content="Haystack is an amazing tool for search."),
             Document(id=uuid1().hex, content="We are using pre-trained models to generate embeddings."),
@@ -157,7 +157,7 @@ class TestDocumentStore(DocumentStoreBaseTests):
         retrieved_docs.sort(key=lambda x: x.id)
         self.assert_documents_are_equal(retrieved_docs, documents)
 
-    def test_write_blob(self, document_store: CouchbaseDocumentStore):
+    def test_write_blob(self, document_store: CouchbaseSearchDocumentStore):
         bytestream = ByteStream(b"test", meta={"meta_key": "meta_value"}, mime_type="mime_type")
         documents = [Document(blob=bytestream)]
         for doc in documents:
@@ -169,7 +169,7 @@ class TestDocumentStore(DocumentStoreBaseTests):
         time.sleep(30)
         self.assert_documents_are_equal(retrieved_docs, documents)
 
-    def test_write_dataframe(self, document_store: CouchbaseDocumentStore):
+    def test_write_dataframe(self, document_store: CouchbaseSearchDocumentStore):
         dataframe = DataFrame({"col1": [1, 2], "col2": [3, 4]})
         docs = [Document(dataframe=dataframe)]
         document_store.write_documents(docs)
@@ -221,7 +221,7 @@ class TestDocumentStore(DocumentStoreBaseTests):
 
 
 class DocumentStore:
-    def __init__(self, document_store: CouchbaseDocumentStore, cluster: MagicMock, scope: MagicMock, collection: MagicMock):
+    def __init__(self, document_store: CouchbaseSearchDocumentStore, cluster: MagicMock, scope: MagicMock, collection: MagicMock):
         self.document_store = document_store
         self.cluster = cluster
         self.scope = scope
@@ -261,7 +261,7 @@ class TestDocumentStoreUnit:
             bucket.collections.return_value.get_all_scopes.return_value = [
                 ScopeSpec("haystack_test_scope", [CollectionSpec(collection_name="haystack_collection")])
             ]
-            store = CouchbaseDocumentStore(
+            store = CouchbaseSearchDocumentStore(
                 cluster_connection_string=Secret.from_env_var("CONNECTION_STRING"),
                 authenticator=CouchbasePasswordAuthenticator(
                     username=Secret.from_env_var("USER_NAME"), password=Secret.from_env_var("PASSWORD")
@@ -280,7 +280,7 @@ class TestDocumentStoreUnit:
         serialized_store = document_store.document_store.to_dict()
         # assert serialized_store["init_parameters"].pop("collection_name").startswith("test_collection_")
         assert serialized_store == {
-            'type': 'couchbase_haystack.document_stores.document_store.CouchbaseDocumentStore',
+            'type': 'couchbase_haystack.document_stores.document_store.CouchbaseSearchDocumentStore',
             'init_parameters': {
                 'cluster_connection_string': {'type': 'env_var', 'env_vars': ['CONNECTION_STRING'], 'strict': True},
                 'authenticator': {
@@ -304,9 +304,9 @@ class TestDocumentStoreUnit:
         }
 
     def test_from_dict(self):
-        docstore = CouchbaseDocumentStore.from_dict(
+        docstore = CouchbaseSearchDocumentStore.from_dict(
             {
-                'type': 'couchbase_haystack.document_stores.document_store.CouchbaseDocumentStore',
+                'type': 'couchbase_haystack.document_stores.document_store.CouchbaseSearch DocumentStore',
                 'init_parameters': {
                     'cluster_connection_string': {'type': 'env_var', 'env_vars': ['CONNECTION_STRING'], 'strict': True},
                     'authenticator': {

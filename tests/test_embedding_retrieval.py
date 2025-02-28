@@ -8,7 +8,7 @@ import pytest
 
 from haystack.dataclasses.document import Document
 from haystack.utils import Secret
-from couchbase_haystack import CouchbaseDocumentStore, CouchbasePasswordAuthenticator, CouchbaseClusterOptions
+from couchbase_haystack import CouchbaseSearchDocumentStore, CouchbasePasswordAuthenticator, CouchbaseClusterOptions
 from couchbase.cluster import Cluster, ClusterOptions
 from couchbase.options import ClusterOptions, KnownConfigProfiles
 from couchbase.auth import PasswordAuthenticator
@@ -76,7 +76,7 @@ class TestEmbeddingRetrieval:
             )
             sim.upsert_index(search_index)
 
-        store = CouchbaseDocumentStore(
+        store = CouchbaseSearchDocumentStore(
             cluster_connection_string=Secret.from_env_var("CONNECTION_STRING"),
             authenticator=CouchbasePasswordAuthenticator(
                 username=Secret.from_env_var("USER_NAME"), password=Secret.from_env_var("PASSWORD")
@@ -104,7 +104,7 @@ class TestEmbeddingRetrieval:
         cluster.query(f"drop collection {bucket_name}.{scope_name}.{collection_name}").execute()
         cluster.close()
 
-    def test_embedding_retrieval(self, document_store: CouchbaseDocumentStore):
+    def test_embedding_retrieval(self, document_store: CouchbaseSearchDocumentStore):
         query_embedding = [0.9, 0.1, 0.0]
         results = document_store._embedding_retrieval(query_embedding=query_embedding, top_k=3)
         assert len(results) == 3
@@ -112,7 +112,7 @@ class TestEmbeddingRetrieval:
         assert results[1].content == "blue color"
         assert results[0].score > results[1].score
 
-    def test_embedding_retrieval_with_filter(self, document_store: CouchbaseDocumentStore):
+    def test_embedding_retrieval_with_filter(self, document_store: CouchbaseSearchDocumentStore):
         query_embedding = [0.9, 0.0, 0.0]
         results = document_store._embedding_retrieval(
             query_embedding=query_embedding,

@@ -35,16 +35,16 @@ is being used for indexing document embeddings and dense retrievals.
 The library allows using Couchbase as a [DocumentStore](https://docs.haystack.deepset.ai/v2.0/docs/document-store), and implements the required [Protocol](https://docs.haystack.deepset.ai/v2.0/docs/document-store#documentstore-protocol) methods. You can start working with the implementation by importing it from `couchbase_haystack` package:
 
 ```python
-from couchbase_haystack import CouchbaseDocumentStore
+from couchbase_haystack import CouchbaseSearchDocumentStore
 ```
 
-In addition to the `CouchbaseDocumentStore` the library includes the following haystack components which can be used in a pipeline:
+In addition to the `CouchbaseSearchDocumentStore` the library includes the following haystack components which can be used in a pipeline:
 
-- [CouchbaseEmbeddingRetriever]() - is a typical [retriever component](https://docs.haystack.deepset.ai/v2.0/docs/retrievers) which can be used to query vector store index and find related Documents. The component uses `CouchbaseDocumentStore` to query embeddings.
+- [CouchbaseSearchEmbeddingRetriever]() - is a typical [retriever component](https://docs.haystack.deepset.ai/v2.0/docs/retrievers) which can be used to query vector store index and find related Documents. The component uses `CouchbaseSearchDocumentStore` to query embeddings.
 
 The `couchbase-haystack` library uses [Python Driver](https://docs.couchbase.com/python-sdk/current/hello-world/start-using-sdk.html).
 
-`CouchbaseDocumentStore` will store Documents as JSON documents in Couchbase. Embeddings are stored as part of the document, with indexing and querying of vector embeddings managed by Couchbase's dedicated [Vector Search Index](https://docs.couchbase.com/server/current/vector-search/vector-search.html). The document store supports both scope-level and global-level vector search indexes:
+`CouchbaseSearchDocumentStore` will store Documents as JSON documents in Couchbase. Embeddings are stored as part of the document, with indexing and querying of vector embeddings managed by Couchbase's dedicated [Vector Search Index](https://docs.couchbase.com/server/current/vector-search/vector-search.html). The document store supports both scope-level and global-level vector search indexes:
 
 - Scope-level indexes (default): The vector search index is created at the scope level and only searches documents within that scope
 - Global-level indexes: The vector search index is created at the bucket level and can search across all scopes and collections in the bucket
@@ -61,7 +61,7 @@ The `couchbase-haystack` library uses [Python Driver](https://docs.couchbase.com
           |                        |      |                |     |
 +---------+--------------+         |      |   embedding    |     |
 |                        |         |      +--------+-------+     |
-| CouchbaseDocumentStore |         |               |             |
+| CouchbaseSearchDocumentStore |         |               |             |
 |                        |         |               |index        |
 +---------+--------------+         |               |             |
           |                        |      +--------+--------+    |
@@ -83,7 +83,7 @@ In the above diagram:
 - `Search service` Where indexes specially purposed for Full Text Search and Vector search are created. The Search Service allows for efficient querying 
 and retrieval based on both text content and vector embeddings.
 
-`CouchbaseDocumentStore` requires the vector index to be created manually either by sdk or UI. Before writing documents you should make sure Documents are embedded by one of the provided [embedders](https://docs.haystack.deepset.ai/v2.0/docs/embedders). For example [SentenceTransformersDocumentEmbedder](https://docs.haystack.deepset.ai/v2.0/docs/sentencetransformersdocumentembedder) can be used in indexing pipeline to calculate document embeddings before writing those to Couchbase.
+`CouchbaseSearchDocumentStore` requires the vector index to be created manually either by sdk or UI. Before writing documents you should make sure Documents are embedded by one of the provided [embedders](https://docs.haystack.deepset.ai/v2.0/docs/embedders). For example [SentenceTransformersDocumentEmbedder](https://docs.haystack.deepset.ai/v2.0/docs/sentencetransformersdocumentembedder) can be used in indexing pipeline to calculate document embeddings before writing those to Couchbase.
 
 ## Installation
 
@@ -123,13 +123,13 @@ In this example, the container is started using Couchbase Server version `7.6.2`
 
 ### Document Store
 
-Once you have the package installed and the database running, you can start using `CouchbaseDocumentStore` as any other document stores that support embeddings.
+Once you have the package installed and the database running, you can start using `CouchbaseSearchDocumentStore` as any other document stores that support embeddings.
 
 ```python
-from couchbase_haystack import CouchbaseDocumentStore, CouchbasePasswordAuthenticator
+from couchbase_haystack import CouchbaseSearchDocumentStore, CouchbasePasswordAuthenticator
 from haystack.utils.auth import Secret
 
-document_store = CouchbaseDocumentStore(
+document_store = CouchbaseSearchDocumentStore(
     cluster_connection_string=Secret.from_env_var("CB_CONNECTION_STRING"),
     authenticator=CouchbasePasswordAuthenticator(
       username=Secret.from_env_var("CB_USERNAME"),
@@ -215,12 +215,12 @@ The data from the dictionary will be used to create a document in COuchbase afte
 }
 ```
 
-The full list of parameters accepted by `CouchbaseDocumentStore` can be found in
+The full list of parameters accepted by `CouchbaseSearchDocumentStore` can be found in
 [API documentation](https://couchbase-ecosystem.github.io/couchbase-haystack/reference/couchbase_document_store).
 
 ### Indexing documents
 
-With Haystack you can use [DocumentWriter](https://docs.haystack.deepset.ai/v2.0/docs/documentwriter) component to write Documents into a Document Store. In the example below we construct pipeline to write documents to Couchbase using `CouchbaseDocumentStore`:
+With Haystack you can use [DocumentWriter](https://docs.haystack.deepset.ai/v2.0/docs/documentwriter) component to write Documents into a Document Store. In the example below we construct pipeline to write documents to Couchbase using `CouchbaseSearchDocumentStore`:
 
 ```python
 from haystack import Document
@@ -229,11 +229,11 @@ from haystack.components.writers import DocumentWriter
 from haystack.pipeline import Pipeline
 from haystack.utils.auth import Secret
 
-from couchbase_haystack import CouchbaseDocumentStore, CouchbasePasswordAuthenticator
+from couchbase_haystack import CouchbaseSearchDocumentStore, CouchbasePasswordAuthenticator
 
 documents = [Document(content="This is document 1"), Document(content="This is document 2")]
 
-document_store = CouchbaseDocumentStore(
+document_store = CouchbaseSearchDocumentStore(
     cluster_connection_string=Secret.from_env_var("CB_CONNECTION_STRING"),
     authenticator=CouchbasePasswordAuthenticator(
       username=Secret.from_env_var("CB_USERNAME"),
@@ -262,7 +262,7 @@ indexing_pipeline.run({"embedder": {"documents": documents}})
 
 ### Retrieving documents
 
-`CouchbaseEmbeddingRetriever` component can be used to retrieve documents from Couchbase by querying vector index using an embedded query. Below is a pipeline which finds documents using query embedding:
+`CouchbaseSearchEmbeddingRetriever` component can be used to retrieve documents from Couchbase by querying vector index using an embedded query. Below is a pipeline which finds documents using query embedding:
 
 ```python
 from typing import List
@@ -270,10 +270,10 @@ from haystack.utils.auth import Secret
 from haystack import Document, Pipeline
 from haystack.components.embedders import SentenceTransformersDocumentEmbedder, SentenceTransformersTextEmbedder
 
-from couchbase_haystack.document_store import CouchbaseDocumentStore, CouchbasePasswordAuthenticator
-from couchbase_haystack.component.retriever import CouchbaseEmbeddingRetriever
+from couchbase_haystack.document_store import CouchbaseSearchDocumentStore, CouchbasePasswordAuthenticator
+from couchbase_haystack.component.retriever import CouchbaseSearchEmbeddingRetriever
 
-document_store = CouchbaseDocumentStore(
+document_store = CouchbaseSearchDocumentStore(
     cluster_connection_string=Secret.from_env_var("CB_CONNECTION_STRING"),
     authenticator=CouchbasePasswordAuthenticator(
       username=Secret.from_env_var("CB_USERNAME"),
@@ -303,7 +303,7 @@ print("Number of documents written: ", document_store.count_documents())
 
 pipeline = Pipeline()
 pipeline.add_component("text_embedder", SentenceTransformersTextEmbedder(model=model_name))
-pipeline.add_component("retriever", CouchbaseEmbeddingRetriever(document_store=document_store))
+pipeline.add_component("retriever", CouchbaseSearchEmbeddingRetriever(document_store=document_store))
 pipeline.connect("text_embedder.embedding", "retriever.query_embedding")
 
 result = pipeline.run(
@@ -328,7 +328,7 @@ documents: List[Document] = result["retriever"]["documents"]
 You can find more examples in the implementation [repository](examples):
 
 - [indexing_pipeline.py](examples/indexing_pipeline.py) - Indexing text files (documents) from a remote http location.
-- [rag_pipeline.py](examples/rag_pipeline.py) - Generative question answering RAG pipeline using `CouchbaseEmbeddingRetriever` to fetch documents from Couchbase document store and answer question using [HuggingFaceAPIGenerator](https://docs.haystack.deepset.ai/v2.0/docs/huggingfacetgigenerator).
+- [rag_pipeline.py](examples/rag_pipeline.py) - Generative question answering RAG pipeline using `CouchbaseSearchEmbeddingRetriever` to fetch documents from Couchbase document store and answer question using [HuggingFaceAPIGenerator](https://docs.haystack.deepset.ai/v2.0/docs/huggingfacetgigenerator).
 
 ## License
 

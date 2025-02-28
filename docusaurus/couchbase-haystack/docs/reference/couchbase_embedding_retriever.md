@@ -1,16 +1,16 @@
 ---
-id: couchbase_embedding_retriever
-title: CouchbaseEmbeddingRetriever
+id: couchbase_search_embedding_retriever
+title: CouchbaseSearchEmbeddingRetriever
 ---
 
 ```markdown
-# Couchbase Embedding Retriever
+# Couchbase Search Embedding Retriever
 
 ## Class Overview
 
-### `CouchbaseEmbeddingRetriever`
+### `CouchbaseSearchEmbeddingRetriever`
 
-The `CouchbaseEmbeddingRetriever` retrieves documents from the `CouchbaseDocumentStore` by embedding similarity. The similarity depends on the `vector_search_index` used in the `CouchbaseDocumentStore` and the metric chosen during the creation of the index (e.g., dot product, or L2 norm).
+The `CouchbaseSearchEmbeddingRetriever` retrieves documents from the `CouchbaseSearchDocumentStore` by embedding similarity. The similarity depends on the `vector_search_index` used in the `CouchbaseSearchDocumentStore` and the metric chosen during the creation of the index (e.g., dot product, or L2 norm).
 
 #### Initialization
 
@@ -18,26 +18,26 @@ The `CouchbaseEmbeddingRetriever` retrieves documents from the `CouchbaseDocumen
 def __init__(
     self,
     *,
-    document_store: CouchbaseDocumentStore,
+    document_store: CouchbaseSearchDocumentStore,
     top_k: int = 10,
 )
 ```
 
 **Input Parameters:**
-- `document_store` (CouchbaseDocumentStore): An instance of `CouchbaseDocumentStore` where the documents are stored.
+- `document_store` (CouchbaseSearchDocumentStore): An instance of `CouchbaseSearchDocumentStore` where the documents are stored.
 - `top_k` (int): Maximum number of documents to return. Defaults to 10.
 
 **Raises:**
-- `ValueError`: If `document_store` is not an instance of `CouchbaseDocumentStore`.
+- `ValueError`: If `document_store` is not an instance of `CouchbaseSearchDocumentStore`.
 
 **Example Usage:**
 
 ```python
 import numpy as np
-from couchbase_haystack import CouchbaseDocumentStore, CouchbaseEmbeddingRetriever
+from couchbase_haystack import CouchbaseSearchDocumentStore, CouchbaseSearchEmbeddingRetriever
 from haystack.utils.auth import Secret
 
-store = CouchbaseDocumentStore(
+store = CouchbaseSearchDocumentStore(
     cluster_connection_string=Secret.from_env_var("CB_CONNECTION_STRING"),,
     cluster_options=CouchbaseClusterOptions(),
     authenticator=CouchbasePasswordAuthenticator(),
@@ -47,7 +47,7 @@ store = CouchbaseDocumentStore(
     vector_search_index="vector_index"
 )
 
-retriever = CouchbaseEmbeddingRetriever(document_store=store)
+retriever = CouchbaseSearchEmbeddingRetriever(document_store=store)
 
 query_embedding = np.random.random(768).tolist()
 results = retriever.run(query_embedding=query_embedding)
@@ -68,10 +68,10 @@ def run(
 ```
 
 **Description:**
-- Retrieves documents from the `CouchbaseDocumentStore` based on the similarity of their embeddings to the provided query embedding.
+- Retrieves documents from the `CouchbaseSearchDocumentStore` based on the similarity of their embeddings to the provided query embedding.
 
 **Input Parameters:**
-- `query_embedding` (List[float]): A list of float values representing the query embedding. The dimensionality of this embedding must match the dimensionality of the embeddings stored in the `CouchbaseDocumentStore`.
+- `query_embedding` (List[float]): A list of float values representing the query embedding. The dimensionality of this embedding must match the dimensionality of the embeddings stored in the `CouchbaseSearchDocumentStore`.
 - `top_k` (Optional[int]): The maximum number of documents to return. Overrides the value specified during initialization. Defaults to the value of `top_k` set during initialization.
 - `search_query` (Optional[SearchQuery]): An optional search query to combine with the embedding query. The embedding query and search query are combined using an OR operation.
 - `limit` (Optional[int]): The maximum number of documents to return from the Couchbase full-text search (FTS) query. Defaults to `top_k`.
@@ -94,10 +94,10 @@ def to_dict() -> Dict[str, Any]
 ```
 
 **Description:**
-- Serializes the `CouchbaseEmbeddingRetriever` instance into a dictionary format.
+- Serializes the `CouchbaseSearchEmbeddingRetriever` instance into a dictionary format.
 
 **Response:**
-- Returns a dictionary containing the serialized state of the `CouchbaseEmbeddingRetriever` instance.
+- Returns a dictionary containing the serialized state of the `CouchbaseSearchEmbeddingRetriever` instance.
 
 **Example Usage:**
 
@@ -109,31 +109,31 @@ retriever_dict = retriever.to_dict()
 
 ```python
 @classmethod
-def from_dict(cls, data: Dict[str, Any]) -> "CouchbaseEmbeddingRetriever"
+def from_dict(cls, data: Dict[str, Any]) -> "CouchbaseSearchEmbeddingRetriever"
 ```
 
 **Description:**
-- Deserializes a `CouchbaseEmbeddingRetriever` instance from a dictionary.
+- Deserializes a `CouchbaseSearchEmbeddingRetriever` instance from a dictionary.
 
 **Input Parameters:**
-- `data` (Dict[str, Any]): A dictionary containing the serialized state of a `CouchbaseEmbeddingRetriever`.
+- `data` (Dict[str, Any]): A dictionary containing the serialized state of a `CouchbaseSearchEmbeddingRetriever`.
 
 **Response:**
-- Returns a `CouchbaseEmbeddingRetriever` instance reconstructed from the provided dictionary.
+- Returns a `CouchbaseSearchEmbeddingRetriever` instance reconstructed from the provided dictionary.
 
 **Example Usage:**
 
 ```python
-retriever_instance = CouchbaseEmbeddingRetriever.from_dict(retriever_dict)
+retriever_instance = CouchbaseSearchEmbeddingRetriever.from_dict(retriever_dict)
 ```
 
 ## Usage Example
 
 ```python
 import numpy as np
-from couchbase_haystack import CouchbaseDocumentStore, CouchbaseEmbeddingRetriever
+from couchbase_haystack import CouchbaseSearchDocumentStore, CouchbaseSearchEmbeddingRetriever
 
-store = CouchbaseDocumentStore(
+store = CouchbaseSearchDocumentStore(
     cluster_connection_string="couchbases://localhost",
     cluster_options=CouchbaseClusterOptions(),
     authenticator=CouchbasePasswordAuthenticator(),
@@ -143,11 +143,11 @@ store = CouchbaseDocumentStore(
     vector_search_index="vector_index"
 )
 
-retriever = CouchbaseEmbeddingRetriever(document_store=store)
+retriever = CouchbaseSearchEmbeddingRetriever(document_store=store)
 
 query_embedding = np.random.random(768).tolist()
 results = retriever.run(query_embedding=query_embedding)
 print(results["documents"])
 ```
 
-This example retrieves the 10 most similar documents to a randomly generated query embedding from the `CouchbaseDocumentStore`. Note that the dimensionality of the `query_embedding` must match the dimensionality of the embeddings stored in the `CouchbaseDocumentStore`.
+This example retrieves the 10 most similar documents to a randomly generated query embedding from the `CouchbaseSearchDocumentStore`. Note that the dimensionality of the `query_embedding` must match the dimensionality of the embeddings stored in the `CouchbaseSearchDocumentStore`.

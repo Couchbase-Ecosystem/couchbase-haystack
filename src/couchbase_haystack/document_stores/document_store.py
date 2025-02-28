@@ -31,9 +31,9 @@ from .filters import _normalize_filters
 logger = logging.getLogger(__name__)
 
 
-class CouchbaseDocumentStore:
+class CouchbaseSearchDocumentStore:
     """
-    CouchbaseDocumentStore is a DocumentStore implementation that uses
+    CouchbaseSearchDocumentStore is a DocumentStore implementation that uses
     [Couchbase capella](https://cloud.couchbase.com) service that is easy to deploy, operate, and scale.
 
     The document store supports both scope-level and global-level vector search indexes:
@@ -60,7 +60,7 @@ class CouchbaseDocumentStore:
         **kwargs: Dict[str, Any],
     ):
         """
-        Creates a new CouchbaseDocumentStore instance.
+        Creates a new CouchbaseSearchDocumentStore instance.
 
         :param cluster_connection_string: Connection string for the Couchbase cluster
         :param authenticator: Authentication method (password or certificate based)
@@ -155,7 +155,7 @@ class CouchbaseDocumentStore:
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "CouchbaseDocumentStore":
+    def from_dict(cls, data: Dict[str, Any]) -> "CouchbaseSearchDocumentStore":
         """
         Deserializes the component from a dictionary.
 

@@ -1,3 +1,3 @@
-from .embedding_retriever import CouchbaseEmbeddingRetriever
+from .embedding_retriever import CouchbaseSearchEmbeddingRetriever
 
-__all__ = ["CouchbaseEmbeddingRetriever"]
+__all__ = ["CouchbaseSearchEmbeddingRetriever"]

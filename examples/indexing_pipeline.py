@@ -12,7 +12,7 @@ from haystack.components.preprocessors import DocumentCleaner, DocumentSplitter
 from haystack.components.writers import DocumentWriter
 from haystack.utils import Secret
 
-from couchbase_haystack import CouchbaseDocumentStore, CouchbasePasswordAuthenticator
+from couchbase_haystack import CouchbaseSearchDocumentStore, CouchbasePasswordAuthenticator
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ fetch_archive_from_http(
 #     --env COUCHBASE_ADMINISTRATOR_PASSWORD=passw0rd \
 #     couchbase:enterprise-7.6.2
 
-document_store = CouchbaseDocumentStore(
+document_store = CouchbaseSearchDocumentStore(
     cluster_connection_string=Secret.from_token("localhost"),
     authenticator=CouchbasePasswordAuthenticator(username=Secret.from_token("username"), password=Secret.from_token("password")),
     bucket="haystack_bucket_name",

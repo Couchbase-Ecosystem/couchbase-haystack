@@ -5,7 +5,7 @@ from haystack.components.embedders import SentenceTransformersTextEmbedder
 from haystack.components.generators import HuggingFaceAPIGenerator
 from haystack.utils import Secret
 
-from couchbase_haystack import CouchbaseDocumentStore, CouchbaseEmbeddingRetriever, CouchbasePasswordAuthenticator
+from couchbase_haystack import CouchbaseSearchDocumentStore, CouchbaseSearchEmbeddingRetriever, CouchbasePasswordAuthenticator
 
 # Load HF Token from environment variables.
 HF_TOKEN = Secret.from_env_var("HF_API_TOKEN")
@@ -18,7 +18,7 @@ HF_TOKEN = Secret.from_env_var("HF_API_TOKEN")
 #     --env COUCHBASE_ADMINISTRATOR_PASSWORD=passw0rd \
 #     couchbase:enterprise-7.6.2
 
-document_store = CouchbaseDocumentStore(
+document_store = CouchbaseSearchDocumentStore(
     cluster_connection_string=Secret.from_token("localhost"),
     authenticator=CouchbasePasswordAuthenticator(username=Secret.from_token("username"), password=Secret.from_token("password")),
     bucket="haystack_bucket_name",
@@ -43,7 +43,7 @@ rag_pipeline.add_component(
     "query_embedder",
     SentenceTransformersTextEmbedder(model="sentence-transformers/all-MiniLM-L6-v2", progress_bar=False),
 )
-rag_pipeline.add_component("retriever", CouchbaseEmbeddingRetriever(document_store=document_store))
+rag_pipeline.add_component("retriever", CouchbaseSearchEmbeddingRetriever(document_store=document_store))
 rag_pipeline.add_component("prompt_builder", PromptBuilder(template=prompt_template))
 rag_pipeline.add_component(
     "llm",
