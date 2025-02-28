@@ -109,7 +109,7 @@ class TestDocumentStore(DocumentStoreBaseTests):
                 break
             except Exception as e:
                 pass
-            
+
             time.sleep(retry_interval)
             if attempt == max_retries - 1:
                 pytest.skip(f"Index {index_definition['name']} not ready after {max_retries} attempts")
