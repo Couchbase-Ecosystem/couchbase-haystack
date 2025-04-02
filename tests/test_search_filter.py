@@ -1,4 +1,4 @@
-from couchbase_haystack.document_stores.filters import _normalize_filters
+from couchbase_haystack.document_stores.search_filters import _normalize_filters
 import pytest
 from haystack.errors import FilterError
 

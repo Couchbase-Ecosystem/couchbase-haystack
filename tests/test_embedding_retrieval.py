@@ -15,7 +15,7 @@ from couchbase.auth import PasswordAuthenticator
 from couchbase.management.logic.search_index_logic import SearchIndex
 from couchbase.exceptions import SearchIndexNotFoundException
 from couchbase import search
-from couchbase_haystack.document_stores.filters import NumericRangeQuery
+from couchbase_haystack.document_stores.search_filters import NumericRangeQuery
 from datetime import timedelta
 from .common.common import IS_GLOBAL_LEVEL_INDEX
 from .common import common

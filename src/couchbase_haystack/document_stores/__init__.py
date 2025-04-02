@@ -3,12 +3,21 @@
 # SPDX-License-Identifier: Apache-2.0
 from .auth import CouchbaseAuthenticator, CouchbaseCertificateAuthenticator, CouchbasePasswordAuthenticator
 from .cluster_options import CouchbaseClusterOptions
-from .document_store import CouchbaseSearchDocumentStore
-
+from .document_store import (
+    CouchbaseSearchDocumentStore,   
+    CouchbaseGSIDocumentStore,
+    IndexParams,
+    IndexType,
+    VectorSimilarityMetric
+)
 __all__ = [
     "CouchbaseAuthenticator",
     "CouchbaseCertificateAuthenticator",
     "CouchbaseClusterOptions",
     "CouchbasePasswordAuthenticator",
     "CouchbaseSearchDocumentStore",
+    "CouchbaseGSIDocumentStore",
+    "IndexParams",
+    "IndexType",
+    "VectorSimilarityMetric"
 ]
