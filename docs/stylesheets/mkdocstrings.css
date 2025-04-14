@@ -1,0 +1,103 @@
+/* Custom MkDocs styling to match Docusaurus Ruby red theme */
+
+:root {
+  --md-primary-fg-color: #cc342d;
+  --md-primary-fg-color--light: #dd433c;
+  --md-primary-fg-color--dark: #b92c26;
+  --md-accent-fg-color: #e3554a;
+  --md-accent-fg-color--transparent: rgba(204, 52, 45, 0.1);
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #ff4d47;
+  --md-primary-fg-color--light: #ff5e58;
+  --md-primary-fg-color--dark: #e64640;
+  --md-accent-fg-color: #ff7066;
+  --md-accent-fg-color--transparent: rgba(255, 77, 71, 0.3);
+}
+
+/* Override menu background to use white/dark based on theme */
+.md-header {
+  background-color: var(--md-default-bg-color);
+  color: var(--md-primary-fg-color);
+  box-shadow: 0 0 0.2rem rgba(0,0,0,.1), 0 0.2rem 0.4rem rgba(0,0,0,.2);
+}
+
+/* Reduce space between logo and site name */
+.md-header__button.md-logo {
+  margin: 0;
+  padding: 0.4rem 0.2rem 0.4rem 0.4rem;
+}
+
+.md-header__title {
+  margin-left: 0;
+  padding-left: 0;
+}
+
+.md-header__topic {
+  margin-left: 0;
+  padding-left: 0;
+}
+
+.md-tabs {
+  background-color: var(--md-default-bg-color);
+  color: var(--md-default-fg-color);
+  border-bottom: 1px solid rgba(0,0,0,.07);
+}
+
+.md-tabs__link {
+  color: var(--md-default-fg-color--light);
+}
+
+.md-tabs__link--active,
+.md-tabs__link:hover {
+  color: var(--md-primary-fg-color);
+}
+
+.md-tabs__item--active {
+  border-bottom: 2px solid var(--md-primary-fg-color);
+}
+
+.md-header__button {
+  color: var(--md-default-fg-color);
+}
+
+.md-search__input {
+  background-color: rgba(0,0,0,.05);
+  color: var(--md-default-fg-color);
+}
+
+[data-md-color-scheme="slate"] .md-search__input {
+  background-color: rgba(255,255,255,.05);
+}
+
+/* Additional styling for elements */
+.md-typeset a {
+  color: var(--md-primary-fg-color);
+}
+
+.md-typeset a:hover {
+  color: var(--md-accent-fg-color);
+}
+
+/* Code highlighting */
+.highlight .hll {
+  background-color: var(--md-accent-fg-color--transparent);
+}
+
+/* Button styling */
+.md-button {
+  background-color: var(--md-primary-fg-color);
+  border-color: var(--md-primary-fg-color);
+  color: white;
+}
+
+.md-button:hover {
+  background-color: var(--md-primary-fg-color--dark);
+  border-color: var(--md-primary-fg-color--dark);
+}
+
+/* Search results highlight */
+.md-search-result__article--document .md-search-result__title mark {
+  background-color: var(--md-accent-fg-color--transparent);
+} 
