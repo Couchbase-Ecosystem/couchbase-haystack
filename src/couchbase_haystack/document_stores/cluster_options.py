@@ -8,6 +8,8 @@ from .auth import CouchbaseCertificateAuthenticator, CouchbasePasswordAuthentica
 
 
 class CouchbaseClusterOptions(dict):
+    """ClusterOptions is a dictionary that contains the options for the Couchbase cluster."""
+
     __cluster_level_timedelta_fields: ClassVar[List[str]] = [
         "tcp_keep_alive_interval",
         "config_poll_interval",
@@ -136,18 +138,87 @@ class CouchbaseClusterOptions(dict):
         disable_mozilla_ca_certificates: Optional[bool] = None,
         dump_configuration: Optional[bool] = None,
     ):
-        """ClusterOptions instance."""
+        """Initialize CouchbaseClusterOptions with explicit parameters.
+
+        Args:
+            profile: The profile to use for the Couchbase cluster. Defaults to None.
+            bootstrap_timeout: The timeout for the bootstrap operation. Defaults to None.
+            resolve_timeout: The timeout for the resolve operation. Defaults to None.
+            connect_timeout: The timeout for the connect operation. Defaults to None.
+            kv_timeout: The timeout for the KV operation. Defaults to None.
+            kv_durable_timeout: The timeout for the KV durable operation. Defaults to None.
+            views_timeout: The timeout for the views operation. Defaults to None.
+            query_timeout: The timeout for the query operation. Defaults to None.
+            analytics_timeout: The timeout for the analytics operation. Defaults to None.
+            search_timeout: The timeout for the search operation. Defaults to None.
+            management_timeout: The timeout for the management operation. Defaults to None.
+            dns_srv_timeout: The timeout for the DNS SRV operation. Defaults to None.
+            idle_http_connection_timeout: The timeout for idle HTTP connections. Defaults to None.
+            config_idle_redial_timeout: The timeout for idle config redials. Defaults to None.
+            config_total_timeout: The total timeout for config operations. Defaults to None.
+            tracing_threshold_kv: The threshold for KV tracing. Defaults to None.
+            tracing_threshold_view: The threshold for view tracing. Defaults to None.
+            tracing_threshold_query: The threshold for query tracing. Defaults to None.
+            tracing_threshold_search: The threshold for search tracing. Defaults to None.
+            tracing_threshold_analytics: The threshold for analytics tracing. Defaults to None.
+            tracing_threshold_eventing: The threshold for eventing tracing. Defaults to None.
+            tracing_threshold_management: The threshold for management tracing. Defaults to None.
+            tracing_threshold_queue_size: The queue size for tracing threshold. Defaults to None.
+            tracing_threshold_queue_flush_interval: The interval for tracing threshold queue flushing. Defaults to None.
+            tracing_orphaned_queue_size: The queue size for tracing orphaned events. Defaults to None.
+            tracing_orphaned_queue_flush_interval: The interval for tracing orphaned queue flushing. Defaults to None.
+            enable_tls: Whether to enable TLS. Defaults to None.
+            enable_mutation_tokens: Whether to enable mutation tokens. Defaults to None.
+            enable_tcp_keep_alive: Whether to enable TCP keep-alive. Defaults to None.
+            ip_protocol: The IP protocol to use. Defaults to None.
+            enable_dns_srv: Whether to enable DNS SRV. Defaults to None.
+            show_queries: Whether to show queries. Defaults to None.
+            enable_unordered_execution: Whether to enable unordered execution. Defaults to None.
+            enable_clustermap_notification: Whether to enable clustermap notification. Defaults to None.
+            enable_compression: Whether to enable compression. Defaults to None.
+            enable_tracing: Whether to enable tracing. Defaults to None.
+            enable_metrics: Whether to enable metrics. Defaults to None.
+            network: The network to use. Defaults to None.
+            tls_verify: The TLS verification mode. Defaults to None.
+            tcp_keep_alive_interval: The interval for TCP keep-alive. Defaults to None.
+            config_poll_interval: The interval for config polling. Defaults to None.
+            config_poll_floor: The floor for config polling. Defaults to None.
+            max_http_connections: The maximum number of HTTP connections. Defaults to None.
+            user_agent_extra: Extra user agent information. Defaults to None.
+            logging_meter_emit_interval: The interval for logging meter emission. Defaults to None.
+            log_redaction: Whether to redact logs. Defaults to None.
+            compression: The compression to use. Defaults to None.
+            compression_min_size: The minimum size for compression. Defaults to None.
+            compression_min_ratio: The minimum ratio for compression. Defaults to None.
+            dns_nameserver: The DNS nameserver to use. Defaults to None.
+            dns_port: The DNS port to use. Defaults to None.
+            disable_mozilla_ca_certificates: Whether to disable Mozilla CA certificates. Defaults to None.
+            dump_configuration: Whether to dump configuration. Defaults to None.
+        """
 
     @overload
     def __init__(self, **kwargs):
-        """ClusterOptions instance."""
+        """Initialize CouchbaseClusterOptions with keyword arguments.
+
+        Any parameter accepted by the explicit overload can be passed as a keyword argument.
+        """
 
     def __init__(self, **kwargs):
+        """Initialize CouchbaseClusterOptions by passing all keyword arguments to the parent dictionary class."""
         super().__init__(**kwargs)
 
     def get_cluster_options(
         self, auth: Union[CouchbasePasswordAuthenticator, CouchbaseCertificateAuthenticator]
     ) -> "ClusterOptions":
+        """Creates a ClusterOptions object with the provided authenticator.
+
+        Args:
+            auth: The authenticator to use for the Couchbase cluster.
+
+        Returns:
+            A ClusterOptions object configured with the provided authenticator and any other options.
+        """
+
         options = list(self.keys())
         obj = {}
         obj["authenticator"] = auth
@@ -156,13 +227,11 @@ class CouchbaseClusterOptions(dict):
         return ClusterOptions(**obj)
 
     def to_dict(self) -> Dict[str, Any]:
-        """
-        Serializes the component to a dictionary.
+        """Serializes the component to a dictionary.
 
-        :returns:
+        Returns:
             Dictionary with serialized data.
         """
-
         obj: Dict[str, Any] = {}
 
         # cluster level direct fields includes timeout and trace as they are flattened
@@ -184,14 +253,14 @@ class CouchbaseClusterOptions(dict):
         return default_to_dict(self, **obj)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ClusterOptions":
-        """
-        Deserializes the component from a dictionary.
+    def from_dict(cls, data: Dict[str, Any]) -> "CouchbaseClusterOptions":
+        """Deserializes the component from a dictionary.
 
-        :param data:
-            Dictionary to deserialize from.
-        :returns:
-              Deserialized component.
+        Args:
+            data: Dictionary to deserialize from.
+
+        Returns:
+            Deserialized component.
         """
         obj = {}
         # cluster level direct fields includes timeout and trace as they are flattened

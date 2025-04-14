@@ -16,10 +16,7 @@ nav:
     - License: license.md
   - Code Reference:
     - CouchbaseSearchDocumentStore: reference/document_stores/document_store.md
-    - Authentication:
-      - CouchbaseAuthenticator: reference/document_stores/auth.md
-      - CouchbasePasswordAuthenticator: reference/document_stores/auth.md
-      - CouchbaseCertificateAuthenticator: reference/document_stores/auth.md
+    - Authentication: reference/document_stores/auth.md
     - CouchbaseClusterOptions: reference/document_stores/cluster_options.md
     - Retrievers:
       - CouchbaseSearchEmbeddingRetriever: reference/components/retrievers/embedding_retriever.md

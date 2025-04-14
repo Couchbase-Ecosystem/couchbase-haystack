@@ -16,4 +16,4 @@
 ::: couchbase_haystack.document_stores.auth.CouchbaseCertificateAuthenticator
     options:
       show_root_heading: false
-      heading_level: 3 
+      heading_level: 3

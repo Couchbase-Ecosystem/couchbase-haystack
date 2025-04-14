@@ -32,8 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 class CouchbaseSearchDocumentStore:
-    """
-    CouchbaseSearchDocumentStore is a DocumentStore implementation that uses
+    """CouchbaseSearchDocumentStore is a DocumentStore implementation that uses
     [Couchbase capella](https://cloud.couchbase.com) service that is easy to deploy, operate, and scale.
 
     The document store supports both scope-level and global-level vector search indexes:
@@ -59,21 +58,41 @@ class CouchbaseSearchDocumentStore:
         is_global_level_index: bool = False,
         **kwargs: Dict[str, Any],
     ):
-        """
-        Creates a new CouchbaseSearchDocumentStore instance.
+        """Creates a new CouchbaseSearchDocumentStore instance.
 
-        :param cluster_connection_string: Connection string for the Couchbase cluster
-        :param authenticator: Authentication method (password or certificate based)
-        :param cluster_options: Options for configuring the cluster connection
-        :param bucket: Name of the Couchbase bucket to use
-        :param scope: Name of the scope within the bucket
-        :param collection: Name of the collection within the scope
-        :param vector_search_index: Name of the vector search index to use
-        :param is_global_level_index: If True, uses a global (bucket-level) vector search index that can search across all
-            scopes and collections. If False (default), uses a scope-level index that only searches within the specified scope.
-        :param kwargs: Additional keyword arguments passed to the Cluster constructor
+        Parameters:
+            cluster_connection_string:
+                Connection string for the Couchbase cluster
 
-        :raises ValueError: If the collection name contains invalid characters.
+            authenticator:
+                Authentication method (password or certificate based)
+
+            cluster_options:
+                Options for configuring the cluster connection
+
+            bucket:
+                Name of the Couchbase bucket to use
+
+            scope:
+                Name of the scope within the bucket
+
+            collection:
+                Name of the collection within the scope
+
+            vector_search_index:
+                Name of the vector search index to use
+
+            is_global_level_index:
+                If True, uses a global (bucket-level) vector search index that can search across all
+                scopes and collections. If False (default), uses a scope-level index that only searches
+                within the specified scope.
+
+            kwargs:
+                Additional keyword arguments passed to the Cluster constructor
+
+        Raises:
+            ValueError:
+                If the collection name contains invalid characters.
         """
         if collection and not bool(re.match(r"^[a-zA-Z0-9\-_]+$", collection)):
             msg = f'Invalid collection name: "{collection}". It can only contain letters, numbers, -, or _.'
@@ -135,10 +154,9 @@ class CouchbaseSearchDocumentStore:
         return self._collection
 
     def to_dict(self) -> Dict[str, Any]:
-        """
-        Serializes the component to a dictionary.
+        """Serializes the component to a dictionary.
 
-        :returns:
+        Returns:
             Dictionary with serialized data.
         """
         return default_to_dict(
@@ -156,13 +174,14 @@ class CouchbaseSearchDocumentStore:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "CouchbaseSearchDocumentStore":
-        """
-        Deserializes the component from a dictionary.
+        """Deserializes the component from a dictionary.
 
-        :param data:
-            Dictionary to deserialize from.
-        :returns:
-              Deserialized component.
+        Args:
+            data:
+                Dictionary to deserialize from.
+
+        Returns:
+            Deserialized component.
         """
         if data["init_parameters"]["authenticator"]["type"] == generate_qualified_class_name(CouchbasePasswordAuthenticator):
             data["init_parameters"]["authenticator"] = CouchbasePasswordAuthenticator.from_dict(
@@ -177,33 +196,35 @@ class CouchbaseSearchDocumentStore:
         return default_from_dict(cls, data)
 
     def _get_search_interface(self):
-        """
-        Returns the appropriate search interface based on the index level configuration.
+        """Returns the appropriate search interface based on the index level configuration.
 
-        :returns: Either scope.search_indexes() for scope-level or connection.search_indexes() for global-level
+        Returns:
+            Either scope.search_indexes() for scope-level or connection.search_indexes() for global-level
         """
         if not self.is_global_level_index:
             return self.scope.search_indexes()
         return self.connection.search_indexes()
 
     def count_documents(self) -> int:
-        """
-        Returns how many documents are present in the document store.
+        """Returns how many documents are present in the document store.
 
-        :returns: The number of documents in the document store.
+        Returns:
+            The number of documents in the document store.
         """
         search_interface = self._get_search_interface()
         return search_interface.get_indexed_documents_count(self.vector_search_index)
 
     def filter_documents(self, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
-        """
-        Returns the documents that match the filters provided.
+        """Returns the documents that match the filters provided.
 
         For a detailed specification of the filters,
         refer to the Haystack [documentation](https://docs.haystack.deepset.ai/v2.0/docs/metadata-filtering).
 
-        :param filters: The filters to apply. It returns only the documents that match the filters.
-        :returns: A list of Documents that match the given filters.
+        Args:
+            filters: The filters to apply. It returns only the documents that match the filters.
+
+        Returns:
+            A list of Documents that match the given filters.
         """
         search_filters: SearchQuery
         if filters:
@@ -222,17 +243,20 @@ class CouchbaseSearchDocumentStore:
         return self.__get_doc_from_kv(response)
 
     def write_documents(self, documents: List[Document], policy: DuplicatePolicy = DuplicatePolicy.NONE) -> int:
-        """
-        Writes documents into the couchbase collection.
+        """Writes documents into the couchbase collection.
 
-        :param documents: A list of Documents to write to the document store.
-        :param policy: The duplicate policy to use when writing documents.
-        :raises DuplicateDocumentError: If a document with the same ID already exists in the document store
-             and the policy is set to DuplicatePolicy.FAIL (or not specified).
-        :raises ValueError: If the documents are not of type Document.
-        :returns: The number of documents written to the document store.
-        """
+        Args:
+            documents: A list of Documents to write to the document store.
+            policy: The duplicate policy to use when writing documents.
 
+        Raises:
+            DuplicateDocumentError: If a document with the same ID already exists in the document store
+                and the policy is set to DuplicatePolicy.FAIL (or not specified).
+            ValueError: If the documents are not of type Document.
+
+        Returns:
+            The number of documents written to the document store.
+        """
         if len(documents) > 0:
             if not isinstance(documents[0], Document):
                 msg = "param 'documents' must contain a list of objects of type Document"
@@ -286,10 +310,10 @@ class CouchbaseSearchDocumentStore:
         return written_docs
 
     def delete_documents(self, document_ids: List[str]) -> None:
-        """
-        Deletes all documents with a matching document_ids from the document store.
+        """Deletes all documents with a matching document_ids from the document store.
 
-        :param document_ids: the document ids to delete
+        Args:
+            document_ids: the document ids to delete
         """
         if not document_ids:
             return
@@ -302,17 +326,21 @@ class CouchbaseSearchDocumentStore:
         search_query: SearchQuery = None,
         limit: Optional[int] = None,
     ) -> List[Document]:
-        """
-        Find the documents that are most similar to the provided `query_embedding` by using a vector similarity metric.
+        """Find the documents that are most similar to the provided `query_embedding` by using a vector similarity metric.
 
-        :param query_embedding: Embedding of the query
-        :param top_k: How many documents to be returned by the vector query
-        :param search_query: Search filters param which is parsed to the Couchbase search query. The vector query and
-        search query are ORed operation.
-        :param limit: Maximum number of Documents to return. Defaults to top_k if not specified.
-        :returns: A list of Documents that are most similar to the given `query_embedding`
-        :raises ValueError: If `query_embedding` is empty
-        :raises DocumentStoreError: If the retrieval of documents from Couchbase fails
+        Args:
+            query_embedding: Embedding of the query
+            top_k: How many documents to be returned by the vector query
+            search_query: Search filters param which is parsed to the Couchbase search query. The vector query and
+                search query are ORed operation.
+            limit: Maximum number of Documents to return. Defaults to top_k if not specified.
+
+        Returns:
+            A list of Documents that are most similar to the given `query_embedding`
+
+        Raises:
+            ValueError: If `query_embedding` is empty
+            DocumentStoreError: If the retrieval of documents from Couchbase fails
         """
         if not query_embedding:
             msg = "Query embedding must not be empty"
@@ -337,6 +365,17 @@ class CouchbaseSearchDocumentStore:
         return self.__get_doc_from_kv(response)
 
     def __get_doc_from_kv(self, response: SearchResult) -> List[Document]:
+        """Gets documents from Couchbase KV store based on search results.
+
+        Args:
+            response: Search results from Couchbase
+
+        Returns:
+            List of Document objects
+
+        Raises:
+            DocumentStoreError: If retrieving documents from Couchbase fails
+        """
         documents: List[Document] = []
         ids: List[str] = []
         scores: List[float] = []

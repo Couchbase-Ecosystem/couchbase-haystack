@@ -12,8 +12,7 @@ from couchbase_haystack.document_stores import CouchbaseSearchDocumentStore
 
 @component
 class CouchbaseSearchEmbeddingRetriever:
-    """
-    Retrieves documents from the CouchbaseSearchDocumentStore by embedding similarity.
+    """Retrieves documents from the CouchbaseSearchDocumentStore by embedding similarity.
 
     The similarity is dependent on the vector_search_index used in the CouchbaseSearchDocumentStore and the chosen metric
     during the creation of the index (i.e. dot product, or l2 norm). See CouchbaseSearchDocumentStore for more
@@ -54,8 +53,7 @@ class CouchbaseSearchEmbeddingRetriever:
         document_store: CouchbaseSearchDocumentStore,
         top_k: int = 10,
     ):
-        """
-        Create the CouchbaseSearchDocumentStore component.
+        """Create the CouchbaseSearchDocumentStore component.
 
         Note: Currently, the filter option is not supported with embedding queries.
         Instead, you can provide a couchbase search query while running the embedding query.
@@ -76,10 +74,9 @@ class CouchbaseSearchEmbeddingRetriever:
         self.top_k = top_k
 
     def to_dict(self) -> Dict[str, Any]:
-        """
-        Serializes the component to a dictionary.
+        """Serializes the component to a dictionary.
 
-        :returns:
+        Returns:
             Dictionary with serialized data.
         """
         return default_to_dict(
@@ -90,13 +87,13 @@ class CouchbaseSearchEmbeddingRetriever:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "CouchbaseSearchDocumentStore":
-        """
-        Deserializes the component from a dictionary.
+        """Deserializes the component from a dictionary.
 
-        :param data:
-            Dictionary to deserialize from.
-        :returns:
-              Deserialized component.
+        Args:
+            data: Dictionary to deserialize from.
+
+        Returns:
+            Deserialized component.
         """
         data["init_parameters"]["document_store"] = CouchbaseSearchDocumentStore.from_dict(
             data["init_parameters"]["document_store"]
@@ -111,8 +108,7 @@ class CouchbaseSearchEmbeddingRetriever:
         search_query: Optional[SearchQuery] = None,
         limit: Optional[int] = None,
     ) -> Dict[str, List[Document]]:
-        """
-        Retrieve documents from the CouchbaseSearchDocumentStore, based on the provided embedding similarity.
+        """Retrieve documents from the CouchbaseSearchDocumentStore, based on the provided embedding similarity.
 
         Args:
             query_embedding: Embedding of the query.
