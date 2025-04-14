@@ -116,9 +116,9 @@ class CouchbaseSearchEmbeddingRetriever:
 
         Args:
             query_embedding: Embedding of the query.
-            top_k: Maximum number of Documents to be returned from vector query. 
+            top_k: Maximum number of Documents to be returned from vector query.
                   Overrides the value specified at initialization.
-            search_query: Search filters param which is parsed to the Couchbase search query. 
+            search_query: Search filters param which is parsed to the Couchbase search query.
                         The vector query and search query are ORed operation.
             limit: Maximum number of Documents to be return by the couchbase fts search request.
                   Default value is top_k.
@@ -130,9 +130,6 @@ class CouchbaseSearchEmbeddingRetriever:
         top_k = top_k or self.top_k
 
         docs = self.document_store._embedding_retrieval(
-            query_embedding=query_embedding, 
-            top_k=top_k, 
-            search_query=search_query, 
-            limit=limit
+            query_embedding=query_embedding, top_k=top_k, search_query=search_query, limit=limit
         )
         return {"documents": docs}
