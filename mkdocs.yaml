@@ -26,6 +26,7 @@ nav:
 theme:
   name: material
   logo: assets/logo.svg
+  favicon: assets/logo.svg
   features:
     - navigation.tabs
     - navigation.tabs.sticky
@@ -74,7 +75,7 @@ plugins:
             - https://docs.python.org/3/objects.inv
             - https://mkdocstrings.github.io/objects.inv
             - https://mkdocstrings.github.io/griffe/objects.inv
-            - https://neo4j.com/docs/api/python-driver/current/objects.inv
+            - https://docs.couchbase.com/sdk-api/couchbase-python-client/objects.inv
           options:
             docstring_options:
               ignore_init_summary: yes
