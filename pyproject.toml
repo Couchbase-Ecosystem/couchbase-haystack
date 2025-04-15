@@ -57,6 +57,7 @@ git_describe_command = 'git describe --tags --match="v[0-9]*"'
 [tool.hatch.envs.default]
 extra-dependencies = [
     "pytest",
+    "pandas",
     "sentence-transformers",
 ]
 
