@@ -15,6 +15,7 @@ try:
 except ImportError:
 
     class DataFrame:
+        """Fallback DataFrame class that raises an ImportError if pandas is not installed."""
         # Override __new__ and __init__ so that any attempt to create a DataFrame raises an error.
         def __new__(cls, *_args, **_kwargs):
             raise ImportError("pandas is required to use DataFrame functionality.")
