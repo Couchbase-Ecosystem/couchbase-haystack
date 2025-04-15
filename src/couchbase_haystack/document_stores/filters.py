@@ -13,11 +13,13 @@ from haystack.errors import FilterError
 try:
     from pandas import DataFrame
 except ImportError:
-    class DataFrame():
+
+    class DataFrame:
         # Override __new__ and __init__ so that any attempt to create a DataFrame raises an error.
-        def __new__(cls, *args, **kwargs):
+        def __new__(cls, *_args, **_kwargs):
             raise ImportError("pandas is required to use DataFrame functionality.")
-        def __init__(self, *args, **kwargs):
+
+        def __init__(self, *_args, **_kwargs):
             raise ImportError("pandas is required to use DataFrame functionality.")
 
 
