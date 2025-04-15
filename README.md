@@ -335,7 +335,7 @@ You can find more examples in the implementation [repository](examples):
 `couchbase-haystack` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license.
 ---
 
-# 📢 Support Policy
+## 📢 Support Policy
 
 We truly appreciate your interest in this project!  
 This project is **community-maintained**, which means it's **not officially supported** by our support team.
