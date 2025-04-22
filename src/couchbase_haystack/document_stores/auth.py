@@ -68,10 +68,12 @@ class CouchbasePasswordAuthenticator(CouchbaseAuthenticator):
 
 class CouchbaseCertificateAuthenticator(dict):
     """
+    Certificate-based authenticator for Couchbase.
+
     Args:
-        username (str): Username to use for authentication.
-        password (str): Password to use for authentication.
-        cert_path (str): Path of the certificate trust store. Defaults to None.
+        cert_path (str): Path to the client certificate file. Defaults to None.
+        key_path (str): Path to the client key file. Defaults to None.
+        trust_store_path (str): Path to the certificate trust store. Defaults to None.
     """
 
     def __init__(self, cert_path: Optional[str] = None, key_path: Optional[str] = None, trust_store_path: Optional[str] = None):
@@ -98,7 +100,7 @@ class CouchbaseCertificateAuthenticator(dict):
         return default_to_dict(self, cert_path=self.cert_path, key_path=self.key_path, trust_store_path=self.trust_store_path)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "CouchbasePasswordAuthenticator":
+    def from_dict(cls, data: Dict[str, Any]) -> "CouchbaseCertificateAuthenticator":
         """
         Deserializes the component from a dictionary.
 

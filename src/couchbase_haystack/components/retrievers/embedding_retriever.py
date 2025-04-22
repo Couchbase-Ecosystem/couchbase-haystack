@@ -20,12 +20,14 @@ class CouchbaseSearchEmbeddingRetriever:
     information.
 
     Usage example:
+
     ```python
     import numpy as np
     from couchbase_haystack import CouchbaseSearchDocumentStore, CouchbaseSearchEmbeddingRetriever, CouchbasePasswordAuthenticator
     from haystack.utils import Secret
 
-    store = CouchbaseSearchDocumentStore(cluster_connection_string=Secret.from_env_var("CB_CONNECTION_STRING"),
+    store = CouchbaseSearchDocumentStore(
+        cluster_connection_string=Secret.from_env_var("CB_CONNECTION_STRING"),
         authenticator=CouchbasePasswordAuthenticator(
             username=Secret.from_env_var("CB_USERNAME"),
             password=Secret.from_env_var("CB_PASSWORD")
@@ -33,7 +35,8 @@ class CouchbaseSearchEmbeddingRetriever:
         bucket="haystack_test_bucket",
         scope="scope_name",
         collection="collection_name",
-        vector_search_index="vector_index")
+        vector_search_index="vector_index"
+    )
     retriever = CouchbaseSearchEmbeddingRetriever(document_store=store)
 
     results = retriever.run(query_embedding=np.random.random(768).tolist())
@@ -58,10 +61,12 @@ class CouchbaseSearchEmbeddingRetriever:
         Instead, you can provide a couchbase search query while running the embedding query.
         The embedding query and search query are combined using an OR operation.
 
-        :param document_store: An instance of CouchbaseSearchDocumentStore.
-        :param top_k: Maximum number of Documents to return.
+        Args:
+            document_store: An instance of CouchbaseSearchDocumentStore.
+            top_k: Maximum number of Documents to return.
 
-        :raises ValueError: If `document_store` is not an instance of `CouchbaseSearchDocumentStore`.
+        Raises:
+            ValueError: If document_store is not an instance of CouchbaseSearchDocumentStore.
         """
         if not isinstance(document_store, CouchbaseSearchDocumentStore):
             msg = "document_store must be an instance of CouchbaseSearchDocumentStore"
@@ -109,20 +114,19 @@ class CouchbaseSearchEmbeddingRetriever:
         """
         Retrieve documents from the CouchbaseSearchDocumentStore, based on the provided embedding similarity.
 
-        :param query_embedding: Embedding of the query.
-        :param filters: Filters applied to the retrieved Documents. The way runtime filters are applied depends on
-                        the `filter_policy` chosen at document store initialization. See init method docstring for more
-                        details.
-        :param top_k: Maximum number of Documents to be returned from vector query. Overrides the value specified at
-        initialization.
-        :param search: Search filters param which is parsed to the Couchbase search query. The vector
-        query and search query are ORed operation.
-        :param limit: Maximum number of Documents to be return by the couchbase fts search request.
-        Default value is top_k.
-        :returns: A dictionary with the following keys:
-            - `documents`: List of Documents most similar to the given `query_embedding`
-        """
+        Args:
+            query_embedding: Embedding of the query.
+            top_k: Maximum number of Documents to be returned from vector query.
+                  Overrides the value specified at initialization.
+            search_query: Search filters param which is parsed to the Couchbase search query.
+                        The vector query and search query are ORed operation.
+            limit: Maximum number of Documents to be return by the couchbase fts search request.
+                  Default value is top_k.
 
+        Returns:
+            A dictionary with the following keys:
+            - documents: List of Documents most similar to the given query_embedding
+        """
         top_k = top_k or self.top_k
 
         docs = self.document_store._embedding_retrieval(
