@@ -67,7 +67,7 @@ class TestSQLFilters:
         assert normalize_sql_filters(comparison_filters["equality"]) == "name = 'John Doe'"
         
         # Inequality
-        assert normalize_sql_filters(comparison_filters["inequality"]) == "status != 'done'"
+        assert normalize_sql_filters(comparison_filters["inequality"]) == "(status != 'done' OR status IS MISSING)"
         
         # Greater than
         assert normalize_sql_filters(comparison_filters["greater_than"]) == "score > 80"
@@ -85,11 +85,11 @@ class TestSQLFilters:
         assert normalize_sql_filters(comparison_filters["in_operator"]) == "status IN ['open', 'pending']"
         
         # Not in operator
-        assert normalize_sql_filters(comparison_filters["not_in_operator"]) == "status NOT IN ['closed', 'rejected']"
+        assert normalize_sql_filters(comparison_filters["not_in_operator"]) == "(status NOT IN ['closed', 'rejected'] OR status IS MISSING)"
         
         # NULL values
-        assert normalize_sql_filters(comparison_filters["null_equality"]) == "description IS NULL"
-        assert normalize_sql_filters(comparison_filters["null_inequality"]) == "description IS NOT NULL"
+        assert normalize_sql_filters(comparison_filters["null_equality"]) == "(description IS NULL OR description IS MISSING)"
+        assert normalize_sql_filters(comparison_filters["null_inequality"]) == "(description IS NOT NULL AND description IS NOT MISSING)"
 
     def test_logical_operators(self, logical_filters):
         """Test all logical operators"""
@@ -99,11 +99,6 @@ class TestSQLFilters:
         # OR operator
         assert normalize_sql_filters(logical_filters["or_filter"]) == "(category = 'books' OR category = 'magazines')"
         
-        # NOT operator with single condition
-        assert normalize_sql_filters(logical_filters["not_filter_single"]) == "(NOT is_deleted = true)"
-        
-        # NOT operator with multiple conditions
-        assert normalize_sql_filters(logical_filters["not_filter_multiple"]) == "(NOT status = 'closed' AND NOT status = 'rejected')"
         
         # Empty conditions
         assert normalize_sql_filters(logical_filters["empty_conditions"]) == "TRUE"
@@ -126,7 +121,7 @@ class TestSQLFilters:
         
         # Value is a list for inequality
         filters = {"field": "tags", "operator": "!=", "value": ["red", "blue"]}
-        expected = "(tags != 'red' AND tags != 'blue')"
+        expected = "((tags != 'red' OR tags IS MISSING) AND (tags != 'blue' OR tags IS MISSING))"
         assert normalize_sql_filters(filters) == expected
 
     def test_error_cases(self, invalid_filters):
@@ -173,7 +168,7 @@ class TestSQLFilters:
         assert normalize_sql_filters(date_filters["less_than"]) == f"created_at < '{date_str}'"
         assert normalize_sql_filters(date_filters["less_than_equal"]) == f"created_at <= '{date_str}'"
         assert normalize_sql_filters(date_filters["equality"]) == f"created_at = '{date_str}'"
-        assert normalize_sql_filters(date_filters["inequality"]) == f"created_at != '{date_str}'"
+        assert normalize_sql_filters(date_filters["inequality"]) == f"(created_at != '{date_str}' OR created_at IS MISSING)"
 
     def test_complex_nested_field_paths(self, field_path_filters):
         """Test complex nested field paths"""
@@ -202,13 +197,6 @@ class TestSQLFilters:
                         {"field": "category", "operator": "in", "value": ["fiction", "biography"]},
                         {"field": "rating", "operator": ">=", "value": 4.5}
                     ]
-                },
-                {
-                    "operator": "NOT",
-                    "conditions": [
-                        {"field": "is_deleted", "operator": "==", "value": True},
-                        {"field": "status", "operator": "==", "value": "archived"}
-                    ]
                 }
             ]
         }
@@ -220,8 +208,7 @@ class TestSQLFilters:
         expected = (
             "(metadata.`year` >= 2020 AND "
             "metadata.`author` = 'Jane Doe' AND "
-            "(category IN ['fiction', 'biography'] OR rating >= 4.5) AND "
-            "(NOT is_deleted = true AND NOT status = 'archived'))"
+            "(category IN ['fiction', 'biography'] OR rating >= 4.5))"
         )
         
         # Compare by normalizing whitespace in both strings

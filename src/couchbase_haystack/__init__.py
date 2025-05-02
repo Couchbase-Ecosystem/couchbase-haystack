@@ -15,10 +15,10 @@ from couchbase_haystack.document_stores import (
     CouchbaseClusterOptions,
     CouchbasePasswordAuthenticator,
     CouchbaseSearchDocumentStore,
-    CouchbaseGSIDocumentStore,
-    IndexParams,
-    IndexType,
-    VectorSimilarityMetric
+    CouchbaseQueryDocumentStore,
+    QueryVectorSearchFunctionParams,
+    QueryVectorSearchType,
+    CouchbaseQueryOptions,
 )
 
 __all__ = [
@@ -28,8 +28,8 @@ __all__ = [
     "CouchbasePasswordAuthenticator",
     "CouchbaseSearchDocumentStore",
     "CouchbaseSearchEmbeddingRetriever",
-    "CouchbaseGSIDocumentStore",
-    "IndexParams",
-    "IndexType",
-    "VectorSimilarityMetric"
+    "CouchbaseQueryDocumentStore",
+    "QueryVectorSearchFunctionParams",
+    "QueryVectorSearchType",
+    "CouchbaseQueryOptions",
 ]

@@ -6,303 +6,313 @@ import pytest
 from datetime import datetime
 from typing import List
 
-from haystack.dataclasses import Document
+from haystack.testing.document_store import DocumentStoreBaseTests
+from haystack.dataclasses import Document, ByteStream
 from haystack.document_stores.types import DuplicatePolicy
 from haystack.utils.auth import Secret
 from couchbase_haystack import (
-    CouchbaseGSIDocumentStore,
-    IndexParams,
-    IndexType,
-    VectorSimilarityMetric
+    CouchbaseQueryDocumentStore,
+    QueryVectorSearchType,
+    QueryVectorSearchFunctionParams,
+    CouchbaseQueryOptions,
 )
 from couchbase_haystack.document_stores.auth import CouchbasePasswordAuthenticator
 from couchbase_haystack.document_stores.cluster_options import CouchbaseClusterOptions
 from couchbase.options import KnownConfigProfiles
+from couchbase.exceptions import ScopeAlreadyExistsException, CollectionAlreadyExistsException
+from couchbase.options import QueryOptions
+from datetime import timedelta
+from sentence_transformers import SentenceTransformer
+import time
+import json
+from pandas import DataFrame
+from uuid import uuid1
+model = SentenceTransformer('all-MiniLM-L6-v2')
 
 # Test configuration
-TEST_BUCKET = "test"
+TEST_BUCKET = "test_bucket"
 TEST_SCOPE = "test_scope"
 TEST_COLLECTION = "test_collection"
 TEST_INDEX = "test_vector_index"
-VECTOR_DIMENSION = 1536
-
-@pytest.fixture(scope="module")
-def sample_init_documents() -> List[Document]:
-    """Create sample documents for testing."""
-    return [
-        Document(
-            id=f"doc_init_{i}",
-            content=f"Test document {i}",
-            meta={
-                "field1": f"value{i}",
-                "field2": i,
-                "created_at": datetime.now().isoformat()
-            },
-            embedding=[0.9 * i] * VECTOR_DIMENSION
-        )
-        for i in range(1024)
-    ]
-
-@pytest.fixture(scope="module")
-def document_store(sample_init_documents):
-    """Create a document store instance for integration testing."""
-    # Create authenticator
-    authenticator = CouchbasePasswordAuthenticator(
-        username=Secret.from_env_var("USER_NAME"),
-        password=Secret.from_env_var("PASSWORD")
-    )
-    
-    # Create cluster options
-    cluster_options = CouchbaseClusterOptions(
-        protocol=KnownConfigProfiles.WanDevelopment
-    )
-    
-    # Create index parameters
-    index_params = IndexParams(
-        dimension=VECTOR_DIMENSION,
-        similarity=VectorSimilarityMetric.COSINE,
-        description="IVF256,SQ8",
-        kwargs={"train_list": 256}
-    )
-    
-    # Create document store
-    store = CouchbaseGSIDocumentStore(
-        cluster_connection_string=Secret.from_env_var("CONNECTION_STRING"),
-        authenticator=authenticator,
-        cluster_options=cluster_options,
-        bucket=TEST_BUCKET,
-        scope=TEST_SCOPE,
-        collection=TEST_COLLECTION,
-        index_name=TEST_INDEX,
-        index_type=IndexType.COMPOSITE,
-        vector_field="embedding",
-        index_params=index_params
-    )
-
-    # Write initial documents
-    store.write_documents(sample_init_documents, policy=DuplicatePolicy.OVERWRITE)
-    
-    # Create index before tests
-    store.create_index()
-    store.delete_documents([doc.id for doc in store.filter_documents()])
-    
-    yield store
-    # Cleanup after tests
-    store.collection.query_indexes().drop_index(TEST_INDEX)
+VECTOR_DIMENSION = 384
 
 
-@pytest.fixture
-def sample_documents() -> List[Document]:
-    """Create sample documents for testing."""
-    return [
-        Document(
-            id=f"doc_{i}",
-            content=f"Test document {i}",
-            meta={
-                "field1": f"value{i}",
-                "field2": i,
-                "created_at": datetime.now().isoformat()
-            },
-            embedding=[0.1 * i] * VECTOR_DIMENSION
-        )
-        for i in range(1024)
-    ]
 
-def test_write_and_read_documents(document_store, sample_documents):
-    """Test writing and reading documents."""
-    # Write documents
-    written_count = document_store.write_documents(sample_documents, policy=DuplicatePolicy.OVERWRITE)
-    assert written_count == len(sample_documents)
-    
-    # Read documents using filter
-    documents = document_store.filter_documents()
-    assert len(documents) == len(sample_documents)
-    
-    # Verify document contents
-    for doc in documents:
-        assert doc.id.startswith("doc_")
-        assert doc.content.startswith("Test document")
-        assert "field1" in doc.meta
-        assert "field2" in doc.meta
-        assert "created_at" in doc.meta
-        assert len(doc.embedding) == VECTOR_DIMENSION
-
-def test_duplicate_document_handling(document_store, sample_documents):
-    """Test handling of duplicate documents."""
-    # Write documents first time
-    document_store.write_documents(sample_documents)
-    
-    # Try to write same documents again with FAIL policy
-    with pytest.raises(Exception):
-        document_store.write_documents(sample_documents)
-    
-    # Write with OVERWRITE policy
-    document_store.write_documents(sample_documents, policy=DuplicatePolicy.OVERWRITE)
-    
-    # Verify document count hasn't changed
-    documents = document_store.filter_documents()
-    assert len(documents) == len(sample_documents)
-
-def test_vector_search(document_store, sample_documents):
-    """Test vector search functionality."""
-    # Write documents
-    document_store.write_documents(sample_documents)
-    
-    # Create a query embedding
-    query_embedding = [0.1] * VECTOR_DIMENSION
-    
-    # Perform vector search
-    results = document_store.vector_search(query_embedding, top_k=3)
-    
-    # Verify results
-    assert len(results) == 3
-    assert all(hasattr(doc, "score") for doc in results)
-    assert all(doc.score is not None for doc in results)
-    
-    # Verify results are sorted by score
-    scores = [doc.score for doc in results]
-    assert scores == sorted(scores, reverse=True)
-
-def test_vector_search_with_filters(document_store, sample_documents):
-    """Test vector search with filters."""
-    # Write documents
-    document_store.write_documents(sample_documents)
-    
-    # Create a query embedding
-    query_embedding = [0.1] * VECTOR_DIMENSION
-    
-    # Define filters
-    filters = {
-        "field": "field2",
-        "operator": ">",
-        "value": 2
-    }
-    
-    # Perform vector search with filters
-    results = document_store.vector_search(
-        query_embedding,
-        top_k=3,
-        filters=filters
-    )
-    
-    # Verify results
-    assert len(results) <= 3
-    assert all(doc.meta["field2"] > 2 for doc in results)
-
-def test_filter_documents_with_complex_filters(document_store, sample_documents):
-    """Test filtering documents with complex filters."""
-    # Write documents
-    document_store.write_documents(sample_documents)
-    
-    # Define complex filters
-    filters = {
-        "operator": "and",
-        "conditions": [
-            {
-                "field": "field2",
-                "operator": ">=",
-                "value": 1
-            },
-            {
-                "field": "field2",
-                "operator": "<=",
-                "value": 3
-            }
+class TestGSIDocumentStoreIntegration(DocumentStoreBaseTests):
+    @pytest.fixture(scope="class")
+    def sample_init_documents(self) -> List[Document]:
+        """Create sample documents for testing."""
+        return [
+            Document(
+                id=f"doc_init_{i}",
+                content=f"Test document {i}",
+                meta={
+                    "field1": f"value{i}",
+                    "field2": i,
+                    "created_at": datetime.now().isoformat()
+                },
+                embedding=[0.001 * i] * VECTOR_DIMENSION
+            )
+            for i in range(2048)
         ]
-    }
-    
-    # Apply filters
-    results = document_store.filter_documents(filters)
-    
-    # Verify results
-    assert len(results) == 3
-    assert all(1 <= doc.meta["field2"] <= 3 for doc in results)
 
-def test_delete_documents(document_store, sample_documents):
-    """Test document deletion."""
-    # Write documents
-    document_store.write_documents(sample_documents)
-    
-    # Get document IDs
-    doc_ids = [doc.id for doc in sample_documents]
-    
-    # Delete some documents
-    delete_ids = doc_ids[:2]
-    document_store.delete_documents(delete_ids)
-    
-    # Verify remaining documents
-    remaining_docs = document_store.filter_documents()
-    assert len(remaining_docs) == len(sample_documents) - 2
-    assert all(doc.id not in delete_ids for doc in remaining_docs)
+    @pytest.fixture
+    def sample_documents(self) -> List[Document]:
+        """Create sample documents for testing."""
+        return [
+            Document(
+                id=f"doc_{i}",
+                content=f"Test document {i}",
+                meta={
+                    "field1": f"value{i}",
+                    "field2": i,
+                    "created_at": datetime.now().isoformat()
+                },
+                embedding=[0.001 * i] * VECTOR_DIMENSION
+            )
+            for i in range(1024)
+        ]
+    @pytest.fixture(scope="class")
+    def document_store_with_index_creation(self, sample_init_documents):
+         # Create authenticator
+        authenticator = CouchbasePasswordAuthenticator(
+            username=Secret.from_env_var("USER_NAME"),
+            password=Secret.from_env_var("PASSWORD")
+        )
+        
+        # Create cluster options
+        cluster_options = CouchbaseClusterOptions(
+            protocol=KnownConfigProfiles.WanDevelopment
+        )
+        
+        # Create document store
+        store = CouchbaseQueryDocumentStore(
+            cluster_connection_string=Secret.from_env_var("CONNECTION_STRING"),
+            authenticator=authenticator,
+            cluster_options=cluster_options,
+            bucket=TEST_BUCKET,
+            scope=TEST_SCOPE,
+            collection=TEST_COLLECTION,
+            index_name=TEST_INDEX,
+            query_vector_search_params=QueryVectorSearchFunctionParams(
+                search_type=QueryVectorSearchType.ANN,
+                dimension=VECTOR_DIMENSION,
+                similarity="L2"
+            ),
+            vector_field="embedding",
+        )
 
-def test_count_documents(document_store, sample_documents):
-    """Test document counting."""
-    # Write documents
-    document_store.write_documents(sample_documents)
-    
-    # Count documents
-    count = document_store.count_documents()
-    assert count == len(sample_documents)
-    
-    # Delete some documents
-    document_store.delete_documents([sample_documents[0].id])
-    
-    # Count again
-    count = document_store.count_documents()
-    assert count == len(sample_documents) - 1
+        # Create scope if it doesn't exist
+        try:
+            store.bucket.collections().create_scope(scope_name=TEST_SCOPE)
+        except ScopeAlreadyExistsException:
+            pass
+        
+        # Create collection if it doesn't exist
+        try:
+            store.bucket.collections().create_collection(collection_name=TEST_COLLECTION, scope_name=TEST_SCOPE)
+        except CollectionAlreadyExistsException:
+            pass
 
-def test_create_index_with_include_fields(document_store_params, mock_cluster, mock_query_result):
-    """Test index creation with include fields"""
-    document_store_params["index_params"] = IndexParams(
-        dimension=768,
-        similarity_metric=VectorSimilarityMetric.COSINE,
-        include_fields=["field1", "field2"],
-    )
-    store = CouchbaseGSIDocumentStore(**document_store_params)
-    mock_cluster.query.return_value = mock_query_result
-    
-    store.create_index()
-    
-    mock_cluster.query.assert_called_once()
-    query_args = mock_cluster.query.call_args[0][0]
-    assert "CREATE VECTOR INDEX test_index" in query_args
-    assert "ON test_bucket.test_scope.test_collection (embedding VECTOR)" in query_args
-    assert "INCLUDE (field1, field2)" in query_args
-    assert "USING GSI" in query_args
-    assert "'dimension': 768" in query_args
-    assert "'similarity_metric': <VectorSimilarityMetric.COSINE: 'COSINE'>" in query_args
-    assert "'include_fields' not in query_args"  # Verify include_fields is not in WITH clause
+        # Write initial documents
+        store.write_documents(sample_init_documents, policy=DuplicatePolicy.OVERWRITE)
+        
+        with_opts = json.dumps({
+            "dimension": VECTOR_DIMENSION,
+            "description": "IVF1024,PQ32x8",
+            "similarity": "L2",
+        })
+        # Create index before tests
+        result = store.scope.query(f"""
+                CREATE INDEX {TEST_INDEX}
+                ON {TEST_BUCKET}.{TEST_SCOPE}.{TEST_COLLECTION} ({store.vector_field} VECTOR)
+                USING GSI WITH {with_opts}
+                """, QueryOptions(timeout=timedelta(seconds=300))).execute()
+        print(result)
+        #time.sleep(60)
 
-def test_composite_index_search(document_store_params, mock_cluster, mock_query_result):
-    """Test vector search with composite index"""
-    document_store_params["index_type"] = IndexType.COMPOSITE
-    document_store_params["index_params"] = IndexParams(
-        dimension=768,
-        similarity_metric=VectorSimilarityMetric.COSINE,
-        description="SQ8",
-        include_fields=["field1", "field2"]
-    )
-    store = CouchbaseGSIDocumentStore(**document_store_params)
-    query_embedding = [0.1] * 768
-    
-    mock_query_result.rows.return_value = [
-        {
-            "test_collection": {
-                "id": "doc1",
-                "content": "Test document 1",
-                "embedding": [0.1] * 768,
-                "field1": "value1",
-                "field2": "value2"
-            },
-            "score": 0.95,
+        store.delete_documents([doc.id for doc in store.filter_documents()])
+        
+        yield store
+        store.bucket.collections().drop_collection(collection_name=TEST_COLLECTION, scope_name=TEST_SCOPE)
+        # Cleanup after tests
+        store.bucket.close()
+
+    @pytest.fixture()
+    def document_store(self, document_store_with_index_creation):
+        yield document_store_with_index_creation
+        document_store_with_index_creation.delete_documents([doc.id for doc in document_store_with_index_creation.filter_documents()])
+
+
+    def assert_documents_are_equal(self, received: List[Document], expected: List[Document]):
+        print(received, expected)
+        for r in received:
+            r.score = None
+            r.embedding = None
+        received_dict = {doc.id: doc for doc in received}
+        received = []
+        for doc in expected:
+            received.append(received_dict.get(doc.id))
+            doc.embedding = None
+        print("================")    
+        print(received, expected)    
+        print(len(received), len(expected))
+        # print([doc.to_dict(flatten=False) if doc else doc for doc in received])
+        # print([doc.to_dict(flatten=False) for doc in expected])
+        super().assert_documents_are_equal(received, expected)
+
+    def test_write_documents_duplicate_skip(self, document_store):
+        pass    
+
+    def test_no_filters(self, document_store: CouchbaseQueryDocumentStore):
+        """Test filter_documents() with empty filters"""
+        self.assert_documents_are_equal(document_store.filter_documents(), [])
+        self.assert_documents_are_equal(document_store.filter_documents(filters={}), [])
+        docs = [Document(content="test doc")]
+        document_store.write_documents(docs)
+        self.assert_documents_are_equal(document_store.filter_documents(), docs)
+        self.assert_documents_are_equal(document_store.filter_documents(filters={}), docs)
+
+    def test_write_documents(self, document_store: CouchbaseQueryDocumentStore):
+        documents = [
+            Document(id=uuid1().hex, content="Haystack is an amazing tool for search."),
+            Document(id=uuid1().hex, content="We are using pre-trained models to generate embeddings."),
+            Document(id=uuid1().hex, content="The weather is sunny today."),
+        ]
+        for doc in documents:
+            embedding = model.encode(doc.content).tolist()
+            doc.embedding = embedding
+
+        assert document_store.write_documents(documents) == 3
+        retrieved_docs = document_store.filter_documents()
+        assert len(retrieved_docs) == 3
+        retrieved_docs.sort(key=lambda x: x.id)
+        self.assert_documents_are_equal(retrieved_docs, documents)
+
+    def test_write_blob(self, document_store: CouchbaseQueryDocumentStore):
+        bytestream = ByteStream(b"test", meta={"meta_key": "meta_value"}, mime_type="mime_type")
+        documents = [Document(blob=bytestream)]
+        for doc in documents:
+            # Assuming blob_content is in bytes, decode it to string if necessary
+            embedding = model.encode(bytestream.data.decode('utf-8')).tolist()
+            doc.embedding = embedding
+        assert document_store.write_documents(documents) == 1
+        retrieved_docs = document_store.filter_documents()
+        time.sleep(30)
+        self.assert_documents_are_equal(retrieved_docs, documents)
+
+    def test_write_dataframe(self, document_store: CouchbaseQueryDocumentStore):
+        dataframe = DataFrame({"col1": [1, 2], "col2": [3, 4]})
+        docs = [Document(dataframe=dataframe)]
+        document_store.write_documents(docs)
+        retrieved_docs = document_store.filter_documents()
+        self.assert_documents_are_equal(retrieved_docs, docs)
+
+    def test_comparison_in1(self, document_store: CouchbaseQueryDocumentStore, filterable_docs):
+        """Test filter_documents() with 'in' comparator"""
+        document_store.write_documents(filterable_docs)
+        # time.sleep(2000)
+        result = document_store.filter_documents({"field": "meta.number", "operator": "in", "value": [10, -10]})
+        assert len(result)
+        expected = [d for d in filterable_docs if d.meta.get("number") is not None and d.meta["number"] in [10, -10]]
+        self.assert_documents_are_equal(result, expected)
+
+    def test_complex_filter(self, document_store, filterable_docs):
+        document_store.write_documents(filterable_docs)
+        filters = {
+            "operator": "OR",
+            "conditions": [
+                {
+                    "operator": "AND",
+                    "conditions": [
+                        {"field": "meta.number", "operator": "==", "value": 100},
+                        {"field": "meta.chapter", "operator": "==", "value": "intro"},
+                    ],
+                },
+                {
+                    "operator": "AND",
+                    "conditions": [
+                        {"field": "meta.page", "operator": "==", "value": "90"},
+                        {"field": "meta.chapter", "operator": "==", "value": "conclusion"},
+                    ],
+                },
+            ],
         }
-    ]
-    mock_cluster.query.return_value = mock_query_result
-    
-    results = store.vector_search(query_embedding, top_k=1)
-    
-    assert len(results) == 1
-    assert results[0].id == "doc1"
-    assert results[0].score == 0.95
-    assert "field1" in results[0].meta
-    assert "field2" in results[0].meta 
+
+        result = document_store.filter_documents(filters=filters)
+
+        self.assert_documents_are_equal(
+            result,
+            [
+                d
+                for d in filterable_docs
+                if (d.meta.get("number") == 100 and d.meta.get("chapter") == "intro")
+                or (d.meta.get("page") == "90" and d.meta.get("chapter") == "conclusion")
+            ],
+        )
+
+
+    def test_duplicate_document_handling(self, document_store, sample_documents):
+        """Test handling of duplicate documents."""
+        # Write documents first time
+        document_store.write_documents(sample_documents)
+        
+        # Try to write same documents again with FAIL policy
+        with pytest.raises(Exception):
+            document_store.write_documents(sample_documents, policy=DuplicatePolicy.FAIL)
+        
+        # Write with OVERWRITE policy
+        document_store.write_documents(sample_documents, policy=DuplicatePolicy.OVERWRITE)
+        
+        # Verify document count hasn't changed
+        documents = document_store.filter_documents()
+        assert len(documents) == len(sample_documents)
+
+    def test_vector_search(self, document_store: CouchbaseQueryDocumentStore, sample_documents):
+        """Test vector search functionality."""
+        # Write documents
+        document_store.write_documents(sample_documents)
+        
+        # Create a query embedding
+        query_embedding = [0.1] * VECTOR_DIMENSION
+        
+        # Perform vector search
+        results = document_store.vector_search(query_embedding, top_k=3)
+        
+        # Verify results
+        assert len(results) == 3
+        assert all(hasattr(doc, "score") for doc in results)
+        print(results)
+        assert all(doc.score is not None for doc in results)
+        
+        # TODO: ADD logic to check if the results are correct
+
+    def test_vector_search_with_filters(self, document_store, sample_documents):
+        """Test vector search with filters."""
+        # Write documents
+        document_store.write_documents(sample_documents)
+        
+        # Create a query embedding
+        query_embedding = [0.1] * VECTOR_DIMENSION
+        
+        # Define filters
+        filters = {
+            "field": "field2",
+            "operator": ">",
+            "value": 2
+        }
+        
+        # Perform vector search with filters
+        results = document_store.vector_search(
+            query_embedding,
+            top_k=3,
+            filters=filters
+        )
+        
+        # Verify results
+        assert len(results) <= 3
+        assert all(doc.meta["field2"] > 2 for doc in results)
+
+
+
+

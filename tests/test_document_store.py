@@ -60,7 +60,7 @@ def test_init_is_lazy(_mock_cluster):
     reason="Couchbase cluster password not provided",
 )
 @pytest.mark.integration
-class TestDocumentStore(DocumentStoreBaseTests):
+class TestSearchDocumentStore(DocumentStoreBaseTests):
     @pytest.fixture()
     def document_store(self):
         bucket_name = "haystack_integration_test"
@@ -264,7 +264,7 @@ class MultiResult:
 
 
 @pytest.mark.unit
-class TestDocumentStoreUnit:
+class TestSearchDocumentStoreUnit:
     @pytest.fixture
     def document_store(self):
         with patch("couchbase_haystack.document_stores.document_store.Cluster") as mock_cb_cluster:

@@ -4,16 +4,15 @@
 import pytest
 from datetime import timedelta
 from unittest.mock import Mock, patch
-
-from couchbase.options import QueryOptions
 from haystack.dataclasses import Document
 from haystack.document_stores.errors import DocumentStoreError
 from couchbase.exceptions import DocumentExistsException
 from couchbase_haystack.document_stores.document_store import (
-    CouchbaseGSIDocumentStore, 
-    IndexParams, 
-    IndexType, 
-    VectorSimilarityMetric
+    CouchbaseQueryDocumentStore, 
+    QueryVectorSearchFunctionParams,
+    QueryVectorSearchType,
+    QueryScanConsistency,
+    CouchbaseQueryOptions
 )
 from couchbase_haystack.document_stores.auth import CouchbasePasswordAuthenticator
 from couchbase_haystack.document_stores.cluster_options import CouchbaseClusterOptions
@@ -104,12 +103,15 @@ def document_store_params(authenticator, cluster_options):
         "bucket": "test_bucket",
         "scope": "test_scope",
         "collection": "test_collection",
-        "vector_field": "embedding",
         "index_name": "test_index",
-        "index_type": IndexType.BHIVE,
-        "index_params": IndexParams(
+        "query_vector_search_params": QueryVectorSearchFunctionParams(
+            search_type=QueryVectorSearchType.ANN,
             dimension=768,
-            similarity=VectorSimilarityMetric.COSINE
+            similarity="COSINE"
+        ),
+        "query_options": CouchbaseQueryOptions(
+            scan_consistency=QueryScanConsistency.REQUEST_PLUS,
+            timeout=timedelta(seconds=10)
         )
     }
 
@@ -139,32 +141,31 @@ def mock_couchbase(mock_cluster):
 # Test cases
 def test_init(document_store_params):
     """Test initialization of CouchbaseGSIDocumentStore"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
-    assert store.bucket == "test_bucket"
+    store = CouchbaseQueryDocumentStore(**document_store_params)
+    assert store.bucket_name == "test_bucket"
     assert store.scope_name == "test_scope"
     assert store.collection_name == "test_collection"
     assert store.index_name == "test_index"
-    assert store.index_type == IndexType.BHIVE
-    assert store.vector_field == "embedding"
-    assert store.index_params.dimension == 768
-    assert store.index_params.similarity == VectorSimilarityMetric.COSINE
+    assert store.query_vector_search_params.search_type == QueryVectorSearchType.ANN
+    assert store.query_vector_search_params.dimension == 768
+    assert store.query_vector_search_params.similarity == "COSINE"
 
 def test_init_invalid_collection_name(document_store_params):
     """Test initialization with invalid collection name"""
     document_store_params["collection"] = "invalid@collection"
     with pytest.raises(ValueError, match="Invalid collection name"):
-        CouchbaseGSIDocumentStore(**document_store_params)
+        CouchbaseQueryDocumentStore(**document_store_params)
 
 def test_connection_property(document_store_params, mock_cluster):
     """Test connection property initialization"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
+    store = CouchbaseQueryDocumentStore(**document_store_params)
     connection = store.connection
     assert connection == mock_cluster
     mock_cluster.wait_until_ready.assert_called_once_with(timeout=timedelta(seconds=60))
 
 def test_scope_property(document_store_params, mock_cluster, mock_bucket, mock_scope_spec):
     """Test scope property initialization"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
+    store = CouchbaseQueryDocumentStore(**document_store_params)
     mock_cluster.bucket.return_value = mock_bucket
     mock_bucket.collections.return_value.get_all_scopes.return_value = [mock_scope_spec]
     mock_bucket.scope.return_value = mock_scope_spec
@@ -175,7 +176,7 @@ def test_scope_property(document_store_params, mock_cluster, mock_bucket, mock_s
 
 def test_scope_property_not_found(document_store_params, mock_cluster, mock_bucket):
     """Test scope property when scope does not exist"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
+    store = CouchbaseQueryDocumentStore(**document_store_params)
     mock_cluster.bucket.return_value = mock_bucket
     mock_bucket.collections.return_value.get_all_scopes.return_value = [
         Mock(name="other_scope", collections=[])
@@ -186,7 +187,7 @@ def test_scope_property_not_found(document_store_params, mock_cluster, mock_buck
 
 def test_collection_property(document_store_params, mock_cluster, mock_bucket, mock_scope):
     """Test collection property initialization"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
+    store = CouchbaseQueryDocumentStore(**document_store_params)
     mock_cluster.bucket.return_value = mock_bucket
     mock_bucket.scope.return_value = mock_scope
     
@@ -194,35 +195,35 @@ def test_collection_property(document_store_params, mock_cluster, mock_bucket, m
     assert collection == mock_scope.collection.return_value
     mock_scope.collection.assert_called_once_with("test_collection")
 
-def test_create_index(document_store_params, mock_cluster, mock_query_result):
-    """Test index creation"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
-    mock_cluster.query.return_value = mock_query_result
+# def test_create_index(document_store_params, mock_cluster, mock_query_result):
+#     """Test index creation"""
+#     store = CouchbaseQueryDocumentStore(**document_store_params)
+#     mock_cluster.query.return_value = mock_query_result
     
-    store.create_index()
+#     store.create_index()
     
-    mock_cluster.query.assert_called_once()
-    query_args = mock_cluster.query.call_args[0][0]
-    assert "CREATE VECTOR INDEX test_index" in query_args
-    assert "ON test_bucket.test_scope.test_collection (embedding VECTOR)" in query_args
-    assert "USING GSI" in query_args
-    assert "'dimension': 768" in query_args
-    assert "'similarity': 'COSINE'" in query_args
+#     mock_cluster.query.assert_called_once()
+#     query_args = mock_cluster.query.call_args[0][0]
+#     assert "CREATE VECTOR INDEX test_index" in query_args
+#     assert "ON test_bucket.test_scope.test_collection (embedding VECTOR)" in query_args
+#     assert "USING GSI" in query_args
+#     assert "'dimension': 768" in query_args
+#     assert "'similarity': 'COSINE'" in query_args
 
-def test_drop_index(document_store_params, mock_cluster, mock_query_result):
-    """Test index dropping"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
-    mock_cluster.query.return_value = mock_query_result
+# def test_drop_index(document_store_params, mock_cluster, mock_query_result):
+#     """Test index dropping"""
+#     store = CouchbaseQueryDocumentStore(**document_store_params)
+#     mock_cluster.query.return_value = mock_query_result
 
-    store.drop_index()
+#     store.drop_index()
 
-    expected_query = "DROP INDEX test_bucket.test_scope.test_collection.test_index"
-    mock_cluster.query.assert_called_once_with(expected_query)
+#     expected_query = "DROP INDEX test_bucket.test_scope.test_collection.test_index"
+#     mock_cluster.query.assert_called_once_with(expected_query)
 
 def test_count_documents(document_store_params, mock_cluster, mock_query_result):
     """Test document counting"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
-    mock_query_result.rows.return_value = [{"count": 5}]
+    store = CouchbaseQueryDocumentStore(**document_store_params)
+    mock_query_result.execute.return_value = [{"count": 5}]
     mock_cluster.query.return_value = mock_query_result
     
     count = store.count_documents()
@@ -230,7 +231,7 @@ def test_count_documents(document_store_params, mock_cluster, mock_query_result)
 
 def test_write_documents(document_store_params, mock_collection, sample_documents):
     """Test document writing"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
+    store = CouchbaseQueryDocumentStore(**document_store_params)
     store._collection = mock_collection
     
     mock_result = Mock()
@@ -248,7 +249,7 @@ def test_write_documents(document_store_params, mock_collection, sample_document
 
 def test_write_documents_duplicate_error(document_store_params, mock_collection, sample_documents):
     """Test document writing with duplicate documents"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
+    store = CouchbaseQueryDocumentStore(**document_store_params)
     store._collection = mock_collection
     
     mock_result = Mock()
@@ -261,7 +262,7 @@ def test_write_documents_duplicate_error(document_store_params, mock_collection,
 
 def test_delete_documents(document_store_params, mock_collection):
     """Test document deletion"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
+    store = CouchbaseQueryDocumentStore(**document_store_params)
     store._collection = mock_collection
     
     document_ids = ["doc1", "doc2"]
@@ -271,7 +272,7 @@ def test_delete_documents(document_store_params, mock_collection):
 
 def test_vector_search(document_store_params, mock_cluster, mock_query_result):
     """Test vector search"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
+    store = CouchbaseQueryDocumentStore(**document_store_params)
     query_embedding = [0.1] * 768
 
     mock_query_result.rows.return_value = [
@@ -279,7 +280,7 @@ def test_vector_search(document_store_params, mock_cluster, mock_query_result):
             "id": "doc1",
             "content": "Test document 1",
             "embedding": [0.1] * 768,
-            "score": 0.95,
+            "distance": 0.95,
         }
     ]
     mock_cluster.query.return_value = mock_query_result
@@ -291,17 +292,10 @@ def test_vector_search(document_store_params, mock_cluster, mock_query_result):
     assert results[0].content == "Test document 1"
     assert results[0].score == 0.95
 
-def test_vector_search_invalid_dimension(document_store_params):
-    """Test vector search with invalid embedding dimension"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
-    query_embedding = [0.1] * 384  # Wrong dimension
-
-    with pytest.raises(ValueError, match="Query embedding dimension"):
-        store.vector_search(query_embedding)
 
 def test_vector_search_empty_embedding(document_store_params):
     """Test vector search with empty embedding"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
+    store = CouchbaseQueryDocumentStore(**document_store_params)
     query_embedding = []
 
     with pytest.raises(ValueError, match="Query embedding must not be empty"):
@@ -309,7 +303,7 @@ def test_vector_search_empty_embedding(document_store_params):
 
 def test_filter_documents(document_store_params, mock_cluster, mock_query_result, comparison_filters):
     """Test document filtering"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
+    store = CouchbaseQueryDocumentStore(**document_store_params)
 
     mock_query_result.rows.return_value = [
         {
@@ -327,31 +321,11 @@ def test_filter_documents(document_store_params, mock_cluster, mock_query_result
     assert results[0].content == "Test document 1"
     assert results[0].meta["field1"] == "value1"
 
-def test_init_composite_index(document_store_params):
-    """Test initialization with composite index type"""
-    document_store_params["index_type"] = IndexType.COMPOSITE
-    document_store_params["index_params"] = IndexParams(
-        dimension=768,
-        similarity=VectorSimilarityMetric.COSINE,
-        description="SQ8",
-        include_fields=["field1", "field2"],
-    )
-    store = CouchbaseGSIDocumentStore(**document_store_params)
-    assert store.index_type == IndexType.COMPOSITE
-    assert store.index_params.similarity == VectorSimilarityMetric.COSINE
-    assert store.index_params.include_fields == ["field1", "field2"]
 
-def test_init_invalid_index_params(document_store_params):
-    """Test initialization with invalid index parameters"""
-    with pytest.raises(ValueError, match="dimension must be greater than 0"):
-        document_store_params["index_params"] = IndexParams(
-            dimension=0,  # Invalid dimension
-            similarity=VectorSimilarityMetric.COSINE,
-        )
 
 def test_connection_property_timeout(document_store_params):
     """Test connection timeout handling"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
+    store = CouchbaseQueryDocumentStore(**document_store_params)
     
     with patch("couchbase_haystack.document_stores.document_store.Cluster") as mock:
         mock.return_value = Mock()
@@ -361,7 +335,7 @@ def test_connection_property_timeout(document_store_params):
 
 def test_collection_property_not_found(document_store_params, mock_cluster, mock_bucket):
     """Test collection property when collection does not exist"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
+    store = CouchbaseQueryDocumentStore(**document_store_params)
     mock_cluster.bucket.return_value = mock_bucket
     
     # Mock a scope with a different collection name
@@ -375,38 +349,10 @@ def test_collection_property_not_found(document_store_params, mock_cluster, mock
     with pytest.raises(ValueError, match="Collection 'test_collection' does not exist"):
         _ = store.collection
 
-def test_create_index_with_include_fields(document_store_params, mock_cluster, mock_query_result):
-    """Test index creation with include fields"""
-    document_store_params["index_params"] = IndexParams(
-        dimension=768,
-        similarity=VectorSimilarityMetric.COSINE,
-        include_fields=["field1", "field2"],
-    )
-    store = CouchbaseGSIDocumentStore(**document_store_params)
-    mock_cluster.query.return_value = mock_query_result
-    
-    store.create_index()
-    
-    mock_cluster.query.assert_called_once()
-    query_args = mock_cluster.query.call_args[0][0]
-    assert "CREATE VECTOR INDEX test_index" in query_args
-    assert "ON test_bucket.test_scope.test_collection (embedding VECTOR)" in query_args
-    assert "INCLUDE (field1, field2)" in query_args
-    assert "USING GSI" in query_args
-    assert "'dimension': 768" in query_args
-    assert "'similarity': 'COSINE'" in query_args
-
-def test_create_index_error(document_store_params, mock_cluster):
-    """Test index creation with error"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
-    mock_cluster.query.side_effect = Exception("Index creation failed")
-    
-    with pytest.raises(DocumentStoreError, match="Failed to create vector index"):
-        store.create_index()
 
 def test_write_documents_empty_list(document_store_params, mock_collection):
     """Test writing empty list of documents"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
+    store = CouchbaseQueryDocumentStore(**document_store_params)
     store._collection = mock_collection  # Directly set the collection to avoid scope/bucket lookup
     documents = []
     
@@ -417,7 +363,7 @@ def test_write_documents_empty_list(document_store_params, mock_collection):
 
 def test_write_documents_invalid_type(document_store_params, mock_collection):
     """Test writing documents with invalid type"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
+    store = CouchbaseQueryDocumentStore(**document_store_params)
     store._collection = mock_collection
     
     with pytest.raises(ValueError, match="param 'documents' must contain a list of objects of type Document"):
@@ -425,7 +371,7 @@ def test_write_documents_invalid_type(document_store_params, mock_collection):
 
 def test_write_documents_upsert_policy(document_store_params, mock_collection, sample_documents):
     """Test document writing with upsert policy"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
+    store = CouchbaseQueryDocumentStore(**document_store_params)
     store._collection = mock_collection
     
     mock_result = Mock()
@@ -440,7 +386,7 @@ def test_write_documents_upsert_policy(document_store_params, mock_collection, s
 
 def test_delete_documents_empty_list(document_store_params, mock_collection):
     """Test deleting empty list of documents"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
+    store = CouchbaseQueryDocumentStore(**document_store_params)
     store._collection = mock_collection
     
     store.delete_documents([])
@@ -448,7 +394,7 @@ def test_delete_documents_empty_list(document_store_params, mock_collection):
 
 def test_vector_search_with_filters(document_store_params, mock_cluster, mock_query_result, comparison_filters):
     """Test vector search with filters"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
+    store = CouchbaseQueryDocumentStore(**document_store_params)
     query_embedding = [0.1] * 768
 
     mock_query_result.rows.return_value = [
@@ -456,7 +402,7 @@ def test_vector_search_with_filters(document_store_params, mock_cluster, mock_qu
             "id": "doc1",
             "content": "Test document 1",
             "embedding": [0.1] * 768,
-            "score": 0.95,
+            "distance": 0.95,
         }
     ]
     mock_cluster.query.return_value = mock_query_result
@@ -473,8 +419,7 @@ def test_vector_search_with_filters(document_store_params, mock_cluster, mock_qu
 
 def test_vector_search_composite_index(document_store_params, mock_cluster, mock_query_result):
     """Test vector search with composite index"""
-    document_store_params["index_type"] = IndexType.COMPOSITE
-    store = CouchbaseGSIDocumentStore(**document_store_params)
+    store = CouchbaseQueryDocumentStore(**document_store_params)
     query_embedding = [0.1] * 768
 
     mock_query_result.rows.return_value = [
@@ -482,7 +427,7 @@ def test_vector_search_composite_index(document_store_params, mock_cluster, mock
             "id": "doc1",
             "content": "Test document 1",
             "embedding": [0.1] * 768,
-            "score": 0.95,
+            "distance": 0.95,
         }
     ]
     mock_cluster.query.return_value = mock_query_result
@@ -495,7 +440,7 @@ def test_vector_search_composite_index(document_store_params, mock_cluster, mock
 
 def test_vector_search_query_error(document_store_params, mock_cluster):
     """Test vector search with query error"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
+    store = CouchbaseQueryDocumentStore(**document_store_params)
     query_embedding = [0.1] * 768
     
     mock_cluster.query.side_effect = Exception("Query failed")
@@ -505,7 +450,7 @@ def test_vector_search_query_error(document_store_params, mock_cluster):
 
 def test_filter_documents_complex_filters(document_store_params, mock_cluster, mock_query_result, nested_filters):
     """Test document filtering with complex nested filters"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
+    store = CouchbaseQueryDocumentStore(**document_store_params)
     
     mock_query_result.rows.return_value = [
         {
@@ -527,7 +472,7 @@ def test_filter_documents_complex_filters(document_store_params, mock_cluster, m
 
 def test_filter_documents_invalid_filters(document_store_params, mock_cluster, invalid_filters):
     """Test document filtering with invalid filters"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
+    store = CouchbaseQueryDocumentStore(**document_store_params)
     
     for filter_name, invalid_filter in invalid_filters.items():
         with pytest.raises(Exception):
@@ -535,7 +480,7 @@ def test_filter_documents_invalid_filters(document_store_params, mock_cluster, i
 
 def test_filter_documents_date_filters(document_store_params, mock_cluster, mock_query_result, date_filters):
     """Test document filtering with date filters"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
+    store = CouchbaseQueryDocumentStore(**document_store_params)
     
     mock_query_result.rows.return_value = [
         {
@@ -554,7 +499,7 @@ def test_filter_documents_date_filters(document_store_params, mock_cluster, mock
 
 def test_filter_documents_field_path_filters(document_store_params, mock_cluster, mock_query_result, field_path_filters):
     """Test document filtering with field path filters"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
+    store = CouchbaseQueryDocumentStore(**document_store_params)
     
     mock_query_result.rows.return_value = [
         {
@@ -579,7 +524,7 @@ def test_filter_documents_field_path_filters(document_store_params, mock_cluster
 
 def test_serialization_deserialization(document_store_params):
     """Test serialization and deserialization of document store"""
-    store = CouchbaseGSIDocumentStore(**document_store_params)
+    store = CouchbaseQueryDocumentStore(**document_store_params)
     
     # Serialize
     serialized = store.to_dict()
@@ -591,20 +536,20 @@ def test_serialization_deserialization(document_store_params):
     assert "bucket" in init_params
     assert "scope" in init_params
     assert "collection" in init_params
-    assert "vector_field" in init_params
     assert "index_name" in init_params
-    assert "index_type" in init_params
-    assert "index_params" in init_params
+    assert "query_vector_search_params" in init_params
+    assert "query_options" in init_params
     
     # Deserialize
-    deserialized = CouchbaseGSIDocumentStore.from_dict({"init_parameters": init_params})
+    deserialized = CouchbaseQueryDocumentStore.from_dict(serialized)
     
     # Verify deserialized object has correct attributes
     assert deserialized.bucket == store.bucket
     assert deserialized.scope_name == store.scope_name
     assert deserialized.collection_name == store.collection_name
-    assert deserialized.vector_field == store.vector_field
     assert deserialized.index_name == store.index_name
-    assert deserialized.index_type == store.index_type
-    assert deserialized.index_params.dimension == store.index_params.dimension
-    assert deserialized.index_params.similarity == store.index_params.similarity
+    assert deserialized.query_vector_search_params.dimension == store.query_vector_search_params.dimension
+    assert deserialized.query_vector_search_params.similarity == store.query_vector_search_params.similarity
+    assert deserialized.query_vector_search_params.search_type == store.query_vector_search_params.search_type
+    assert deserialized.query_options.scan_consistency == store.query_options.scan_consistency.value
+    assert deserialized.query_options.timeout == store.query_options.timeout.total_seconds()

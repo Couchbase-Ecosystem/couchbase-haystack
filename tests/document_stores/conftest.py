@@ -44,19 +44,6 @@ def logical_filters() -> Dict[str, Dict[str, Any]]:
                 {"field": "category", "operator": "==", "value": "magazines"}
             ]
         },
-        "not_filter_single": {
-            "operator": "NOT",
-            "conditions": [
-                {"field": "is_deleted", "operator": "==", "value": True}
-            ]
-        },
-        "not_filter_multiple": {
-            "operator": "NOT",
-            "conditions": [
-                {"field": "status", "operator": "==", "value": "closed"},
-                {"field": "status", "operator": "==", "value": "rejected"}
-            ]
-        },
         "empty_conditions": {
             "operator": "AND", 
             "conditions": []

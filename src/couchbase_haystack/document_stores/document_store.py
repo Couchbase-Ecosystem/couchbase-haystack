@@ -12,11 +12,12 @@ from couchbase import search
 from couchbase.cluster import Cluster
 from couchbase.collection import Collection
 from couchbase.exceptions import DocumentExistsException
-
 # needed for options -- cluster, timeout, SQL++ (N1QL) query, etc.
 from couchbase.options import QueryOptions, SearchOptions
+from couchbase.n1ql import QueryScanConsistency
 from couchbase.result import MultiMutationResult, QueryResult, SearchResult
 from couchbase.scope import Scope
+from couchbase.bucket import Bucket
 from couchbase.search import SearchQuery
 from couchbase.vector_search import VectorQuery, VectorSearch
 from haystack import default_from_dict, default_to_dict
@@ -34,73 +35,73 @@ from .sql_filters import normalize_sql_filters
 logger = logging.getLogger(__name__)
 
 
-class VectorSimilarityMetric(str, Enum):
-    """Enum for vector similarity metrics supported by Couchbase GSI."""
+class QueryVectorSearchType(str, Enum):
+    """Enum for search types supported by Couchbase GSI."""
 
-    L2 = "L2"
-    EUCLIDEAN = "EUCLIDEAN"
-    L2_SQUARED = "L2_SQUARED"
-    EUCLIDEAN_SQUARED = "EUCLIDEAN_SQUARED"
-    COSINE = "COSINE"
-    DOT = "DOT"
-
-
-class IndexType(str, Enum):
-    """Enum for index types supported by Couchbase GSI."""
-
-    BHIVE = "BHIVE"
-    COMPOSITE = "COMPOSITE"
-
+    ANN = "ANN"
+    KNN = "KNN"    
 
 @dataclass
-class IndexParams:
+class QueryVectorSearchFunctionParams:
     """
-    Configuration parameters for Couchbase GSI vector index.
+    Class for storing vector search function parameters for Couchbase GSI.
     
-    This class consolidates all parameters related to vector index configuration into a single object.
+    :param search_type: The type of search to perform.
+    :param dimension: The dimension of the vector.
+    :param similarity: The similarity metric to use.
     """
-    dimension: int = 768
-    similarity: VectorSimilarityMetric = VectorSimilarityMetric.L2
-    description: Optional[str] = None
-    include_fields: Optional[List[str]] = None
-    kwargs: Dict[str, Any] = field(default_factory=dict)
-    
-    def __post_init__(self):
-        """Initialize default values and validate parameters"""
-        if self.dimension <= 0:
-            raise ValueError("dimension must be greater than 0")
-            
-        if self.include_fields is None:
-            self.include_fields = []
-            
-        # Default description for composite index if not provided
-        if self.description is None and self.similarity in [VectorSimilarityMetric.L2, VectorSimilarityMetric.EUCLIDEAN]:
-            self.description = "SQ8"
-            
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert parameters to dictionary for serialization and index creation"""
-        result = {
-            "dimension": self.dimension,
-            "similarity": VectorSimilarityMetric[self.similarity].value,
-            "description": self.description,
-            "include_fields": self.include_fields,
-            **self.kwargs,
-        }
-        
-        if self.description:
-            result["description"] = self.description
-            
-        return result
-        
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "IndexParams":
-        """Create parameters from dictionary"""
-        # Handle similarity conversion from string if needed
-        if isinstance(data.get("similarity"), str):
-            data["similarity"] = VectorSimilarityMetric(data["similarity"])
-            
-        return cls(**data)
+    search_type: QueryVectorSearchType
+    dimension: int
+    similarity: str
 
+    def to_dict(self) -> Dict[str, Any]:
+        return default_to_dict(
+            self,
+            search_type=self.search_type.value if isinstance(self.search_type, QueryVectorSearchType) else self.search_type,
+            dimension=self.dimension,
+            similarity=self.similarity,
+        )   
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "QueryVectorSearchFunctionParams":
+        data["search_type"] = QueryVectorSearchType(data["search_type"]) if data.get("search_type") else None
+        return default_from_dict(cls, data)
+
+@dataclass
+class CouchbaseQueryOptions:
+    """
+    Class for storing query options for Couchbase GSI.
+    
+    :param timeout: The timeout for the query.
+    :param scan_consistency: The scan consistency for the query.
+    """
+
+    timeout: timedelta = timedelta(seconds=60)
+    scan_consistency: Optional[Union[QueryScanConsistency, str]] = None
+    
+    __cb_query_options: Optional[QueryOptions] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        return default_to_dict(
+            self,
+            timeout=self.timeout.total_seconds(),
+            scan_consistency=self.scan_consistency.value if isinstance(self.scan_consistency, QueryScanConsistency) else self.scan_consistency,
+        )
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "CouchbaseQueryOptions":
+        data["scan_consistency"] = QueryScanConsistency(data["scan_consistency"]) if data.get("scan_consistency") else None
+        data["timeout"] = timedelta(seconds=data["timeout"]) if data.get("timeout") else None
+        return default_from_dict(cls, data)
+
+    @property
+    def cb_query_options(self) -> QueryOptions:
+        if self.__cb_query_options is None:
+            self.__cb_query_options = QueryOptions(
+                timeout=self.timeout.total_seconds(),
+                scan_consistency=self.scan_consistency.value if isinstance(self.scan_consistency, QueryScanConsistency) else self.scan_consistency,
+            )
+        return self.__cb_query_options
 
 class CouchbaseDocumentStore:
     """
@@ -137,10 +138,11 @@ class CouchbaseDocumentStore:
         self.cluster_connection_string = cluster_connection_string
         self.authenticator = authenticator
         self.cluster_options = cluster_options
-        self.bucket = bucket
+        self.bucket_name = bucket
         self.scope_name = scope
         self.collection_name = collection
         self._connection: Optional[Cluster] = None
+        self._bucket: Optional[Bucket] = None
         self._scope: Optional[Scope] = None
         self._collection: Optional[Collection] = None
         self._kwargs = kwargs
@@ -151,7 +153,7 @@ class CouchbaseDocumentStore:
             try:
                 cluster_options = self.cluster_options.get_cluster_options(self.authenticator.get_cb_auth())
                 if self.cluster_options.get("profile") is not None:
-                    cluster_options.apply_profile(self.cluster_options["profile"])
+                    cluster_options.apply_profile(self.cluster_options["profile"])   
                 self._connection = Cluster(
                     self.cluster_connection_string.resolve_value(),
                     cluster_options,
@@ -165,12 +167,17 @@ class CouchbaseDocumentStore:
                 msg = f"Failed to establish connection: {e}"
                 raise DocumentStoreError(msg) from e
         return self._connection
+    
+    @property
+    def bucket(self) -> Bucket:
+        if self._bucket is None:
+            self._bucket = self.connection.bucket(self.bucket_name)
+        return self._bucket
 
     @property
     def scope(self) -> Scope:
         if self._scope is None:
-            bucket = self.connection.bucket(self.bucket)
-            scopes_specs = bucket.collections().get_all_scopes()
+            scopes_specs = self.bucket.collections().get_all_scopes()
             scope_found = False
             collection_found = False
             for scope_spec in scopes_specs:
@@ -180,12 +187,12 @@ class CouchbaseDocumentStore:
                         if col_spec.name == self.collection_name:
                             collection_found = True
             if not scope_found:
-                msg = f"Scope '{self.scope_name}' does not exist in bucket '{self.bucket}'."
+                msg = f"Scope '{self.scope_name}' does not exist in bucket '{self.bucket_name}'."
                 raise ValueError(msg)
             if not collection_found:
                 msg = f"Collection '{self.collection_name}' does not exist in scope '{self.scope_name}'."
                 raise ValueError(msg)
-            self._scope = bucket.scope(self.scope_name)
+            self._scope = self.bucket.scope(self.scope_name)
         return self._scope
 
     @property
@@ -194,6 +201,18 @@ class CouchbaseDocumentStore:
             self._collection = self.scope.collection(self.collection_name)
         return self._collection
 
+
+    def _base_to_dict(self) -> Dict[str, Any]:
+        return {
+            "cluster_connection_string": self.cluster_connection_string.to_dict(),
+            "authenticator": self.authenticator.to_dict(),
+            "cluster_options": self.cluster_options.to_dict(),
+            "bucket": self.bucket_name,
+            "scope": self.scope_name,
+            "collection": self.collection_name,
+            **self._kwargs,
+        }
+    
     def write_documents(self, documents: List[Document], policy: DuplicatePolicy = DuplicatePolicy.NONE) -> int:
         """
         Writes documents into the couchbase collection.
@@ -333,12 +352,7 @@ class CouchbaseSearchDocumentStore(CouchbaseDocumentStore):
         """
         return default_to_dict(
             self,
-            cluster_connection_string=self.cluster_connection_string.to_dict(),
-            authenticator=self.authenticator.to_dict(),
-            cluster_options=self.cluster_options.to_dict(),
-            bucket=self.bucket,
-            scope=self.scope_name,
-            collection=self.collection_name,
+            **self._base_to_dict(),
             vector_search_index=self.vector_search_index,
             is_global_level_index=self.is_global_level_index,
             **self._kwargs,
@@ -477,9 +491,9 @@ class CouchbaseSearchDocumentStore(CouchbaseDocumentStore):
         return documents
 
 
-class CouchbaseGSIDocumentStore(CouchbaseDocumentStore):
+class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
     """
-    CouchbaseGSIDocumentStore is a DocumentStore implementation that uses
+    CouchbaseQueryDocumentStore is a DocumentStore implementation that uses
     Couchbase Global Secondary Index (GSI) for vector search capabilities.
 
     This document store supports two types of vector indexes:
@@ -501,9 +515,10 @@ class CouchbaseGSIDocumentStore(CouchbaseDocumentStore):
         scope: str,
         collection: str,
         index_name: str,
-        index_type: IndexType = IndexType.BHIVE,
-        vector_field: str = "embedding",
-        index_params: IndexParams = None,
+        query_vector_search_params: QueryVectorSearchFunctionParams,
+        query_options: CouchbaseQueryOptions = CouchbaseQueryOptions(
+            timeout=timedelta(seconds=60), 
+            scan_consistency=QueryScanConsistency.NOT_BOUNDED),
         **kwargs: Dict[str, Any],
     ):
         """
@@ -517,8 +532,6 @@ class CouchbaseGSIDocumentStore(CouchbaseDocumentStore):
         :param collection: Name of the collection within the scope
         :param index_name: Name of the GSI index to use for vector search
         :param index_type: Type of index (BHIVE or COMPOSITE)
-        :param vector_field: Name of the field containing vectors
-        :param index_params: Parameters for configuring the vector index
         :param kwargs: Additional keyword arguments passed to the Cluster constructor
         """
         super().__init__(
@@ -531,10 +544,8 @@ class CouchbaseGSIDocumentStore(CouchbaseDocumentStore):
             **kwargs,
         )
         self.index_name = index_name
-        self.index_type = index_type
-        self.vector_field = vector_field
-        self.index_params = index_params or IndexParams()
-
+        self.query_vector_search_params = query_vector_search_params
+        self.query_options = query_options
     def to_dict(self) -> Dict[str, Any]:
         """
         Serializes the component to a dictionary.
@@ -544,21 +555,15 @@ class CouchbaseGSIDocumentStore(CouchbaseDocumentStore):
         """
         return default_to_dict(
             self,
-            cluster_connection_string=self.cluster_connection_string.to_dict(),
-            authenticator=self.authenticator.to_dict(),
-            cluster_options=self.cluster_options.to_dict(),
-            bucket=self.bucket,
-            scope=self.scope_name,
-            collection=self.collection_name,
+            **self._base_to_dict(), # cluster details
             index_name=self.index_name,
-            index_type=self.index_type,
-            vector_field=self.vector_field,
-            index_params=self.index_params.to_dict(),
+            query_vector_search_params=self.query_vector_search_params.to_dict() if self.query_vector_search_params else None,
+            query_options=self.query_options.to_dict() if self.query_options else None,
             **self._kwargs,
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "CouchbaseGSIDocumentStore":
+    def from_dict(cls, data: Dict[str, Any]) -> "CouchbaseQueryDocumentStore":
         """
         Deserializes the component from a dictionary.
 
@@ -577,69 +582,17 @@ class CouchbaseGSIDocumentStore(CouchbaseDocumentStore):
             
         # Handle cluster options deserialization
         init_params["cluster_options"] = CouchbaseClusterOptions.from_dict(init_params["cluster_options"])
+
+        if init_params["query_vector_search_params"]:
+            init_params["query_vector_search_params"] = QueryVectorSearchFunctionParams.from_dict(init_params["query_vector_search_params"])
         
-        # Handle index_params deserialization if present
-        if "index_params" in init_params:
-            init_params["index_params"] = IndexParams.from_dict(init_params["index_params"])
+        if init_params["query_options"]:
+            init_params["query_options"] = CouchbaseQueryOptions.from_dict(init_params["query_options"])
         
         # Handle secrets
         deserialize_secrets_inplace(init_params, keys=["cluster_connection_string"])
         
-        return cls(**init_params)
-
-    def create_index(self) -> None:
-        """
-        Creates a vector search index for the collection if it doesn't exist.
-        The index type and configuration are based on the initialization parameters.
-        
-        For BHIVE index, creates a dedicated vector index.
-        For Composite index, creates a secondary index that includes the vector field.
-        
-        :raises DocumentStoreError: If creating the index fails.
-        """
-        try:
-            query_context = f"{self.bucket}.{self.scope_name}.{self.collection_name}"
-            
-            # Include fields formatted for the WITH clause
-            include_clause = ""
-            if self.index_params.include_fields:
-                include_fields_str = ", ".join(self.index_params.include_fields)
-                include_clause = f"INCLUDE ({include_fields_str})"
-            
-            # Get the index parameters as a dictionary for the WITH clause
-            with_params = self.index_params.to_dict()
-            # Remove include_fields from with_params as it's handled in the INCLUDE clause
-            with_params.pop("include_fields", None)
-            
-            if self.index_type == IndexType.BHIVE:
-                # Create BHIVE vector index
-                query = f"""
-                CREATE VECTOR INDEX {self.index_name}
-                ON {query_context} ({self.vector_field} VECTOR)
-                {include_clause}
-                USING GSI
-                WITH {with_params}
-                """
-            else:
-                # Create Composite secondary index with vector field
-                # Ensure description is set for composite index
-                if "description" not in with_params and self.index_params.description:
-                    with_params["description"] = self.index_params.description
-                
-                query = f"""
-                CREATE INDEX {self.index_name}
-                ON {query_context} ({self.vector_field} VECTOR)
-                {include_clause}
-                USING GSI
-                WITH {with_params}
-                """
-            # Execute the query to create the index
-            self.connection.query(query, QueryOptions(timeout=timedelta(seconds=60))).execute()
-            logger.info(f"Created vector index '{self.index_name}' on {query_context}")
-        except Exception as e:
-            msg = f"Failed to create vector index: {e}"
-            logger.error(msg)
-            raise DocumentStoreError(msg) from e
+        return default_from_dict(cls, data)
 
     def drop_index(self) -> None:
         """
@@ -648,7 +601,7 @@ class CouchbaseGSIDocumentStore(CouchbaseDocumentStore):
         :raises DocumentStoreError: If dropping the index fails.
         """
         try:
-            query_context = f"{self.bucket}.{self.scope_name}.{self.collection_name}.{self.index_name}"
+            query_context = f"{self.bucket_name}.{self.scope_name}.{self.collection_name}.{self.index_name}"
             query = f"DROP INDEX {query_context}"
             self.connection.query(query).execute()
             logger.info(f"Dropped vector index '{self.index_name}'")
@@ -663,9 +616,9 @@ class CouchbaseGSIDocumentStore(CouchbaseDocumentStore):
 
         :returns: The number of documents in the document store.
         """
-        query = f"SELECT COUNT(*) as count FROM {self.bucket}.{self.scope_name}.{self.collection_name}"
-        result = self.connection.query(query)
-        return result.rows()[0]["count"]
+        query = f"SELECT COUNT(*) as count FROM {self.bucket_name}.{self.scope_name}.{self.collection_name}"
+        result = self.connection.query(query, self.query_options.cb_query_options).execute()
+        return result[0]["count"]
 
     def filter_documents(self, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
         """
@@ -677,17 +630,16 @@ class CouchbaseGSIDocumentStore(CouchbaseDocumentStore):
         :param filters: The filters to apply. It returns only the documents that match the filters.
         :returns: A list of Documents that match the given filters.
         """
-        query_str = f"SELECT d.*, meta().id as id FROM {self.bucket}.{self.scope_name}.{self.collection_name}"
+        query_str = f"SELECT d.*, meta().id as id FROM {self.bucket_name}.{self.scope_name}.{self.collection_name} as d"
         where_clause = ""
         
         if filters:
             normalized_filters = normalize_sql_filters(filters)
             where_clause = f" WHERE {normalized_filters}"
-        
-        query_str += where_clause
-        
+            query_str += where_clause
+        print(query_str,filters)
         try:
-            result = self.connection.query(query_str, QueryOptions(timeout=timedelta(seconds=60)))
+            result = self.connection.query(query_str, self.query_options.cb_query_options)
             documents = []
             
             for row in result.rows():
@@ -724,15 +676,11 @@ class CouchbaseGSIDocumentStore(CouchbaseDocumentStore):
             msg = "Query embedding must not be empty"
             raise ValueError(msg)
 
-        if len(query_embedding) != self.index_params.dimension:
-            msg = f"Query embedding dimension {len(query_embedding)} does not match index dimension {self.index_params.dimension}"
-            raise ValueError(msg)
-
         if limit is None:
             limit = top_k
 
         # Construct the SQL++ query with vector search
-        query_context = f"{self.bucket}.{self.scope_name}.{self.collection_name}"
+        query_context = f"{self.bucket_name}.{self.scope_name}.{self.collection_name}"
         
         # Convert embedding to string representation for query
         query_vector_str = str(query_embedding)
@@ -743,33 +691,25 @@ class CouchbaseGSIDocumentStore(CouchbaseDocumentStore):
             normalized_filters = normalize_sql_filters(filters)
             where_clause = f"WHERE {normalized_filters}"
         
+        # Determine the appropriate distance function based on search type
+        distance_function = "APPROX_VECTOR_DISTANCE" if self.query_vector_search_params.search_type == QueryVectorSearchType.ANN else "VECTOR_DISTANCE"
+        
+
+        distance_function_exp = f"{distance_function}(d.embedding, {query_vector_str}, '{self.query_vector_search_params.similarity}', {limit})"
         # Build the query
-        if self.index_type == IndexType.BHIVE:
-            # Use APPROX_VECTOR_DISTANCE for BHIVE index
-            query_str = f"""
-            SELECT d.*, meta().id as id
-            FROM {query_context} d
-            {where_clause}
-            ORDER BY APPROX_VECTOR_DISTANCE(d.{self.vector_field}, {query_vector_str}, 
-                                             "{self.index_params.similarity}", {limit})
-            LIMIT {limit}
-            """
-        else:
-            # Use standard vector distance for composite index
-            query_str = f"""
-            SELECT d.*, meta().id as id
-            FROM {query_context} d
-            {where_clause}
-            ORDER BY APPROX_VECTOR_DISTANCE(d.{self.vector_field}, {query_vector_str}, 
-                                             "{self.index_params.similarity}", {limit})
-            LIMIT {limit}
-            """
+        query_str = f"""
+        SELECT d.*, meta().id as id, {distance_function_exp} as distance
+        FROM {query_context} d
+        {where_clause}
+        ORDER BY distance
+        LIMIT {limit}
+        """
         
         try:
             # Execute the query
             result: QueryResult = self.connection.query(
                 query_str, 
-                QueryOptions(timeout=timedelta(seconds=60))
+                self.query_options.cb_query_options,
             )
             
             # Process results
@@ -777,6 +717,7 @@ class CouchbaseGSIDocumentStore(CouchbaseDocumentStore):
             for row in result.rows():
                 # Convert row to Document
                 doc_dict = row.copy()
+                doc_dict["score"] = row["distance"]
                 documents.append(Document.from_dict(doc_dict))
                 
             return documents

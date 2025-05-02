@@ -51,11 +51,8 @@ def _parse_logical_condition(condition: Dict[str, Any]) -> str:
     elif operator == "OR":
         return f"({' OR '.join(conditions)})"
     elif operator == "NOT":
-        if len(conditions) == 1:
-            return f"(NOT {conditions[0]})"
-        else:
-            # For multiple conditions, NOT(A OR B OR C) is equivalent to NOT A AND NOT B AND NOT C
-            return f"({' AND '.join(['NOT ' + c for c in conditions])})"
+        msg = "NOT operator is not supported. Only AND and OR logical operators are supported."
+        raise FilterError(msg)
     else:
         msg = f"Unknown logical operator '{operator}'"
         raise FilterError(msg)
@@ -122,7 +119,7 @@ def _equal(field: str, value: Any) -> str:
     :returns: SQL++ equality condition
     """
     if value is None:
-        return f"{field} IS NULL"
+        return f"({field} IS NULL OR {field} IS MISSING)"
     if isinstance(value, list):
         # Handle list of values (generate multiple equality conditions)
         conditions = [f"{field} = {_format_value(v)}" for v in value]
@@ -139,12 +136,12 @@ def _not_equal(field: str, value: Any) -> str:
     :returns: SQL++ not equal condition
     """
     if value is None:
-        return f"{field} IS NOT NULL"
+        return f"({field} IS NOT NULL AND {field} IS NOT MISSING)"
     if isinstance(value, list):
         # Handle list of values (generate multiple inequality conditions)
-        conditions = [f"{field} != {_format_value(v)}" for v in value]
+        conditions = [_not_equal(field,v) for v in value]
         return f"({' AND '.join(conditions)})"
-    return f"{field} != {_format_value(value)}"
+    return f"({field} != {_format_value(value)} OR {field} IS MISSING)"
 
 
 def _greater_than(field: str, value: Any) -> str:
@@ -294,9 +291,16 @@ def _not_in(field: str, value: Any) -> str:
     if not value:
         # Empty list means match all (always true)
         return "TRUE"
-    formatted_values = [_format_value(v) for v in value]
+    
+    formatted_values = [_format_value(v) for v in value if v]
     values_str = ', '.join(formatted_values)
-    return f"{field} NOT IN [{values_str}]"
+    # Check if None is in the list
+    if None in value:
+        # If None is in the list, don't match NULL or MISSING fields
+        return f"{field} NOT IN [{values_str}]"
+    else:
+        # If None is not in the list, also match NULL or MISSING fields
+        return f"({field} NOT IN [{values_str}] OR {field} IS MISSING)"
 
 
 def _format_value(value: Any) -> str:
