@@ -21,10 +21,20 @@
 
 **Table of Contents**
 
+- [Breaking Changes in Version 2.0.0](#breaking-changes-in-version-200)
 - [Overview](#overview)
 - [Installation](#installation)
 - [Usage](#usage)
 - [License](#license)
+
+## Breaking Changes in Version 2.0.0
+
+> **Important Note:**  
+> In version 2.0.0, the following component names have been changed:
+> - `CouchbaseDocumentStore` is now `CouchbaseSearchDocumentStore`
+> - `CouchbaseEmbeddingRetriever` is now `CouchbaseSearchEmbeddingRetriever`
+>
+> Please update your code accordingly if upgrading from an earlier version.
 
 ## Overview
 
