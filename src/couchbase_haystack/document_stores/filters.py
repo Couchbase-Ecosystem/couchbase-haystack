@@ -11,6 +11,7 @@ from haystack.errors import FilterError
 
 try:
     import pandas as pd
+
     DataFrame = pd.DataFrame
 except ImportError:
     DataFrame = type(None)
