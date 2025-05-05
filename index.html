@@ -17,7 +17,7 @@
         <link rel="next" href="changelog/">
       
       
-      <link rel="icon" href="assets/images/favicon.png">
+      <link rel="icon" href="assets/logo.svg">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.12">
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#overview" class="md-skip">
+        <a href="#breaking-changes-in-version-200" class="md-skip">
           Skip to content
         </a>
       
@@ -422,6 +422,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#breaking-changes-in-version-200" class="md-nav__link">
+    <span class="md-ellipsis">
+      Breaking Changes in Version 2.0.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#overview" class="md-nav__link">
     <span class="md-ellipsis">
       Overview
@@ -658,23 +667,9 @@
   
   
   
-    
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
+    <li class="md-nav__item">
+      <a href="reference/document_stores/auth/" class="md-nav__link">
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2" >
-        
-          
-          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
-            
   
   
   <span class="md-ellipsis">
@@ -683,88 +678,7 @@
   </span>
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_2_2">
-            <span class="md-nav__icon md-icon"></span>
-            Authentication
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="reference/document_stores/auth/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    CouchbaseAuthenticator
-    
-  </span>
-  
-
       </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="reference/document_stores/auth/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    CouchbaseAuthenticator
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="reference/document_stores/auth/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    CouchbaseAuthenticator
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
     </li>
   
 
@@ -942,6 +856,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#breaking-changes-in-version-200" class="md-nav__link">
+    <span class="md-ellipsis">
+      Breaking Changes in Version 2.0.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#overview" class="md-nav__link">
     <span class="md-ellipsis">
       Overview
@@ -1087,11 +1010,20 @@
 <hr />
 <p><strong>Table of Contents</strong></p>
 <ul>
+<li><a href="#breaking-changes-in-version-200">Breaking Changes in Version 2.0.0</a></li>
 <li><a href="#overview">Overview</a></li>
 <li><a href="#installation">Installation</a></li>
 <li><a href="#usage">Usage</a></li>
 <li><a href="#license">License</a></li>
 </ul>
+<h2 id="breaking-changes-in-version-200">Breaking Changes in Version 2.0.0<a class="headerlink" href="#breaking-changes-in-version-200" title="Permanent link">¤</a></h2>
+<blockquote>
+<p><strong>Important Note:</strong><br />
+In version 2.0.0, the following component names have been changed:
+- <code>CouchbaseDocumentStore</code> is now <code>CouchbaseSearchDocumentStore</code>
+- <code>CouchbaseEmbeddingRetriever</code> is now <code>CouchbaseSearchEmbeddingRetriever</code></p>
+<p>Please update your code accordingly if upgrading from an earlier version.</p>
+</blockquote>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">¤</a></h2>
 <p>An integration of <a href="https://www.couchbase.com">Couchbase</a> NoSQL database with <a href="https://docs.haystack.deepset.ai/v2.0/docs/intro">Haystack v2.0</a>
 by <a href="https://www.deepset.ai">deepset</a>. In Couchbase <a href="https://docs.couchbase.com/server/current/vector-search/vector-search.html">Vector search index</a>
