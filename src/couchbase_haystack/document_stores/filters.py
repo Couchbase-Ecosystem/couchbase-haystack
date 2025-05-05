@@ -8,7 +8,14 @@ from backports.datetime_fromisoformat import MonkeyPatch
 from couchbase import search
 from couchbase.logic.search_queries import SearchQuery
 from haystack.errors import FilterError
-from pandas import DataFrame
+
+try:
+    import pandas as pd
+
+    DataFrame = pd.DataFrame
+except ImportError:
+    DataFrame = type(None)
+
 
 MonkeyPatch.patch_fromisoformat()
 
@@ -107,8 +114,8 @@ def _equal(field: str, value: Any) -> Dict[str, Any]:
     if isinstance(value, list):
         conjunction = [create_search_query(field=field, value=v) for v in value]
         return search.BooleanQuery(must=search.ConjunctionQuery(*conjunction))
-    if field == "dataframe" and isinstance(value, DataFrame):
-        value = value.to_json()
+    # if field == "dataframe" and isinstance(value, DataFrame):
+    #     value = value.to_json()
     return create_search_query(field=field, value=value)
 
 
@@ -119,8 +126,8 @@ def _not_equal(field: str, value: Any) -> Dict[str, Any]:
     if isinstance(value, list):
         conjunction = [create_search_query(field=field, value=v) for v in value]
         return search.BooleanQuery(must_not=search.DisjunctionQuery(*conjunction, min=len(conjunction)))
-    if field == "dataframe" and isinstance(value, DataFrame):
-        value = value.to_json()
+    # if field == "dataframe" and isinstance(value, DataFrame):
+    #     value = value.to_json()
     return search.BooleanQuery(must_not=search.DisjunctionQuery(create_search_query(field=field, value=value)))
 
 
@@ -288,43 +295,3 @@ def _parse_comparison_condition(condition: Dict[str, Any]) -> Dict[str, Any]:
         value = value.to_json()
 
     return COMPARISON_OPERATORS[operator](field, value)
-
-
-def _normalize_ranges(conditions: List[search.SearchQuery]) -> List[search.SearchQuery]:
-    """Merges range conditions acting on the same field.
-
-    Args:
-        conditions: List of search conditions.
-
-    Returns:
-        List with merged range conditions.
-    """
-    # Extract range conditions and associated field names
-    range_conditions = [
-        (query.field, query) for query in conditions if isinstance(query, NumericRangeQuery) or isinstance(query, DateRangeQuery)
-    ]
-
-    if range_conditions:
-        # Remove range conditions from the original list
-        conditions = [c for c in conditions if not isinstance(c, NumericRangeQuery) and not isinstance(c, DateRangeQuery)]
-
-        # Dictionary to hold merged range conditions
-        range_conditions_dict: Dict[str, Dict[str, Any]] = {}
-
-        for field_name, query in range_conditions:
-            encodable = query.encodable
-            if field_name not in range_conditions_dict:
-                range_conditions_dict[field_name] = {}
-            for key, value in encodable.items():
-                if key not in range_conditions_dict[field_name]:
-                    range_conditions_dict[field_name][key] = value
-                else:
-                    range_conditions_dict[field_name].update({key: value})
-
-        for _field_name, comparisons in range_conditions_dict.items():
-            if "start" in comparisons or "end" in comparisons:
-                conditions.append(DateRangeQuery(**comparisons))
-            else:
-                conditions.append(NumericRangeQuery(**comparisons))
-
-    return conditions

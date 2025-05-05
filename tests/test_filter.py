@@ -1,6 +1,7 @@
 from couchbase_haystack.document_stores.filters import _normalize_filters
 import pytest
 from haystack.errors import FilterError
+import pandas as pd
 
 
 @pytest.mark.unit
@@ -74,6 +75,12 @@ class TestFilterEq:
                 ]
             }
         }
+
+    def test_filter_eq_condition_dataframe(self):
+        df = pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
+        _filter = {"field": "dataframe", "operator": "==", "value": df}
+        normalized_filter = _normalize_filters(_filter)
+        assert normalized_filter.encodable == {"field": "dataframe", "match": df.to_json()}
 
 
 @pytest.mark.unit
@@ -156,6 +163,17 @@ class TestFilterNeq:
                     {"field": "meta.years", "min": 2011, "max": 2011, "inclusive_min": True, "inclusive_max": True},
                     {"field": "meta.years", "min": 2012, "max": 2012, "inclusive_min": True, "inclusive_max": True},
                 ],
+            }
+        }
+
+    def test_filter_neq_condition_dataframe(self):
+        df = pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
+        _filter = {"field": "dataframe", "operator": "!=", "value": df}
+        normalized_filter = _normalize_filters(_filter)
+        assert normalized_filter.encodable == {
+            "must_not": {
+                "min": 1,
+                "disjuncts": [{"field": "dataframe", "match": df.to_json()}],
             }
         }
 
