@@ -59,11 +59,11 @@ The `couchbase-haystack` library uses [Python Driver](https://docs.couchbase.com
                 write_documents    |      +----------------+     |
           +------------------------+----->|   properties   |     |
           |                        |      |                |     |
-+---------+--------------+         |      |   embedding    |     |
-|                        |         |      +--------+-------+     |
-| CouchbaseSearchDocumentStore |         |               |             |
-|                        |         |               |index        |
-+---------+--------------+         |               |             |
++---------+--------------------+   |      |   embedding    |     |
+|                              |   |      +--------+-------+     |
+| CouchbaseSearchDocumentStore |   |               |             |
+|                              |   |               |index        |
++---------+--------------------+   |               |             |
           |                        |      +--------+--------+    |
           |                        |      |  Search service |    |
           |                        |      +-----------------+    |

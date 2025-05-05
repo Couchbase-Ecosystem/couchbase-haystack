@@ -55,25 +55,38 @@ class QueryVectorSearchFunctionParams:
     similarity: str
 
     def to_dict(self) -> Dict[str, Any]:
+        """
+        Serializes the QueryVectorSearchFunctionParams object to a dictionary.
+
+        :returns: A dictionary representation of the object.
+        """
         return default_to_dict(
             self,
             search_type=self.search_type.value if isinstance(self.search_type, QueryVectorSearchType) else self.search_type,
             dimension=self.dimension,
             similarity=self.similarity,
-        )   
+        )
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "QueryVectorSearchFunctionParams":
-        data["search_type"] = QueryVectorSearchType(data["search_type"]) if data.get("search_type") else None
+        """
+        Deserializes a dictionary into a QueryVectorSearchFunctionParams object.
+
+        :param data: The dictionary to deserialize from.
+        :returns: A QueryVectorSearchFunctionParams instance.
+        """
+        init_parameters = data.get("init_parameters", {})
+        init_parameters["search_type"] = QueryVectorSearchType(init_parameters["search_type"]) if init_parameters.get("search_type") else None
         return default_from_dict(cls, data)
 
 @dataclass
 class CouchbaseQueryOptions:
     """
-    Class for storing query options for Couchbase GSI.
-    
-    :param timeout: The timeout for the query.
-    :param scan_consistency: The scan consistency for the query.
+    Dataclass for storing query options specifically for Couchbase SQL++ (N1QL) queries.
+
+    :param timeout: The timeout duration for the query. Defaults to 60 seconds.
+    :param scan_consistency: The scan consistency level for the query. See `couchbase.n1ql.QueryScanConsistency`.
+                             Defaults to None, which implies Couchbase's default behavior.
     """
 
     timeout: timedelta = timedelta(seconds=60)
@@ -82,6 +95,11 @@ class CouchbaseQueryOptions:
     __cb_query_options: Optional[QueryOptions] = None
 
     def to_dict(self) -> Dict[str, Any]:
+        """
+        Serializes the CouchbaseQueryOptions object to a dictionary.
+
+        :returns: A dictionary representation of the object.
+        """
         return default_to_dict(
             self,
             timeout=self.timeout.total_seconds(),
@@ -90,12 +108,24 @@ class CouchbaseQueryOptions:
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "CouchbaseQueryOptions":
-        data["scan_consistency"] = QueryScanConsistency(data["scan_consistency"]) if data.get("scan_consistency") else None
-        data["timeout"] = timedelta(seconds=data["timeout"]) if data.get("timeout") else None
+        """
+        Deserializes a dictionary into a CouchbaseQueryOptions object.
+
+        :param data: The dictionary to deserialize from.
+        :returns: A CouchbaseQueryOptions instance.
+        """
+        init_parameters = data.get("init_parameters", {})
+        init_parameters["scan_consistency"] = QueryScanConsistency(init_parameters["scan_consistency"]) if init_parameters.get("scan_consistency") else None
+        init_parameters["timeout"] = timedelta(seconds=init_parameters["timeout"]) if init_parameters.get("timeout") else None
         return default_from_dict(cls, data)
 
     @property
     def cb_query_options(self) -> QueryOptions:
+        """
+        Returns the underlying Couchbase SDK `QueryOptions` object.
+
+        :returns: The configured `couchbase.options.QueryOptions` instance.
+        """
         if self.__cb_query_options is None:
             self.__cb_query_options = QueryOptions(
                 timeout=self.timeout.total_seconds(),
@@ -130,6 +160,7 @@ class CouchbaseDocumentStore:
         :param scope: Name of the scope within the bucket
         :param collection: Name of the collection within the scope
         :param kwargs: Additional keyword arguments passed to the Cluster constructor
+        :raises ValueError: If the provided collection name contains invalid characters.
         """
         if collection and not bool(re.match(r"^[a-zA-Z0-9\-_]+$", collection)):
             msg = f'Invalid collection name: "{collection}". It can only contain letters, numbers, -, or _.'
@@ -149,6 +180,15 @@ class CouchbaseDocumentStore:
 
     @property
     def connection(self) -> Cluster:
+        """
+        Establishes and returns the Couchbase Cluster connection.
+
+        Initializes the connection if it doesn't exist, applying cluster options and authentication.
+        Waits until the cluster is ready before returning.
+
+        :returns: The active `couchbase.cluster.Cluster` instance.
+        :raises DocumentStoreError: If the connection cannot be established or times out.
+        """
         if self._connection is None:
             try:
                 cluster_options = self.cluster_options.get_cluster_options(self.authenticator.get_cb_auth())
@@ -170,12 +210,29 @@ class CouchbaseDocumentStore:
     
     @property
     def bucket(self) -> Bucket:
+        """
+        Returns the Couchbase `Bucket` object associated with this document store.
+
+        Retrieves the bucket instance using the configured bucket name from the active connection.
+
+        :returns: The `couchbase.bucket.Bucket` instance.
+        :raises: Exceptions from the underlying `connection.bucket()` call if the bucket doesn't exist or is inaccessible.
+        """
         if self._bucket is None:
             self._bucket = self.connection.bucket(self.bucket_name)
         return self._bucket
 
     @property
     def scope(self) -> Scope:
+        """
+        Returns the Couchbase `Scope` object associated with this document store.
+
+        Verifies that the configured scope and collection exist within the bucket before returning the scope instance.
+
+        :returns: The `couchbase.scope.Scope` instance.
+        :raises ValueError: If the specified scope or collection does not exist in the bucket.
+        :raises: Exceptions from the underlying `bucket.collections().get_all_scopes()` or `bucket.scope()` calls.
+        """
         if self._scope is None:
             scopes_specs = self.bucket.collections().get_all_scopes()
             scope_found = False
@@ -197,12 +254,27 @@ class CouchbaseDocumentStore:
 
     @property
     def collection(self) -> Collection:
+        """
+        Returns the Couchbase `Collection` object associated with this document store.
+
+        Retrieves the collection instance using the configured collection name from the active scope.
+
+        :returns: The `couchbase.collection.Collection` instance.
+        :raises: Exceptions from the underlying `scope.collection()` call if the collection is inaccessible.
+        """
         if self._collection is None:
             self._collection = self.scope.collection(self.collection_name)
         return self._collection
 
 
     def _base_to_dict(self) -> Dict[str, Any]:
+        """
+        Creates a base dictionary containing common configuration parameters for serialization.
+
+        This is intended to be used by subclasses in their `to_dict` methods.
+
+        :returns: A dictionary with core configuration details.
+        """
         return {
             "cluster_connection_string": self.cluster_connection_string.to_dict(),
             "authenticator": self.authenticator.to_dict(),
@@ -219,10 +291,12 @@ class CouchbaseDocumentStore:
 
         :param documents: A list of Documents to write to the document store.
         :param policy: The duplicate policy to use when writing documents.
-        :raises DuplicateDocumentError: If a document with the same ID already exists in the document store
-             and the policy is set to DuplicatePolicy.FAIL (or not specified).
-        :raises ValueError: If the documents are not of type Document.
-        :returns: The number of documents written to the document store.
+                       `FAIL`: (Default if `NONE`) Raise an error if a document ID already exists.
+                       `OVERWRITE`: Replace existing documents with the same ID.
+        :raises DuplicateDocumentError: If `policy` is `FAIL` and a document with the same ID already exists.
+        :raises ValueError: If `documents` is not a list of `Document` objects.
+        :raises DocumentStoreError: If any other error occurs during the write operation.
+        :returns: The number of documents successfully written to the document store.
         """
         if len(documents) == 0:
             return 0
@@ -326,10 +400,10 @@ class CouchbaseSearchDocumentStore(CouchbaseDocumentStore):
         :param bucket: Name of the Couchbase bucket to use
         :param scope: Name of the scope within the bucket
         :param collection: Name of the collection within the scope
-        :param vector_search_index: Name of the vector search index to use
-        :param is_global_level_index: If True, uses a global (bucket-level) vector search index that can search across all
-            scopes and collections. If False (default), uses a scope-level index that only searches within the specified scope.
-        :param kwargs: Additional keyword arguments passed to the Cluster constructor
+        :param vector_search_index: Name of the FTS index (which must include vector indexing) to use for searches.
+        :param is_global_level_index: If `True`, use a global (bucket-level) FTS index.
+                                    If `False` (default), use a scope-level FTS index.
+        :param kwargs: Additional keyword arguments passed to the Cluster constructor.
         """
         super().__init__(
             cluster_connection_string=cluster_connection_string,
@@ -382,9 +456,10 @@ class CouchbaseSearchDocumentStore(CouchbaseDocumentStore):
 
     def _get_search_interface(self):
         """
-        Returns the appropriate search interface based on the index level configuration.
+        Returns the appropriate Couchbase search interface (`scope.search_indexes()` or `connection.search_indexes()`)
+        based on the `is_global_level_index` configuration.
 
-        :returns: Either scope.search_indexes() for scope-level or connection.search_indexes() for global-level
+        :returns: The Couchbase search index manager object.
         """
         if not self.is_global_level_index:
             return self.scope.search_indexes()
@@ -408,6 +483,7 @@ class CouchbaseSearchDocumentStore(CouchbaseDocumentStore):
 
         :param filters: The filters to apply. It returns only the documents that match the filters.
         :returns: A list of Documents that match the given filters.
+        :raises DocumentStoreError: If the search request fails.
         """
         search_filters: SearchQuery
         if filters:
@@ -467,6 +543,16 @@ class CouchbaseSearchDocumentStore(CouchbaseDocumentStore):
         return self.__get_doc_from_kv(response)
 
     def __get_doc_from_kv(self, response: SearchResult) -> List[Document]:
+        """
+        Fetches the full document content from Couchbase KV storage based on IDs from a SearchResult.
+
+        This helper method takes the results of an FTS/Vector search (which might only contain IDs and scores)
+        and retrieves the complete documents using a multi-get operation for efficiency.
+
+        :param response: The `SearchResult` object containing document IDs and scores.
+        :returns: A list of Haystack `Document` objects, populated with content and scores.
+        :raises DocumentStoreError: If fetching documents from KV fails for any ID.
+        """
         documents: List[Document] = []
         ids: List[str] = []
         scores: List[float] = []
@@ -501,8 +587,8 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
     - BHIVE Index: A dedicated vector index for high-performance ANN vector search
     - Composite Secondary Index: Includes vectors alongside other fields for combined filtering
 
-    Both index types support various vector similarity metrics and can be configured with
-    additional parameters for optimizing vector search performance.
+    Both index types support various vector similarity metrics and can be configured
+    with additional parameters for optimizing vector search performance.
     """
 
     def __init__(
@@ -514,7 +600,6 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         bucket: str,
         scope: str,
         collection: str,
-        index_name: str,
         query_vector_search_params: QueryVectorSearchFunctionParams,
         query_options: CouchbaseQueryOptions = CouchbaseQueryOptions(
             timeout=timedelta(seconds=60), 
@@ -530,9 +615,9 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         :param bucket: Name of the Couchbase bucket to use
         :param scope: Name of the scope within the bucket
         :param collection: Name of the collection within the scope
-        :param index_name: Name of the GSI index to use for vector search
-        :param index_type: Type of index (BHIVE or COMPOSITE)
-        :param kwargs: Additional keyword arguments passed to the Cluster constructor
+        :param query_vector_search_params: Configuration for the vector search function (type, dimensions, similarity).
+        :param query_options: Options controlling SQL++ query execution (timeout, scan consistency).
+        :param kwargs: Additional keyword arguments passed to the `CouchbaseDocumentStore` base class constructor.
         """
         super().__init__(
             cluster_connection_string=cluster_connection_string,
@@ -543,7 +628,6 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
             collection=collection,
             **kwargs,
         )
-        self.index_name = index_name
         self.query_vector_search_params = query_vector_search_params
         self.query_options = query_options
     def to_dict(self) -> Dict[str, Any]:
@@ -556,7 +640,6 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         return default_to_dict(
             self,
             **self._base_to_dict(), # cluster details
-            index_name=self.index_name,
             query_vector_search_params=self.query_vector_search_params.to_dict() if self.query_vector_search_params else None,
             query_options=self.query_options.to_dict() if self.query_options else None,
             **self._kwargs,
@@ -594,21 +677,6 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         
         return default_from_dict(cls, data)
 
-    def drop_index(self) -> None:
-        """
-        Drops the vector search index if it exists.
-        
-        :raises DocumentStoreError: If dropping the index fails.
-        """
-        try:
-            query_context = f"{self.bucket_name}.{self.scope_name}.{self.collection_name}.{self.index_name}"
-            query = f"DROP INDEX {query_context}"
-            self.connection.query(query).execute()
-            logger.info(f"Dropped vector index '{self.index_name}'")
-        except Exception as e:
-            msg = f"Failed to drop vector index: {e}"
-            logger.error(msg)
-            raise DocumentStoreError(msg) from e
 
     def count_documents(self) -> int:
         """
@@ -627,8 +695,10 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         For a detailed specification of the filters,
         refer to the Haystack [documentation](https://docs.haystack.deepset.ai/v2.0/docs/metadata-filtering).
 
-        :param filters: The filters to apply. It returns only the documents that match the filters.
+        :param filters: The filters to apply using SQL++ WHERE clause syntax.
+                       Refer to the Haystack documentation for filter structure.
         :returns: A list of Documents that match the given filters.
+        :raises DocumentStoreError: If the SQL++ query execution fails.
         """
         query_str = f"SELECT d.*, meta().id as id FROM {self.bucket_name}.{self.scope_name}.{self.collection_name} as d"
         where_clause = ""
@@ -665,12 +735,12 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         Find the documents that are most similar to the provided `query_embedding` by using a vector similarity metric.
 
         :param query_embedding: Embedding of the query
-        :param top_k: How many documents to be returned by the vector query
-        :param filters: Optional filters to apply before vector similarity search
-        :param limit: Maximum number of Documents to return. Defaults to top_k if not specified.
-        :returns: A list of Documents that are most similar to the given `query_embedding`
-        :raises ValueError: If `query_embedding` is empty
-        :raises DocumentStoreError: If the retrieval of documents from Couchbase fails
+        :param top_k: How many documents to retrieve based on vector similarity.
+        :param filters: Optional dictionary of filters to apply using a SQL++ WHERE clause before the vector search.
+        :param limit: Maximum number of Documents to return. Defaults to `top_k` if not specified.
+        :returns: A list of Documents most similar to the `query_embedding`, potentially pre-filtered.
+        :raises ValueError: If `query_embedding` is empty.
+        :raises DocumentStoreError: If the SQL++ query execution fails.
         """
         if not query_embedding:
             msg = "Query embedding must not be empty"

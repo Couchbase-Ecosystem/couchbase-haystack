@@ -17,8 +17,8 @@ from couchbase.exceptions import SearchIndexNotFoundException
 from couchbase import search
 from couchbase_haystack.document_stores.search_filters import NumericRangeQuery
 from datetime import timedelta
-from .common.common import IS_GLOBAL_LEVEL_INDEX
-from .common import common
+from ..common.common import IS_GLOBAL_LEVEL_INDEX
+from ..common import common
 
 
 @pytest.mark.skipif(

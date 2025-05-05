@@ -551,5 +551,5 @@ def test_serialization_deserialization(document_store_params):
     assert deserialized.query_vector_search_params.dimension == store.query_vector_search_params.dimension
     assert deserialized.query_vector_search_params.similarity == store.query_vector_search_params.similarity
     assert deserialized.query_vector_search_params.search_type == store.query_vector_search_params.search_type
-    assert deserialized.query_options.scan_consistency == store.query_options.scan_consistency.value
-    assert deserialized.query_options.timeout == store.query_options.timeout.total_seconds()
+    assert deserialized.query_options.scan_consistency == store.query_options.scan_consistency
+    assert deserialized.query_options.timeout.total_seconds() == store.query_options.timeout.total_seconds()
