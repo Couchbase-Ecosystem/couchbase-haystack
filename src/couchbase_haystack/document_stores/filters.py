@@ -9,20 +9,11 @@ from couchbase import search
 from couchbase.logic.search_queries import SearchQuery
 from haystack.errors import FilterError
 
-# Optional import for pandas.DataFrame
 try:
-    from pandas import DataFrame
+    import pandas as pd
+    DataFrame = pd.DataFrame
 except ImportError:
-
-    class DataFrame:
-        """Fallback DataFrame class that raises an ImportError if pandas is not installed."""
-
-        # Override __new__ and __init__ so that any attempt to create a DataFrame raises an error.
-        def __new__(cls, *_args, **_kwargs):
-            raise ImportError("pandas is required to use DataFrame functionality.")
-
-        def __init__(self, *_args, **_kwargs):
-            raise ImportError("pandas is required to use DataFrame functionality.")
+    DataFrame = type(None)
 
 
 MonkeyPatch.patch_fromisoformat()
