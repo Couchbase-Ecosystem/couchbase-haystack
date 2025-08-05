@@ -618,7 +618,9 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         bucket: str,
         scope: str,
         collection: str,
-        query_vector_search_params: QueryVectorSearchFunctionParams,
+        search_type: QueryVectorSearchType,
+        similarity: str,
+        nprobes: Optional[int] = None,
         query_options: CouchbaseQueryOptions = CouchbaseQueryOptions(
             timeout=timedelta(seconds=60), 
             scan_consistency=QueryScanConsistency.NOT_BOUNDED),
@@ -633,7 +635,10 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
             bucket: Name of the Couchbase bucket to use
             scope: Name of the scope within the bucket
             collection: Name of the collection within the scope
-            query_vector_search_params: Configuration for the vector search function (type, dimensions, similarity).
+            search_type: Type of vector search (ANN or KNN).
+            similarity: Similarity metric to use (cosine, euclidean, dot_product).
+            nprobes: Number of probes for the ANN search.
+                Defaults to None, uses the value set at index creation time.
             query_options: Options controlling SQL++ query execution (timeout, scan consistency).
             kwargs: Additional keyword arguments passed to the `CouchbaseDocumentStore` base class constructor.
         """
@@ -646,7 +651,9 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
             collection=collection,
             **kwargs,
         )
-        self.query_vector_search_params = query_vector_search_params
+        self.search_type = QueryVectorSearchType(search_type) if isinstance(search_type, str) else search_type
+        self.similarity = similarity
+        self.nprobes = nprobes
         self.query_options = query_options
     def to_dict(self) -> Dict[str, Any]:
         """Serializes the component to a dictionary.
@@ -657,8 +664,10 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         return default_to_dict(
             self,
             **self._base_to_dict(), # cluster details
-            query_vector_search_params=self.query_vector_search_params.to_dict() if self.query_vector_search_params else None,
             query_options=self.query_options.to_dict() if self.query_options else None,
+            search_type=self.search_type.value if isinstance(self.search_type, QueryVectorSearchType) else self.search_type,
+            similarity=self.similarity,
+            nprobes = self.nprobes,
             **self._kwargs,
         )
 
@@ -682,9 +691,6 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
             
         # Handle cluster options deserialization
         init_params["cluster_options"] = CouchbaseClusterOptions.from_dict(init_params["cluster_options"])
-
-        if init_params["query_vector_search_params"]:
-            init_params["query_vector_search_params"] = QueryVectorSearchFunctionParams.from_dict(init_params["query_vector_search_params"])
         
         if init_params["query_options"]:
             init_params["query_options"] = CouchbaseQueryOptions.from_dict(init_params["query_options"])
@@ -728,7 +734,6 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
             normalized_filters = normalize_sql_filters(filters)
             where_clause = f" WHERE {normalized_filters}"
             query_str += where_clause
-        print(query_str,filters)
         try:
             result = self.connection.query(query_str, self.query_options.cb_query_options)
             documents = []
@@ -751,6 +756,7 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         top_k: int = 5,
         filters: Optional[Dict[str, Any]] = None,
         limit: Optional[int] = None,
+        nprobes: Optional[int] = None,
     ) -> List[Document]:
         """Find the documents that are most similar to the provided `query_embedding` by using a vector similarity metric.
 
@@ -759,6 +765,7 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
             top_k: How many documents to retrieve based on vector similarity.
             filters: Optional dictionary of filters to apply using a SQL++ WHERE clause before the vector search.
             limit: Maximum number of Documents to return. Defaults to `top_k` if not specified.
+            nprobes: Number of probes for the ANN search. If None, uses the value set at index creation time or the value set at the document store level.
             
         Returns:
             A list of Documents most similar to the `query_embedding`, potentially pre-filtered.
@@ -786,11 +793,16 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
             normalized_filters = normalize_sql_filters(filters)
             where_clause = f"WHERE {normalized_filters}"
         
+        if nprobes is None:
+            nprobes = self.nprobes
         # Determine the appropriate distance function based on search type
-        distance_function = "APPROX_VECTOR_DISTANCE" if self.query_vector_search_params.search_type == QueryVectorSearchType.ANN else "VECTOR_DISTANCE"
-        
+        if self._search_type == QueryVectorSearchType.ANN:
+            nprobes_exp = f", {nprobes}" if nprobes else ""
+            distance_function_exp = f"APPROX_VECTOR_DISTANCE(d.embedding, {query_vector_str}, '{self.similarity}'{nprobes_exp})"
+        else:
+            distance_function_exp = f"VECTOR_DISTANCE(d.embedding, {query_vector_str}, '{self.similarity}')"
 
-        distance_function_exp = f"{distance_function}(d.embedding, {query_vector_str}, '{self.query_vector_search_params.similarity}', {limit})"
+
         # Build the query
         query_str = f"""
         SELECT d.*, meta().id as id, {distance_function_exp} as distance
@@ -827,6 +839,7 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         query_embedding: List[float],
         top_k: int = 10,
         filters: Optional[Dict[str, Any]] = None,
+        nprobes: Optional[int] = None,
     ) -> List[Document]:
         """Find the documents that are most similar to the provided `query_embedding` using GSI vector search.
 
@@ -834,6 +847,7 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
             query_embedding: Embedding vector of the query
             top_k: Maximum number of documents to return
             filters: Optional filters to apply to documents before vector search
+            nprobes: Number of probes for the ANN search. If None, uses the value set at index creation time or the value set at the document store level.
             
         Returns:
             List of Documents most similar to the query embedding, sorted by relevance
@@ -846,4 +860,5 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
             query_embedding=query_embedding,
             top_k=top_k,
             filters=filters,
+            nprobes=nprobes,
         )
