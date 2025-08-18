@@ -42,46 +42,6 @@ class QueryVectorSearchType(str, Enum):
     KNN = "KNN"    
 
 @dataclass
-class QueryVectorSearchFunctionParams:
-    """Class for storing vector search function parameters for Couchbase GSI.
-    
-    Args:
-        search_type: The type of search to perform.
-        dimension: The dimension of the vector.
-        similarity: The similarity metric to use.
-    """
-    search_type: QueryVectorSearchType
-    dimension: int
-    similarity: str
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Serializes the QueryVectorSearchFunctionParams object to a dictionary.
-
-        Returns:
-            A dictionary representation of the object.
-        """
-        return default_to_dict(
-            self,
-            search_type=self.search_type.value if isinstance(self.search_type, QueryVectorSearchType) else self.search_type,
-            dimension=self.dimension,
-            similarity=self.similarity,
-        )
-    
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "QueryVectorSearchFunctionParams":
-        """Deserializes a dictionary into a QueryVectorSearchFunctionParams object.
-
-        Args:
-            data: The dictionary to deserialize from.
-            
-        Returns:
-            A QueryVectorSearchFunctionParams instance.
-        """
-        init_parameters = data.get("init_parameters", {})
-        init_parameters["search_type"] = QueryVectorSearchType(init_parameters["search_type"]) if init_parameters.get("search_type") else None
-        return default_from_dict(cls, data)
-
-@dataclass
 class CouchbaseQueryOptions:
     """Dataclass for storing query options specifically for Couchbase SQL++ (N1QL) queries.
 
