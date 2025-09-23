@@ -13,7 +13,6 @@ from couchbase_haystack.document_stores import (
     CouchbaseQueryDocumentStore,
 )
 from couchbase_haystack.document_stores.auth import CouchbasePasswordAuthenticator
-import numpy as np
 
 
 @component
@@ -111,6 +110,7 @@ class CouchbaseSearchEmbeddingRetriever:
         self,
         query_embedding: List[float],
         top_k: Optional[int] = None,
+        filters: Optional[Dict[str, Any]] = None,
         search_query: Optional[SearchQuery] = None,
         limit: Optional[int] = None,
     ) -> Dict[str, List[Document]]:
@@ -120,6 +120,8 @@ class CouchbaseSearchEmbeddingRetriever:
             query_embedding: Embedding of the query.
             top_k: Maximum number of Documents to be returned from vector query.
                   Overrides the value specified at initialization.
+            filters: Optional dictionary of filters to apply before the vector search.
+                     Refer to Haystack documentation for filter structure (https://docs.haystack.deepset.ai/v2.0/docs/metadata-filtering).
             search_query: Search filters param which is parsed to the Couchbase search query.
                         The vector query and search query are ORed operation.
             limit: Maximum number of Documents to be return by the couchbase fts search request.
@@ -132,7 +134,8 @@ class CouchbaseSearchEmbeddingRetriever:
         top_k = top_k or self.top_k
 
         docs = self.document_store._embedding_retrieval(
-            query_embedding=query_embedding, top_k=top_k, search_query=search_query, limit=limit
+            query_embedding=query_embedding, top_k=top_k, search_query=search_query, 
+            filters=filters, limit=limit
         )
         return {"documents": docs}
 
@@ -150,7 +153,7 @@ class CouchbaseQueryEmbeddingRetriever:
 
     ```python
     import numpy as np
-    from couchbase_haystack import CouchbaseQueryDocumentStore, CouchbaseQueryEmbeddingRetriever, CouchbasePasswordAuthenticator, QueryVectorSearchFunctionParams, QueryVectorSearchType, CouchbaseQueryOptions
+    from couchbase_haystack import CouchbaseQueryDocumentStore, CouchbaseQueryEmbeddingRetriever, CouchbasePasswordAuthenticator, QueryVectorSearchType, CouchbaseQueryOptions
     from haystack.utils import Secret
 
     # Assume a Couchbase GSI index named "vector_gsi_index" exists on the "embedding" field
@@ -165,11 +168,9 @@ class CouchbaseQueryEmbeddingRetriever:
         scope="scope_name",
         collection="collection_name",
         index_name="vector_gsi_index",
-        query_vector_search_params=QueryVectorSearchFunctionParams(
-            search_type=QueryVectorSearchType.ANN, # Or KNN depending on index
-            dimension=768,
-            similarity="cosine" # Or dot_product, squared_l2
-        ),
+        search_type=QueryVectorSearchType.ANN, # Or KNN depending on index
+        similarity="cosine", # Or dot_product, squared_l2
+        nprobes=10, # optional Number of probes for the ANN search
         query_options=CouchbaseQueryOptions() # Optional query options
     )
     retriever = CouchbaseQueryEmbeddingRetriever(document_store=store, top_k=5)
@@ -248,8 +249,7 @@ class CouchbaseQueryEmbeddingRetriever:
         query_embedding: List[float],
         top_k: Optional[int] = None,
         filters: Optional[Dict[str, Any]] = None,
-        # Added limit parameter consistent with _embedding_retrieval signature
-        limit: Optional[int] = None,
+        nprobes: Optional[int] = None,
     ) -> Dict[str, List[Document]]:
         """Retrieve documents from the CouchbaseQueryDocumentStore based on embedding similarity using GSI.
 
@@ -259,19 +259,14 @@ class CouchbaseQueryEmbeddingRetriever:
                    Overrides the value specified at initialization.
             filters: Optional dictionary of filters to apply before the vector search.
                      Refer to Haystack documentation for filter structure (https://docs.haystack.deepset.ai/v2.0/docs/metadata-filtering).
-            limit: Maximum number of documents to return from the underlying query.
-                   Defaults to `top_k` if not provided.
-
+            nprobes: Number of probes for the ANN search. If None, uses the value set at index creation time or the value set at the document store level.
         Returns:
             A dictionary with the following keys:
             - documents: List of Documents most similar to the given `query_embedding`, potentially filtered.
         """
         top_k = top_k or self.top_k
-        # Use limit if provided, otherwise default to top_k
-        actual_limit = limit or top_k
 
-        # Pass limit to the underlying document store method
         docs = self.document_store._embedding_retrieval(
-            query_embedding=query_embedding, top_k=top_k, filters=filters, limit=actual_limit
+            query_embedding=query_embedding, top_k=top_k, filters=filters, nprobes=nprobes
         )
         return {"documents": docs} 

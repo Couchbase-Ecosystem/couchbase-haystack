@@ -9,7 +9,6 @@ from couchbase_haystack import (
     CouchbasePasswordAuthenticator,
     CouchbaseClusterOptions,
     CouchbaseQueryOptions,
-    QueryVectorSearchFunctionParams,
     QueryVectorSearchType
 )
 
@@ -30,11 +29,8 @@ class TestQueryRetrieverUnit:
             scope="haystack_test_scope",
             collection="haystack_collection",
             index_name="vector_gsi_index",
-            query_vector_search_params=QueryVectorSearchFunctionParams(
-                search_type=QueryVectorSearchType.ANN,
-                dimension=768,
-                similarity="cosine"
-            ),
+            search_type=QueryVectorSearchType.ANN,
+            similarity="cosine",
             query_options=CouchbaseQueryOptions(scan_consistency=QueryScanConsistency.NOT_BOUNDED)
         )
         # Mock the to_dict method of the fixture to return the actual dict
@@ -68,10 +64,9 @@ class TestQueryRetrieverUnit:
                         "collection": "haystack_collection",
                         "index_name": "vector_gsi_index",
                         "query_vector_search_params": {
-                            "type": "couchbase_haystack.document_stores.document_store.QueryVectorSearchFunctionParams",
+                            "type": "couchbase_haystack.document_stores.document_store.QueryVectorSearchType",
                              "init_parameters": {
                                 "search_type": "ANN",
-                                "dimension": 768,
                                 "similarity": "cosine"
                             }
                         },
@@ -113,10 +108,9 @@ class TestQueryRetrieverUnit:
                              "collection": "collection_name",
                              "index_name": "vector_gsi_index",
                              "query_vector_search_params": {
-                                 "type": "couchbase_haystack.document_stores.document_store.QueryVectorSearchFunctionParams",
+                                 "type": "couchbase_haystack.document_stores.document_store.QueryVectorSearchType",
                                  "init_parameters": {
                                     "search_type": "KNN",
-                                    "dimension": 384,
                                     "similarity": "dot_product"
                                  }
                              },
@@ -138,10 +132,8 @@ class TestQueryRetrieverUnit:
         assert retriever.document_store.scope_name == "scope_name"
         assert retriever.document_store.collection_name == "collection_name"
         assert retriever.document_store.index_name == "vector_gsi_index"
-        assert isinstance(retriever.document_store.query_vector_search_params, QueryVectorSearchFunctionParams)
-        assert retriever.document_store.query_vector_search_params.search_type == QueryVectorSearchType.KNN
-        assert retriever.document_store.query_vector_search_params.dimension == 384
-        assert retriever.document_store.query_vector_search_params.similarity == "dot_product"
+        assert retriever.document_store.search_type == QueryVectorSearchType.KNN
+        assert retriever.document_store.similarity == "dot_product"
         assert isinstance(retriever.document_store.query_options, CouchbaseQueryOptions)
         assert retriever.document_store.query_options.scan_consistency == QueryScanConsistency.REQUEST_PLUS
         assert retriever.document_store.query_options.timeout.total_seconds() == 30.0
@@ -167,7 +159,6 @@ class TestQueryRetrieverUnit:
         )
         # Assert the result contains the documents returned by the mock
         assert result["documents"] == mock_docs
-
     def test_run_with_limit(self, query_doc_store: MagicMock):
         mock_docs = [Document(content="Test doc limit")]
         query_doc_store._embedding_retrieval.return_value = mock_docs
@@ -188,3 +179,4 @@ class TestQueryRetrieverUnit:
             limit=test_limit, # Explicit limit passed
         )
         assert result["documents"] == mock_docs
+

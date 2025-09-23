@@ -17,8 +17,8 @@ from couchbase.exceptions import SearchIndexNotFoundException
 from couchbase import search
 from couchbase_haystack.document_stores.search_filters import NumericRangeQuery
 from datetime import timedelta
-from ..common.common import IS_GLOBAL_LEVEL_INDEX
-from ..common import common
+from tests.common.common import IS_GLOBAL_LEVEL_INDEX
+from tests.common import common
 
 
 @pytest.mark.skipif(
@@ -53,8 +53,7 @@ class TestEmbeddingRetrieval:
         common.create_scope_if_not_exists(collection_manager, scope_name)
         common.create_collection_if_not_exists(collection_manager, scope_name, collection_name)
         scope = bucket.scope(scope_name)
-        collection = scope.collection(collection_name)
-        index_definition = common.load_json_file("./tests/vector_index.json")
+        index_definition = common.load_json_file(f"{os.path.dirname(__file__)}/vector_index.json")
         index_definition["params"]["mapping"]["types"]["haystack_test_scope.haystack_collection"]["properties"]["embedding"][
             "fields"
         ][0]["dims"] = 3
@@ -112,7 +111,7 @@ class TestEmbeddingRetrieval:
         assert results[1].content == "blue color"
         assert results[0].score > results[1].score
 
-    def test_embedding_retrieval_with_filter(self, document_store: CouchbaseSearchDocumentStore):
+    def test_embedding_retrieval_with_search_query(self, document_store: CouchbaseSearchDocumentStore):
         query_embedding = [0.9, 0.0, 0.0]
         results = document_store._embedding_retrieval(
             query_embedding=query_embedding,
@@ -124,3 +123,13 @@ class TestEmbeddingRetrieval:
         assert results[0].content == "red color"
         assert results[1].content == "grey color"
         assert results[0].score > results[1].score
+
+    def test_embedding_retrieval_with_filters(self, document_store: CouchbaseSearchDocumentStore):
+        query_embedding = [0.0, 0.9, 0.0]
+        results = document_store._embedding_retrieval(
+            query_embedding=query_embedding,
+            top_k=1,
+            filters={"field": "meta.color", "operator": "==", "value": "red"},
+        )
+        assert len(results) == 1
+        assert results[0].content == "red color"

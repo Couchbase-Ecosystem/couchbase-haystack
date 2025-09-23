@@ -9,7 +9,6 @@ from haystack.document_stores.errors import DocumentStoreError
 from couchbase.exceptions import DocumentExistsException
 from couchbase_haystack.document_stores.document_store import (
     CouchbaseQueryDocumentStore, 
-    QueryVectorSearchFunctionParams,
     QueryVectorSearchType,
     QueryScanConsistency,
     CouchbaseQueryOptions
@@ -104,11 +103,8 @@ def document_store_params(authenticator, cluster_options):
         "scope": "test_scope",
         "collection": "test_collection",
         "index_name": "test_index",
-        "query_vector_search_params": QueryVectorSearchFunctionParams(
-            search_type=QueryVectorSearchType.ANN,
-            dimension=768,
-            similarity="COSINE"
-        ),
+        "search_type": QueryVectorSearchType.ANN,
+        "similarity": "COSINE",
         "query_options": CouchbaseQueryOptions(
             scan_consistency=QueryScanConsistency.REQUEST_PLUS,
             timeout=timedelta(seconds=10)
@@ -146,9 +142,8 @@ def test_init(document_store_params):
     assert store.scope_name == "test_scope"
     assert store.collection_name == "test_collection"
     assert store.index_name == "test_index"
-    assert store.query_vector_search_params.search_type == QueryVectorSearchType.ANN
-    assert store.query_vector_search_params.dimension == 768
-    assert store.query_vector_search_params.similarity == "COSINE"
+    assert store.search_type == QueryVectorSearchType.ANN
+    assert store.similarity == "COSINE"
 
 def test_init_invalid_collection_name(document_store_params):
     """Test initialization with invalid collection name"""
@@ -548,8 +543,7 @@ def test_serialization_deserialization(document_store_params):
     assert deserialized.scope_name == store.scope_name
     assert deserialized.collection_name == store.collection_name
     assert deserialized.index_name == store.index_name
-    assert deserialized.query_vector_search_params.dimension == store.query_vector_search_params.dimension
-    assert deserialized.query_vector_search_params.similarity == store.query_vector_search_params.similarity
-    assert deserialized.query_vector_search_params.search_type == store.query_vector_search_params.search_type
+    assert deserialized.search_type == store.search_type
+    assert deserialized.similarity == store.similarity
     assert deserialized.query_options.scan_consistency == store.query_options.scan_consistency
     assert deserialized.query_options.timeout.total_seconds() == store.query_options.timeout.total_seconds()

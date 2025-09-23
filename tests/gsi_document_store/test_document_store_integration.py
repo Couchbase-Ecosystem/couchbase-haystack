@@ -13,7 +13,6 @@ from haystack.utils.auth import Secret
 from couchbase_haystack import (
     CouchbaseQueryDocumentStore,
     QueryVectorSearchType,
-    QueryVectorSearchFunctionParams,
     CouchbaseQueryOptions,
 )
 from couchbase_haystack.document_stores.auth import CouchbasePasswordAuthenticator
@@ -94,11 +93,8 @@ class TestGSIDocumentStoreIntegration(DocumentStoreBaseTests):
             scope=TEST_SCOPE,
             collection=TEST_COLLECTION,
             index_name=TEST_INDEX,
-            query_vector_search_params=QueryVectorSearchFunctionParams(
-                search_type=QueryVectorSearchType.ANN,
-                dimension=VECTOR_DIMENSION,
-                similarity="L2"
-            ),
+            search_type=QueryVectorSearchType.ANN,
+            similarity="L2",
             vector_field="embedding",
         )
 

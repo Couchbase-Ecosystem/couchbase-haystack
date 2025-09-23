@@ -6,7 +6,7 @@ import re
 from datetime import timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from couchbase import search
 from couchbase.cluster import Cluster
@@ -80,7 +80,7 @@ class CouchbaseQueryOptions:
         """
         init_parameters = data.get("init_parameters", {})
         init_parameters["scan_consistency"] = QueryScanConsistency(init_parameters["scan_consistency"]) if init_parameters.get("scan_consistency") else None
-        init_parameters["timeout"] = timedelta(seconds=init_parameters["timeout"]) if init_parameters.get("timeout") else None
+        init_parameters["timeout"] = timedelta(seconds=init_parameters.get("timeout")) if init_parameters.get("timeout") else None
         return default_from_dict(cls, data)
 
     @property
@@ -302,7 +302,7 @@ class CouchbaseDocumentStore:
             else:
                 result = self.collection.upsert_multi(operations)
         except Exception as e:
-            logger.error("write error {e}")
+            logger.error(f"write error {e}")
             msg = f"Failed to write documents to Couchbase. Error: {e}"
             raise DocumentStoreError(msg) from e
         if not result.all_ok and result.exceptions:
@@ -397,7 +397,6 @@ class CouchbaseSearchDocumentStore(CouchbaseDocumentStore):
             **self._base_to_dict(),
             vector_search_index=self.vector_search_index,
             is_global_level_index=self.is_global_level_index,
-            **self._kwargs,
         )
 
     @classmethod
@@ -476,6 +475,7 @@ class CouchbaseSearchDocumentStore(CouchbaseDocumentStore):
         self,
         query_embedding: List[float],
         top_k: int = 10,
+        filters: Optional[Dict[str, Any]] = None,
         search_query: SearchQuery = None,
         limit: Optional[int] = None,
     ) -> List[Document]:
@@ -484,6 +484,8 @@ class CouchbaseSearchDocumentStore(CouchbaseDocumentStore):
         Args:
             query_embedding: Embedding of the query
             top_k: How many documents to be returned by the vector query
+            filters: Optional dictionary of filters to apply before the vector search.
+                     Refer to Haystack documentation for filter structure (https://docs.haystack.deepset.ai/v2.0/docs/metadata-filtering).
             search_query: Search filters param which is parsed to the Couchbase search query. The vector query and
                           search query are ORed operation.
             limit: Maximum number of Documents to return. Defaults to top_k if not specified.
@@ -498,9 +500,18 @@ class CouchbaseSearchDocumentStore(CouchbaseDocumentStore):
         if not query_embedding:
             msg = "Query embedding must not be empty"
             raise ValueError(msg)
+        pre_filter: Optional[SearchQuery] = None
+        if filters is not None:
+            pre_filter = _normalize_filters(filters)
+            logger.debug(f"pre_filter.encodable: {pre_filter.encodable}")
 
         vector_search = VectorSearch.from_vector_query(
-            VectorQuery(field_name="embedding", vector=query_embedding, num_candidates=top_k)
+            VectorQuery(
+                field_name="embedding",
+                  vector=query_embedding, 
+                  num_candidates=top_k,
+                  prefilter=pre_filter
+            )
         )
         request = search.SearchRequest.create(vector_search)
         if search_query:
@@ -715,7 +726,6 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         query_embedding: List[float],
         top_k: int = 5,
         filters: Optional[Dict[str, Any]] = None,
-        limit: Optional[int] = None,
         nprobes: Optional[int] = None,
     ) -> List[Document]:
         """Find the documents that are most similar to the provided `query_embedding` by using a vector similarity metric.
@@ -724,7 +734,6 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
             query_embedding: Embedding of the query
             top_k: How many documents to retrieve based on vector similarity.
             filters: Optional dictionary of filters to apply using a SQL++ WHERE clause before the vector search.
-            limit: Maximum number of Documents to return. Defaults to `top_k` if not specified.
             nprobes: Number of probes for the ANN search. If None, uses the value set at index creation time or the value set at the document store level.
             
         Returns:
@@ -738,8 +747,6 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
             msg = "Query embedding must not be empty"
             raise ValueError(msg)
 
-        if limit is None:
-            limit = top_k
 
         # Construct the SQL++ query with vector search
         query_context = f"{self.bucket_name}.{self.scope_name}.{self.collection_name}"
@@ -756,7 +763,7 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         if nprobes is None:
             nprobes = self.nprobes
         # Determine the appropriate distance function based on search type
-        if self._search_type == QueryVectorSearchType.ANN:
+        if self.search_type == QueryVectorSearchType.ANN:
             nprobes_exp = f", {nprobes}" if nprobes else ""
             distance_function_exp = f"APPROX_VECTOR_DISTANCE(d.embedding, {query_vector_str}, '{self.similarity}'{nprobes_exp})"
         else:
@@ -769,7 +776,7 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         FROM {query_context} d
         {where_clause}
         ORDER BY distance
-        LIMIT {limit}
+        LIMIT {top_k}
         """
         
         try:
@@ -784,7 +791,7 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
             for row in result.rows():
                 # Convert row to Document
                 doc_dict = row.copy()
-                doc_dict["score"] = row["distance"]
+                doc_dict["score"] = self.normalize_score(row["distance"])
                 documents.append(Document.from_dict(doc_dict))
                 
             return documents
@@ -793,32 +800,25 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
             msg = f"Failed to retrieve documents with vector search: {e}"
             logger.error(msg)
             raise DocumentStoreError(msg) from e
-            
-    def vector_search(
-        self,
-        query_embedding: List[float],
-        top_k: int = 10,
-        filters: Optional[Dict[str, Any]] = None,
-        nprobes: Optional[int] = None,
-    ) -> List[Document]:
-        """Find the documents that are most similar to the provided `query_embedding` using GSI vector search.
+        
+
+    def normalize_score(self, score: float) -> float:
+        """
+        Normalizes the raw vector search score based on the similarity metric.
+
+        For l2_distance, the normalized score is the reciprocal of the distance (1 / distance).
+        For cosine and dot_product, the raw score is already the similarity score and is returned as-is.
 
         Args:
-            query_embedding: Embedding vector of the query
-            top_k: Maximum number of documents to return
-            filters: Optional filters to apply to documents before vector search
-            nprobes: Number of probes for the ANN search. If None, uses the value set at index creation time or the value set at the document store level.
-            
+            score: The raw score or distance returned by the vector search.
+            similarity: The similarity metric used ("l2_distance", "cosine", or "dot_product").
+
         Returns:
-            List of Documents most similar to the query embedding, sorted by relevance
-            
-        Raises:
-            ValueError: If query_embedding is empty or has wrong dimension
-            DocumentStoreError: If vector search fails
+            The normalized score.
         """
-        return self._embedding_retrieval(
-            query_embedding=query_embedding,
-            top_k=top_k,
-            filters=filters,
-            nprobes=nprobes,
-        )
+        if self.similarity == "l2_distance":
+            return 1.0 / score if score != 0 else float("inf")
+        elif self.similarity in ("cosine", "dot_product"):
+            return score
+        else:
+            raise ValueError(f"Unknown similarity metric: {self.similarity}")

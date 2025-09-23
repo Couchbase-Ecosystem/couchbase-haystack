@@ -81,7 +81,7 @@ class TestSearchDocumentStore(DocumentStoreBaseTests):
         common.create_collection_if_not_exists(collection_manager, scope_name, collection_name)
         scope = bucket.scope(scope_name)
         collection = scope.collection(collection_name)
-        index_definition = common.load_json_file("./tests/vector_index.json")
+        index_definition = common.load_json_file(f"{os.path.dirname(__file__)}/vector_index.json")
 
         if IS_GLOBAL_LEVEL_INDEX:
             sim = cluster.search_indexes()
@@ -345,7 +345,7 @@ class TestSearchDocumentStoreUnit:
             }
         )
         assert docstore.cluster_connection_string == Secret.from_env_var("CONNECTION_STRING")
-        assert docstore.bucket == "haystack_integration_test"
+        assert docstore.bucket_name == "haystack_integration_test"
         assert docstore.scope_name == "haystack_test_scope"
         assert docstore.collection_name == "haystack_collection"
         assert docstore.vector_search_index == "vector_search"

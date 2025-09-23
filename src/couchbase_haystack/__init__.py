@@ -19,7 +19,6 @@ from couchbase_haystack.document_stores import (
     CouchbasePasswordAuthenticator,
     CouchbaseSearchDocumentStore,
     CouchbaseQueryDocumentStore,
-    QueryVectorSearchFunctionParams,
     QueryVectorSearchType,
     CouchbaseQueryOptions,
 )
@@ -33,7 +32,6 @@ __all__ = [
     "CouchbaseSearchEmbeddingRetriever",
     "CouchbaseQueryDocumentStore",
     "CouchbaseQueryEmbeddingRetriever",
-    "QueryVectorSearchFunctionParams",
     "QueryVectorSearchType",
     "CouchbaseQueryOptions",
 ]

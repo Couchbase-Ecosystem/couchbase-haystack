@@ -105,7 +105,7 @@ class TestRetrieverUnit:
         )
         assert retriever.top_k == 15
         assert isinstance(retriever.document_store.authenticator, CouchbasePasswordAuthenticator)
-        assert retriever.document_store.bucket == "haystack_integration_test"
+        assert retriever.document_store.bucket_name == "haystack_integration_test"
         assert retriever.document_store.scope_name == "haystack_test_scope"
         assert retriever.document_store.collection_name == "haystack_collection"
         assert retriever.document_store.vector_search_index == "vector_search"
@@ -128,13 +128,44 @@ class TestRetrieverUnit:
         )
         data = {
             "query_embedder": {"text": question},
-            "retriever": {"top_k": 3, "search_query": sq},
+            "retriever": {"top_k": 3, "search_query": sq, "filters": {"field": "meta.color", "operator": "==", "value": "red"}},
         }
         result = rag_pipeline.run(data, include_outputs_from={"query_embedder"})
         doc_store._embedding_retrieval.assert_called_once_with(
             query_embedding=result["query_embedder"]["embedding"],
             top_k=3,
-            search_query=data["retriever"]["search_query"],
+            search_query=data["retriever"]["search_query"],  # type: ignore
+            filters=data["retriever"]["filters"],  # type: ignore
             limit=None,
         )
         assert result["retriever"]["documents"] == doc_store._embedding_retrieval.return_value
+
+    def test_run_with_limit(self, doc_store: MagicMock):
+        # Setup mock return value
+        mock_docs = [Document(content="Who created the Dothraki vocabulary?")]
+        doc_store._embedding_retrieval.return_value = mock_docs
+        retriever = CouchbaseSearchEmbeddingRetriever(document_store=doc_store, top_k=15)
+        # Example embedding and filters
+        test_embedding = [0.1, 0.2, 0.3]
+        sq = search.BooleanQuery(
+            must=search.ConjunctionQuery(search.MatchQuery("term2", field="field1"), search.MatchQuery("term", field="field3"))
+        )
+        test_filters = {"field": "meta.color", "operator": "==", "value": "red"}
+        test_limit = 2
+        # Call run directly with explicit limit
+        result = retriever.run(
+            query_embedding=test_embedding,
+            top_k=3,
+            search_query=sq,
+            filters=test_filters,
+            limit=test_limit,
+        )
+        # Assert that explicit limit is passed through
+        doc_store._embedding_retrieval.assert_called_once_with(
+            query_embedding=test_embedding,
+            top_k=3,
+            search_query=sq,
+            filters=test_filters,
+            limit=test_limit,
+        )
+        assert result["documents"] == mock_docs

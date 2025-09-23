@@ -6,7 +6,6 @@ from .cluster_options import CouchbaseClusterOptions
 from .document_store import (
     CouchbaseSearchDocumentStore,   
     CouchbaseQueryDocumentStore,
-    QueryVectorSearchFunctionParams,
     QueryVectorSearchType,
     CouchbaseQueryOptions,
 )
@@ -17,7 +16,6 @@ __all__ = [
     "CouchbasePasswordAuthenticator",
     "CouchbaseSearchDocumentStore",
     "CouchbaseQueryDocumentStore",
-    "QueryVectorSearchFunctionParams",
     "QueryVectorSearchType",
     "CouchbaseQueryOptions",
 ]
