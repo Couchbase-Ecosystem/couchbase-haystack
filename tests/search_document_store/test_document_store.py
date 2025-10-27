@@ -39,14 +39,26 @@ def test_init_is_lazy(_mock_cluster):
         cluster_options=CouchbaseClusterOptions(),
         authenticator=CouchbasePasswordAuthenticator(),
         bucket="haystack_test_bucket",
-        scope="scope_name",
-        collection="collection_name",
+        scope="test_scope",
+        collection="test_collection",
         vector_search_index="vector_index",
         is_global_level_index=IS_GLOBAL_LEVEL_INDEX,
     )
     _mock_cluster.assert_not_called()
 
 
+@pytest.mark.skipif(
+    "BUCKET_NAME" not in os.environ,
+    reason="Couchbase bucket name not provided",
+)
+@pytest.mark.skipif(
+    "SCOPE_NAME" not in os.environ,
+    reason="Couchbase scope name not provided",
+)
+@pytest.mark.skipif(
+    "COLLECTION_NAME" not in os.environ,
+    reason="Couchbase collection name not provided",
+)
 @pytest.mark.skipif(
     "CONNECTION_STRING" not in os.environ,
     reason="Couchbase cluster connection string not provided",
@@ -63,9 +75,9 @@ def test_init_is_lazy(_mock_cluster):
 class TestSearchDocumentStore(DocumentStoreBaseTests):
     @pytest.fixture()
     def document_store(self):
-        bucket_name = "haystack_integration_test"
-        scope_name = "haystack_test_scope"
-        collection_name = "haystack_collection"
+        bucket_name = os.environ["BUCKET_NAME"]
+        scope_name = os.environ["SCOPE_NAME"]
+        collection_name = os.environ["COLLECTION_NAME"]
         cluster_opts = ClusterOptions(
             authenticator=PasswordAuthenticator(username=os.environ["USER_NAME"], password=os.environ["PASSWORD"]),
             enable_tcp_keep_alive=True,
@@ -90,9 +102,12 @@ class TestSearchDocumentStore(DocumentStoreBaseTests):
         try:
             sim.get_index(index_name=index_definition["name"])
         except SearchIndexNotFoundException as e:
+            type = index_definition["params"]["mapping"]["types"]["____scope.collection_____"]
+            del index_definition["params"]["mapping"]["types"]["____scope.collection_____"]
+            index_definition["params"]["mapping"]["types"][f"{scope_name}.{collection_name}"] = type
             search_index = SearchIndex(
                 name=index_definition["name"],
-                source_name=index_definition["sourceName"],
+                source_name=bucket_name,
                 source_type=index_definition["sourceType"],
                 params=index_definition["params"],
                 plan_params=index_definition["planParams"],
@@ -100,7 +115,7 @@ class TestSearchDocumentStore(DocumentStoreBaseTests):
             sim.upsert_index(search_index)
         # Wait for the index to be ready
         max_retries = 10
-        retry_interval = 1  # seconds
+        retry_interval = 2  # seconds
         for attempt in range(max_retries):
             try:
                 # Check if index exists and is ready by getting document count
@@ -274,7 +289,7 @@ class TestSearchDocumentStoreUnit:
             scope = bucket.scope.return_value
             collection = scope.collection.return_value
             bucket.collections.return_value.get_all_scopes.return_value = [
-                ScopeSpec("haystack_test_scope", [CollectionSpec(collection_name="haystack_collection")])
+                ScopeSpec("test_scope", [CollectionSpec(collection_name="test_collection")])
             ]
             store = CouchbaseSearchDocumentStore(
                 cluster_connection_string=Secret.from_env_var("CONNECTION_STRING"),
@@ -282,9 +297,9 @@ class TestSearchDocumentStoreUnit:
                     username=Secret.from_env_var("USER_NAME"), password=Secret.from_env_var("PASSWORD")
                 ),
                 cluster_options=CouchbaseClusterOptions(profile=KnownConfigProfiles.WanDevelopment),
-                bucket="haystack_integration_test",
-                scope="haystack_test_scope",
-                collection="haystack_collection",
+                bucket="test_bucket",
+                scope="test_scope",
+                collection="test_collection",
                 vector_search_index="vector_search",
                 is_global_level_index=IS_GLOBAL_LEVEL_INDEX,
             )
@@ -310,9 +325,9 @@ class TestSearchDocumentStoreUnit:
                     'type': 'couchbase_haystack.document_stores.cluster_options.CouchbaseClusterOptions',
                     'init_parameters': {'profile': 'wan_development'},
                 },
-                'bucket': 'haystack_integration_test',
-                'scope': 'haystack_test_scope',
-                'collection': 'haystack_collection',
+                'bucket': 'test_bucket',
+                'scope': 'test_scope',
+                'collection': 'test_collection',
                 'vector_search_index': 'vector_search',
                 'is_global_level_index': IS_GLOBAL_LEVEL_INDEX,
             },
@@ -336,18 +351,18 @@ class TestSearchDocumentStoreUnit:
                         'type': 'couchbase_haystack.document_stores.cluster_options.CouchbaseClusterOptions',
                         'init_parameters': {'profile': 'wan_development'},
                     },
-                    'bucket': 'haystack_integration_test',
-                    'scope': 'haystack_test_scope',
-                    'collection': 'haystack_collection',
+                    'bucket': 'test_bucket',
+                    'scope': 'test_scope',
+                    'collection': 'test_collection',
                     'vector_search_index': 'vector_search',
                     'is_global_level_index': IS_GLOBAL_LEVEL_INDEX,
                 },
             }
         )
         assert docstore.cluster_connection_string == Secret.from_env_var("CONNECTION_STRING")
-        assert docstore.bucket_name == "haystack_integration_test"
-        assert docstore.scope_name == "haystack_test_scope"
-        assert docstore.collection_name == "haystack_collection"
+        assert docstore.bucket_name == 'test_bucket'
+        assert docstore.scope_name == 'test_scope'
+        assert docstore.collection_name == 'test_collection'
         assert docstore.vector_search_index == "vector_search"
         assert docstore.cluster_options["profile"] == KnownConfigProfiles.WanDevelopment
         assert docstore.is_global_level_index == IS_GLOBAL_LEVEL_INDEX
@@ -368,6 +383,6 @@ class TestSearchDocumentStoreUnit:
         if IS_GLOBAL_LEVEL_INDEX:
             document_store.cluster.search.assert_called_once()
         else:
-            document_store.cluster.bucket.return_value.scope.assert_called_once_with("haystack_test_scope")
+            document_store.cluster.bucket.return_value.scope.assert_called_once_with('test_scope')
             document_store.cluster.bucket.return_value.scope.return_value.search.assert_called_once()
         assert doc == [Document(id="1a", content="text", score=1)]

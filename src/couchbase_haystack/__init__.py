@@ -20,7 +20,8 @@ from couchbase_haystack.document_stores import (
     CouchbaseSearchDocumentStore,
     CouchbaseQueryDocumentStore,
     QueryVectorSearchType,
-    CouchbaseQueryOptions,
+    QueryVectorSearchSimilarity,
+    CouchbaseQueryOptions
 )
 
 __all__ = [
@@ -33,5 +34,6 @@ __all__ = [
     "CouchbaseQueryDocumentStore",
     "CouchbaseQueryEmbeddingRetriever",
     "QueryVectorSearchType",
-    "CouchbaseQueryOptions",
+    "QueryVectorSearchSimilarity"
+    "CouchbaseQueryOptions"
 ]

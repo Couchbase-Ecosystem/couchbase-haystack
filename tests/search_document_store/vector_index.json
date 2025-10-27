@@ -24,7 +24,7 @@
           "enabled": false
         },
         "types": {
-          "haystack_test_scope.haystack_collection": {
+          "____scope.collection_____": {
             "dynamic": false,
             "enabled": true,
             "properties": {

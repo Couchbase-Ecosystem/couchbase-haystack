@@ -28,9 +28,9 @@ class TestRetrieverUnit:
     def test_to_dict(self, doc_store: MagicMock):
         ac_doc_store = CouchbaseSearchDocumentStore(
             authenticator=CouchbasePasswordAuthenticator(),
-            bucket="haystack_integration_test",
-            scope="haystack_test_scope",
-            collection="haystack_collection",
+            bucket="test_bucket",
+            scope="test_scope",
+            collection="test_collection",
             vector_search_index="vector_search",
             is_global_level_index=IS_GLOBAL_LEVEL_INDEX,
         )
@@ -58,9 +58,9 @@ class TestRetrieverUnit:
                             "type": "couchbase_haystack.document_stores.cluster_options.CouchbaseClusterOptions",
                             "init_parameters": {},
                         },
-                        "bucket": "haystack_integration_test",
-                        "scope": "haystack_test_scope",
-                        "collection": "haystack_collection",
+                        "bucket": "test_bucket",
+                        "scope": "test_scope",
+                        "collection": "test_collection",
                         "vector_search_index": "vector_search",
                         'is_global_level_index': IS_GLOBAL_LEVEL_INDEX,
                     },
@@ -94,9 +94,9 @@ class TestRetrieverUnit:
                                 "type": "couchbase_haystack.document_stores.cluster_options.CouchbaseClusterOptions",
                                 "init_parameters": {},
                             },
-                            "bucket": "haystack_integration_test",
-                            "scope": "haystack_test_scope",
-                            "collection": "haystack_collection",
+                            "bucket": "test_bucket",
+                            "scope": "test_scope",
+                            "collection": "test_collection",
                             "vector_search_index": "vector_search",
                         },
                     },
@@ -105,9 +105,9 @@ class TestRetrieverUnit:
         )
         assert retriever.top_k == 15
         assert isinstance(retriever.document_store.authenticator, CouchbasePasswordAuthenticator)
-        assert retriever.document_store.bucket_name == "haystack_integration_test"
-        assert retriever.document_store.scope_name == "haystack_test_scope"
-        assert retriever.document_store.collection_name == "haystack_collection"
+        assert retriever.document_store.bucket_name == "test_bucket"
+        assert retriever.document_store.scope_name == "test_scope"
+        assert retriever.document_store.collection_name == "test_collection"
         assert retriever.document_store.vector_search_index == "vector_search"
 
     def test_run(self, doc_store: MagicMock):

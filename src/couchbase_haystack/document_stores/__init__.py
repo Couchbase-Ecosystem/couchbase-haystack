@@ -8,6 +8,7 @@ from .document_store import (
     CouchbaseQueryDocumentStore,
     QueryVectorSearchType,
     CouchbaseQueryOptions,
+    QueryVectorSearchSimilarity,
 )
 __all__ = [
     "CouchbaseAuthenticator",
@@ -17,5 +18,6 @@ __all__ = [
     "CouchbaseSearchDocumentStore",
     "CouchbaseQueryDocumentStore",
     "QueryVectorSearchType",
+    "QueryVectorSearchSimilarity",
     "CouchbaseQueryOptions",
 ]

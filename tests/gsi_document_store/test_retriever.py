@@ -9,7 +9,8 @@ from couchbase_haystack import (
     CouchbasePasswordAuthenticator,
     CouchbaseClusterOptions,
     CouchbaseQueryOptions,
-    QueryVectorSearchType
+    QueryVectorSearchType,
+    QueryVectorSearchSimilarity
 )
 
 from haystack.dataclasses import Document
@@ -25,12 +26,11 @@ class TestQueryRetrieverUnit:
         # Create an actual instance to get its default dict representation
         ac_doc_store = CouchbaseQueryDocumentStore(
             authenticator=CouchbasePasswordAuthenticator(),
-            bucket="haystack_integration_test",
-            scope="haystack_test_scope",
-            collection="haystack_collection",
-            index_name="vector_gsi_index",
+            bucket="test_bucket",
+            scope="test_scope",
+            collection="test_collection",
             search_type=QueryVectorSearchType.ANN,
-            similarity="cosine",
+            similarity=QueryVectorSearchSimilarity.COSINE,
             query_options=CouchbaseQueryOptions(scan_consistency=QueryScanConsistency.NOT_BOUNDED)
         )
         # Mock the to_dict method of the fixture to return the actual dict
@@ -59,17 +59,12 @@ class TestQueryRetrieverUnit:
                             "type": "couchbase_haystack.document_stores.cluster_options.CouchbaseClusterOptions",
                             "init_parameters": {},
                         },
-                        "bucket": "haystack_integration_test",
-                        "scope": "haystack_test_scope",
-                        "collection": "haystack_collection",
-                        "index_name": "vector_gsi_index",
-                        "query_vector_search_params": {
-                            "type": "couchbase_haystack.document_stores.document_store.QueryVectorSearchType",
-                             "init_parameters": {
-                                "search_type": "ANN",
-                                "similarity": "cosine"
-                            }
-                        },
+                        "bucket": "test_bucket",
+                        "scope": "test_scope",
+                        "collection": "test_collection",
+                        "search_type": "ANN",
+                        "similarity": "COSINE",
+                        "nprobes": None,
                          "query_options": {
                              "type": "couchbase_haystack.document_stores.document_store.CouchbaseQueryOptions",
                              "init_parameters": {
@@ -103,17 +98,12 @@ class TestQueryRetrieverUnit:
                                 "type": "couchbase_haystack.document_stores.cluster_options.CouchbaseClusterOptions",
                                 "init_parameters": {},
                             },
-                             "bucket": "haystack_test_bucket",
-                             "scope": "scope_name",
-                             "collection": "collection_name",
-                             "index_name": "vector_gsi_index",
-                             "query_vector_search_params": {
-                                 "type": "couchbase_haystack.document_stores.document_store.QueryVectorSearchType",
-                                 "init_parameters": {
-                                    "search_type": "KNN",
-                                    "similarity": "dot_product"
-                                 }
-                             },
+                             "bucket": "test_bucket",
+                             "scope": "test_scope",
+                             "collection": "test_collection",
+                             "search_type": "KNN",
+                             "similarity": QueryVectorSearchSimilarity.DOT.value,
+                             "nprobes": None,
                              "query_options": {
                                 "type": "couchbase_haystack.document_stores.document_store.CouchbaseQueryOptions",
                                 "init_parameters": {
@@ -128,12 +118,11 @@ class TestQueryRetrieverUnit:
         )
         assert retriever.top_k == 5
         assert isinstance(retriever.document_store, CouchbaseQueryDocumentStore)
-        assert retriever.document_store.bucket_name == "haystack_test_bucket"
-        assert retriever.document_store.scope_name == "scope_name"
-        assert retriever.document_store.collection_name == "collection_name"
-        assert retriever.document_store.index_name == "vector_gsi_index"
+        assert retriever.document_store.bucket_name == "test_bucket"
+        assert retriever.document_store.scope_name == "test_scope"
+        assert retriever.document_store.collection_name == "test_collection"
         assert retriever.document_store.search_type == QueryVectorSearchType.KNN
-        assert retriever.document_store.similarity == "dot_product"
+        assert retriever.document_store.similarity == "DOT"
         assert isinstance(retriever.document_store.query_options, CouchbaseQueryOptions)
         assert retriever.document_store.query_options.scan_consistency == QueryScanConsistency.REQUEST_PLUS
         assert retriever.document_store.query_options.timeout.total_seconds() == 30.0
@@ -148,14 +137,14 @@ class TestQueryRetrieverUnit:
         test_embedding = [0.1] * 768 # Example embedding
         test_filters = {"field": "meta.genre", "operator": "==", "value": "fiction"}
         
-        result = retriever.run(query_embedding=test_embedding, top_k=3, filters=test_filters)
+        result = retriever.run(query_embedding=test_embedding, top_k=3, filters=test_filters, nprobes=10)
 
         # Assert _embedding_retrieval was called correctly
         query_doc_store._embedding_retrieval.assert_called_once_with(
             query_embedding=test_embedding,
             top_k=3,
             filters=test_filters,
-            limit=3, # limit defaults to top_k in run method
+            nprobes=10,
         )
         # Assert the result contains the documents returned by the mock
         assert result["documents"] == mock_docs
@@ -169,14 +158,14 @@ class TestQueryRetrieverUnit:
         test_filters = {"field": "meta.year", "operator": ">", "value": 2000}
         test_limit = 2 # Explicit limit different from top_k
 
-        result = retriever.run(query_embedding=test_embedding, top_k=5, filters=test_filters, limit=test_limit)
+        result = retriever.run(query_embedding=test_embedding, top_k=5, filters=test_filters, nprobes=10)
 
         # Assert _embedding_retrieval was called with the explicit limit
         query_doc_store._embedding_retrieval.assert_called_once_with(
             query_embedding=test_embedding,
             top_k=5, # top_k from run call
             filters=test_filters,
-            limit=test_limit, # Explicit limit passed
+            nprobes=10, # Explicit limit passed
         )
         assert result["documents"] == mock_docs
 

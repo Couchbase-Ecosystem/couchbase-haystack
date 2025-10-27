@@ -102,9 +102,8 @@ def document_store_params(authenticator, cluster_options):
         "bucket": "test_bucket",
         "scope": "test_scope",
         "collection": "test_collection",
-        "index_name": "test_index",
         "search_type": QueryVectorSearchType.ANN,
-        "similarity": "COSINE",
+        "similarity": "cosine",
         "query_options": CouchbaseQueryOptions(
             scan_consistency=QueryScanConsistency.REQUEST_PLUS,
             timeout=timedelta(seconds=10)
@@ -141,7 +140,6 @@ def test_init(document_store_params):
     assert store.bucket_name == "test_bucket"
     assert store.scope_name == "test_scope"
     assert store.collection_name == "test_collection"
-    assert store.index_name == "test_index"
     assert store.search_type == QueryVectorSearchType.ANN
     assert store.similarity == "COSINE"
 
@@ -203,7 +201,7 @@ def test_collection_property(document_store_params, mock_cluster, mock_bucket, m
 #     assert "ON test_bucket.test_scope.test_collection (embedding VECTOR)" in query_args
 #     assert "USING GSI" in query_args
 #     assert "'dimension': 768" in query_args
-#     assert "'similarity': 'COSINE'" in query_args
+#     assert "'similarity': 'cosine'" in query_args
 
 # def test_drop_index(document_store_params, mock_cluster, mock_query_result):
 #     """Test index dropping"""
@@ -215,11 +213,11 @@ def test_collection_property(document_store_params, mock_cluster, mock_bucket, m
 #     expected_query = "DROP INDEX test_bucket.test_scope.test_collection.test_index"
 #     mock_cluster.query.assert_called_once_with(expected_query)
 
-def test_count_documents(document_store_params, mock_cluster, mock_query_result):
+def test_count_documents(document_store_params, mock_scope, mock_query_result):
     """Test document counting"""
     store = CouchbaseQueryDocumentStore(**document_store_params)
     mock_query_result.execute.return_value = [{"count": 5}]
-    mock_cluster.query.return_value = mock_query_result
+    mock_scope.query.return_value = mock_query_result
     
     count = store.count_documents()
     assert count == 5
@@ -280,7 +278,7 @@ def test_vector_search(document_store_params, mock_cluster, mock_query_result):
     ]
     mock_cluster.query.return_value = mock_query_result
 
-    results = store.vector_search(query_embedding, top_k=1)
+    results = store._embedding_retrieval(query_embedding, top_k=1)
 
     assert len(results) == 1
     assert results[0].id == "doc1"
@@ -294,9 +292,9 @@ def test_vector_search_empty_embedding(document_store_params):
     query_embedding = []
 
     with pytest.raises(ValueError, match="Query embedding must not be empty"):
-        store.vector_search(query_embedding)
+        store._embedding_retrieval(query_embedding)
 
-def test_filter_documents(document_store_params, mock_cluster, mock_query_result, comparison_filters):
+def test_filter_documents(document_store_params, mock_scope, mock_query_result, comparison_filters):
     """Test document filtering"""
     store = CouchbaseQueryDocumentStore(**document_store_params)
 
@@ -307,7 +305,7 @@ def test_filter_documents(document_store_params, mock_cluster, mock_query_result
             "field1": "value1",
         }
     ]
-    mock_cluster.query.return_value = mock_query_result
+    mock_scope.query.return_value = mock_query_result
 
     results = store.filter_documents(comparison_filters["equality"])
 
@@ -402,7 +400,7 @@ def test_vector_search_with_filters(document_store_params, mock_cluster, mock_qu
     ]
     mock_cluster.query.return_value = mock_query_result
 
-    results = store.vector_search(
+    results = store._embedding_retrieval(
         query_embedding,
         top_k=1,
         filters=comparison_filters["equality"]
@@ -427,7 +425,7 @@ def test_vector_search_composite_index(document_store_params, mock_cluster, mock
     ]
     mock_cluster.query.return_value = mock_query_result
 
-    results = store.vector_search(query_embedding, top_k=1)
+    results = store._embedding_retrieval(query_embedding, top_k=1)
 
     assert len(results) == 1
     assert results[0].id == "doc1"
@@ -441,9 +439,9 @@ def test_vector_search_query_error(document_store_params, mock_cluster):
     mock_cluster.query.side_effect = Exception("Query failed")
     
     with pytest.raises(DocumentStoreError, match="Failed to retrieve documents with vector search"):
-        store.vector_search(query_embedding)
+        store._embedding_retrieval(query_embedding)
 
-def test_filter_documents_complex_filters(document_store_params, mock_cluster, mock_query_result, nested_filters):
+def test_filter_documents_complex_filters(document_store_params, mock_scope, mock_query_result, nested_filters):
     """Test document filtering with complex nested filters"""
     store = CouchbaseQueryDocumentStore(**document_store_params)
     
@@ -456,7 +454,7 @@ def test_filter_documents_complex_filters(document_store_params, mock_cluster, m
             "role": "admin",
         }
     ]
-    mock_cluster.query.return_value = mock_query_result
+    mock_scope.query.return_value = mock_query_result
     
     results = store.filter_documents(nested_filters["and_with_or"])
     
@@ -473,7 +471,7 @@ def test_filter_documents_invalid_filters(document_store_params, mock_cluster, i
         with pytest.raises(Exception):
             store.filter_documents(invalid_filter)
 
-def test_filter_documents_date_filters(document_store_params, mock_cluster, mock_query_result, date_filters):
+def test_filter_documents_date_filters(document_store_params, mock_scope, mock_query_result, date_filters):
     """Test document filtering with date filters"""
     store = CouchbaseQueryDocumentStore(**document_store_params)
     
@@ -484,7 +482,7 @@ def test_filter_documents_date_filters(document_store_params, mock_cluster, mock
             "created_at": "2023-01-01T12:00:00",
         }
     ]
-    mock_cluster.query.return_value = mock_query_result
+    mock_scope.query.return_value = mock_query_result
     
     results = store.filter_documents(date_filters["equality"])
     
@@ -492,7 +490,7 @@ def test_filter_documents_date_filters(document_store_params, mock_cluster, mock
     assert results[0].id == "doc1"
     assert results[0].meta["created_at"] == "2023-01-01T12:00:00"
 
-def test_filter_documents_field_path_filters(document_store_params, mock_cluster, mock_query_result, field_path_filters):
+def test_filter_documents_field_path_filters(document_store_params, mock_scope, mock_query_result, field_path_filters):
     """Test document filtering with field path filters"""
     store = CouchbaseQueryDocumentStore(**document_store_params)
     
@@ -508,7 +506,7 @@ def test_filter_documents_field_path_filters(document_store_params, mock_cluster
             }
         }
     ]
-    mock_cluster.query.return_value = mock_query_result
+    mock_scope.query.return_value = mock_query_result
     
     results = store.filter_documents(field_path_filters["nested_logical"])
     
@@ -531,8 +529,8 @@ def test_serialization_deserialization(document_store_params):
     assert "bucket" in init_params
     assert "scope" in init_params
     assert "collection" in init_params
-    assert "index_name" in init_params
-    assert "query_vector_search_params" in init_params
+    assert "search_type" in init_params
+    assert "similarity" in init_params
     assert "query_options" in init_params
     
     # Deserialize
@@ -542,7 +540,6 @@ def test_serialization_deserialization(document_store_params):
     assert deserialized.bucket == store.bucket
     assert deserialized.scope_name == store.scope_name
     assert deserialized.collection_name == store.collection_name
-    assert deserialized.index_name == store.index_name
     assert deserialized.search_type == store.search_type
     assert deserialized.similarity == store.similarity
     assert deserialized.query_options.scan_consistency == store.query_options.scan_consistency

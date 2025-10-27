@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2023-present deepset GmbH <info@deepset.ai>
 #
 # SPDX-License-Identifier: Apache-2.0
+from ast import Not
 import os
 import pytest
 from datetime import datetime
@@ -20,6 +21,7 @@ from couchbase_haystack.document_stores.cluster_options import CouchbaseClusterO
 from couchbase.options import KnownConfigProfiles
 from couchbase.exceptions import ScopeAlreadyExistsException, CollectionAlreadyExistsException
 from couchbase.options import QueryOptions
+from couchbase.n1ql import QueryScanConsistency
 from datetime import timedelta
 from sentence_transformers import SentenceTransformer
 import time
@@ -29,14 +31,38 @@ from uuid import uuid1
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
 # Test configuration
-TEST_BUCKET = "test_bucket"
-TEST_SCOPE = "test_scope"
-TEST_COLLECTION = "test_collection"
+TEST_BUCKET = os.getenv("BUCKET_NAME")
+TEST_SCOPE = os.getenv("SCOPE_NAME")
+TEST_COLLECTION = os.getenv("COLLECTION_NAME")
 TEST_INDEX = "test_vector_index"
 VECTOR_DIMENSION = 384
 
 
-
+@pytest.mark.skipif(
+    "BUCKET_NAME" not in os.environ,
+    reason="Couchbase bucket name not provided",
+)
+@pytest.mark.skipif(
+    "SCOPE_NAME" not in os.environ,
+    reason="Couchbase scope name not provided",
+)
+@pytest.mark.skipif(
+    "COLLECTION_NAME" not in os.environ,
+    reason="Couchbase collection name not provided",
+)
+@pytest.mark.skipif(
+    "CONNECTION_STRING" not in os.environ,
+    reason="Couchbase cluster connection string not provided",
+)
+@pytest.mark.skipif(
+    "USER_NAME" not in os.environ,
+    reason="Couchbase cluster username not provided",
+)
+@pytest.mark.skipif(
+    "PASSWORD" not in os.environ,
+    reason="Couchbase cluster password not provided",
+)
+@pytest.mark.integration
 class TestGSIDocumentStoreIntegration(DocumentStoreBaseTests):
     @pytest.fixture(scope="class")
     def sample_init_documents(self) -> List[Document]:
@@ -92,10 +118,13 @@ class TestGSIDocumentStoreIntegration(DocumentStoreBaseTests):
             bucket=TEST_BUCKET,
             scope=TEST_SCOPE,
             collection=TEST_COLLECTION,
-            index_name=TEST_INDEX,
             search_type=QueryVectorSearchType.ANN,
             similarity="L2",
-            vector_field="embedding",
+            nprobes=100,
+            query_options=CouchbaseQueryOptions(
+                timeout=timedelta(seconds=300),
+                scan_consistency=QueryScanConsistency.REQUEST_PLUS
+            )
         )
 
         # Create scope if it doesn't exist
@@ -118,16 +147,19 @@ class TestGSIDocumentStoreIntegration(DocumentStoreBaseTests):
             "description": "IVF1024,PQ32x8",
             "similarity": "L2",
         })
+
+        store.collection.query_indexes().create_primary_index()
         # Create index before tests
         result = store.scope.query(f"""
                 CREATE INDEX {TEST_INDEX}
-                ON {TEST_BUCKET}.{TEST_SCOPE}.{TEST_COLLECTION} ({store.vector_field} VECTOR)
+                ON {TEST_BUCKET}.{TEST_SCOPE}.{TEST_COLLECTION} (embedding VECTOR)
                 USING GSI WITH {with_opts}
                 """, QueryOptions(timeout=timedelta(seconds=300))).execute()
         print(result)
         #time.sleep(60)
 
         store.delete_documents([doc.id for doc in store.filter_documents()])
+        time.sleep(15)
         
         yield store
         store.bucket.collections().drop_collection(collection_name=TEST_COLLECTION, scope_name=TEST_SCOPE)
@@ -273,7 +305,7 @@ class TestGSIDocumentStoreIntegration(DocumentStoreBaseTests):
         query_embedding = [0.1] * VECTOR_DIMENSION
         
         # Perform vector search
-        results = document_store.vector_search(query_embedding, top_k=3)
+        results = document_store._embedding_retrieval(query_embedding, top_k=3)
         
         # Verify results
         assert len(results) == 3
@@ -299,7 +331,7 @@ class TestGSIDocumentStoreIntegration(DocumentStoreBaseTests):
         }
         
         # Perform vector search with filters
-        results = document_store.vector_search(
+        results = document_store._embedding_retrieval(
             query_embedding,
             top_k=3,
             filters=filters

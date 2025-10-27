@@ -39,7 +39,18 @@ class QueryVectorSearchType(str, Enum):
     """Enum for search types supported by Couchbase GSI."""
 
     ANN = "ANN"
-    KNN = "KNN"    
+    KNN = "KNN" 
+
+
+class QueryVectorSearchSimilarity(str, Enum):
+    """Enum for similarity metrics supported by Couchbase GSI."""
+
+    COSINE = "COSINE"
+    DOT = "DOT"
+    L2 = "L2"
+    EUCLIDEAN = "EUCLIDEAN"
+    L2_SQUARED = "L2_SQUARED"
+    EUCLIDEAN_SQUARED = "EUCLIDEAN_SQUARED"
 
 @dataclass
 class CouchbaseQueryOptions:
@@ -590,7 +601,7 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         scope: str,
         collection: str,
         search_type: QueryVectorSearchType,
-        similarity: str,
+        similarity: Union[QueryVectorSearchSimilarity, str],
         nprobes: Optional[int] = None,
         query_options: CouchbaseQueryOptions = CouchbaseQueryOptions(
             timeout=timedelta(seconds=60), 
@@ -607,7 +618,7 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
             scope: Name of the scope within the bucket
             collection: Name of the collection within the scope
             search_type: Type of vector search (ANN or KNN).
-            similarity: Similarity metric to use (cosine, euclidean, dot_product).
+            similarity: Similarity metric to use (COSINE, DOT, L2 or EUCLIDEAN, L2_SQUARED or EUCLIDEAN_SQUARED) or string representation of the enum.
             nprobes: Number of probes for the ANN search.
                 Defaults to None, uses the value set at index creation time.
             query_options: Options controlling SQL++ query execution (timeout, scan consistency).
@@ -623,7 +634,9 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
             **kwargs,
         )
         self.search_type = QueryVectorSearchType(search_type) if isinstance(search_type, str) else search_type
-        self.similarity = similarity
+        self.similarity:str =  similarity.upper() if isinstance(similarity, str) else (similarity.value if isinstance(similarity, QueryVectorSearchSimilarity) else None)
+        if self.similarity is None:
+            raise ValueError(f"Invalid similarity metric: {similarity}")
         self.nprobes = nprobes
         self.query_options = query_options
     def to_dict(self) -> Dict[str, Any]:
@@ -678,8 +691,8 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         Returns:
             The number of documents in the document store.
         """
-        query = f"SELECT COUNT(*) as count FROM {self.bucket_name}.{self.scope_name}.{self.collection_name}"
-        result = self.connection.query(query, self.query_options.cb_query_options).execute()
+        query = f"SELECT COUNT(*) as count FROM `{self.collection_name}`"
+        result = self.scope.query(query, self.query_options.cb_query_options).execute()
         return result[0]["count"]
 
     def filter_documents(self, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
@@ -698,7 +711,7 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         Raises:
             DocumentStoreError: If the SQL++ query execution fails.
         """
-        query_str = f"SELECT d.*, meta().id as id FROM {self.bucket_name}.{self.scope_name}.{self.collection_name} as d"
+        query_str = f"SELECT d.*, meta().id as id FROM `{self.collection_name}` as d"
         where_clause = ""
         
         if filters:
@@ -706,7 +719,7 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
             where_clause = f" WHERE {normalized_filters}"
             query_str += where_clause
         try:
-            result = self.connection.query(query_str, self.query_options.cb_query_options)
+            result = self.scope.query(query_str, self.query_options.cb_query_options)
             documents = []
             
             for row in result.rows():
@@ -749,7 +762,7 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
 
 
         # Construct the SQL++ query with vector search
-        query_context = f"{self.bucket_name}.{self.scope_name}.{self.collection_name}"
+        query_context = f"`{self.bucket_name}`.`{self.scope_name}`.`{self.collection_name}`"
         
         # Convert embedding to string representation for query
         query_vector_str = str(query_embedding)
@@ -792,6 +805,7 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
                 # Convert row to Document
                 doc_dict = row.copy()
                 doc_dict["score"] = self.normalize_score(row["distance"])
+                del doc_dict["distance"]
                 documents.append(Document.from_dict(doc_dict))
                 
             return documents
@@ -816,9 +830,9 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         Returns:
             The normalized score.
         """
-        if self.similarity == "l2_distance":
+        if self.similarity == "L2" or self.similarity == "EUCLIDEAN" or self.similarity == "L2_SQUARED" or self.similarity == "EUCLIDEAN_SQUARED":
             return 1.0 / score if score != 0 else float("inf")
-        elif self.similarity in ("cosine", "dot_product"):
+        elif self.similarity in ("COSINE", "DOT"):
             return score
         else:
             raise ValueError(f"Unknown similarity metric: {self.similarity}")

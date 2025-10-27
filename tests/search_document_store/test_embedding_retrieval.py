@@ -33,13 +33,25 @@ from tests.common import common
     "PASSWORD" not in os.environ,
     reason="Couchbase cluster password not provided",
 )
+@pytest.mark.skipif(
+    "BUCKET_NAME" not in os.environ,
+    reason="Couchbase bucket name not provided",
+)
+@pytest.mark.skipif(
+    "SCOPE_NAME" not in os.environ,
+    reason="Couchbase scope name not provided",
+)
+@pytest.mark.skipif(
+    "COLLECTION_NAME" not in os.environ,
+    reason="Couchbase collection name not provided",
+)
 @pytest.mark.integration
 class TestEmbeddingRetrieval:
     @pytest.fixture()
     def document_store(self):
-        bucket_name = "haystack_integration_test"
-        scope_name = "haystack_test_scope"
-        collection_name = "haystack_collection"
+        bucket_name = os.environ["BUCKET_NAME"]
+        scope_name = os.environ["SCOPE_NAME"]
+        collection_name = os.environ["COLLECTION_NAME"]
         cluster_opts = ClusterOptions(
             authenticator=PasswordAuthenticator(username=os.environ["USER_NAME"], password=os.environ["PASSWORD"]),
             enable_tcp_keep_alive=True,
@@ -54,9 +66,12 @@ class TestEmbeddingRetrieval:
         common.create_collection_if_not_exists(collection_manager, scope_name, collection_name)
         scope = bucket.scope(scope_name)
         index_definition = common.load_json_file(f"{os.path.dirname(__file__)}/vector_index.json")
-        index_definition["params"]["mapping"]["types"]["haystack_test_scope.haystack_collection"]["properties"]["embedding"][
+        mapping_type = index_definition["params"]["mapping"]["types"]["____scope.collection_____"]
+        del index_definition["params"]["mapping"]["types"]["____scope.collection_____"]
+        mapping_type["properties"]["embedding"][
             "fields"
         ][0]["dims"] = 3
+        index_definition["params"]["mapping"]["types"][f"{scope_name}.{collection_name}"] = mapping_type
 
         if IS_GLOBAL_LEVEL_INDEX:
             sim = cluster.search_indexes()
