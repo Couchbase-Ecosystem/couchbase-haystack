@@ -697,12 +697,8 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         Returns:
             The number of documents in the document store.
         """
-        query = "SELECT COUNT(*) as count FROM $collection"
-        query_options = self.query_options.cb_query_options()
-        query_options["named_parameters"] = {
-            "collection": self.collection_name,
-        }
-        result = self.scope.query(query, query_options).execute()
+        query = f"SELECT COUNT(*) as count FROM `{self.collection_name}`"  # noqa: S608
+        result = self.scope.query(query, self.query_options.cb_query_options()).execute()
         return result[0]["count"]
 
     def filter_documents(self, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
@@ -721,7 +717,7 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         Raises:
             DocumentStoreError: If the SQL++ query execution fails.
         """
-        query_str = "SELECT d.*, meta().id as id FROM $collection as d"
+        query_str = f"SELECT d.*, meta().id as id FROM `{self.collection_name}` as d"  # noqa: S608
         where_clause = ""
 
         if filters:
@@ -729,11 +725,7 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
             where_clause = f" WHERE {normalized_filters}"
             query_str += where_clause
         try:
-            query_options = self.query_options.cb_query_options()
-            query_options["named_parameters"] = {
-                "collection": self.collection_name,
-            }
-            result = self.scope.query(query_str, query_options)
+            result = self.scope.query(query_str, self.query_options.cb_query_options())
             documents = []
 
             for row in result.rows():
@@ -798,10 +790,10 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
 
         # Build the query
         query_str = f"""
-        SELECT d.*, meta().id as id, {distance_function_exp} as distance
+        SELECT d.*, meta().id as id, {distance_function_exp} as score
         FROM {query_context} d
         {where_clause}
-        ORDER BY distance
+        ORDER BY score
         LIMIT {top_k}
         """  # noqa: S608  # query_vector_str is a float array, where_clause is normalized by normalize_sql_filters
 
@@ -819,8 +811,6 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
             for row in result.rows():
                 # Convert row to Document
                 doc_dict = row.copy()
-                doc_dict["score"] = self.normalize_score(row["distance"])
-                del doc_dict["distance"]
                 documents.append(Document.from_dict(doc_dict))
 
             return documents
@@ -830,21 +820,21 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
             logger.error(msg)
             raise DocumentStoreError(msg) from e
 
-    def normalize_score(self, score: float) -> float:
-        """
-        Normalizes the raw vector search score based on the similarity metric.
+    # def normalize_score(self, score: float) -> float:
+    #     """
+    #     Normalizes the raw vector search score based on the similarity metric.
 
-        For l2_distance, the normalized score is the reciprocal of the distance (1 / distance).
-        For cosine and dot_product, the raw score is already the similarity score and is returned as-is.
+    #     For l2_distance, the normalized score is the reciprocal of the distance (1 / distance).
+    #     For cosine and dot_product, the raw score is already the similarity score and is returned as-is.
 
-        Args:
-            score: The raw score or distance returned by the vector search.
-            similarity: The similarity metric used ("l2_distance", "cosine", or "dot_product").
+    #     Args:
+    #         score: The raw score or distance returned by the vector search.
+    #         similarity: The similarity metric used ("l2_distance", "cosine", or "dot_product").
 
-        Returns:
-            The normalized score.
-        """
-        if self.similarity in {"L2", "EUCLIDEAN", "L2_SQUARED", "EUCLIDEAN_SQUARED"}:
-            return 1.0 / score if score != 0 else float("inf")
-        else:
-            return score
+    #     Returns:
+    #         The normalized score.
+    #     """
+    #     if self.similarity in {"L2", "EUCLIDEAN", "L2_SQUARED", "EUCLIDEAN_SQUARED"}:
+    #         return 1.0 / score if score != 0 else float("inf")
+    #     else:
+    #         return score

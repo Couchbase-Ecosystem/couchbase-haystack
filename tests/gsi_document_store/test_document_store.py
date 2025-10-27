@@ -290,7 +290,7 @@ def test_vector_search(document_store_params, mock_cluster, mock_query_result):
             "id": "doc1",
             "content": "Test document 1",
             "embedding": [0.1] * 768,
-            "distance": 0.95,
+            "score": 0.95,
         }
     ]
     mock_cluster.query.return_value = mock_query_result
@@ -417,7 +417,7 @@ def test_vector_search_with_filters(document_store_params, mock_cluster, mock_qu
             "id": "doc1",
             "content": "Test document 1",
             "embedding": [0.1] * 768,
-            "distance": 0.95,
+            "score": 0.95,
         }
     ]
     mock_cluster.query.return_value = mock_query_result
@@ -439,7 +439,7 @@ def test_vector_search_composite_index(document_store_params, mock_cluster, mock
             "id": "doc1",
             "content": "Test document 1",
             "embedding": [0.1] * 768,
-            "distance": 0.95,
+            "score": 0.95,
         }
     ]
     mock_cluster.query.return_value = mock_query_result

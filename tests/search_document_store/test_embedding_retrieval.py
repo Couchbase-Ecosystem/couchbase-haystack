@@ -81,7 +81,7 @@ class TestEmbeddingRetrieval:
         except SearchIndexNotFoundException as e:
             search_index = SearchIndex(
                 name=index_definition["name"],
-                source_name=index_definition["sourceName"],
+                source_name=bucket_name,
                 source_type=index_definition["sourceType"],
                 params=index_definition["params"],
                 plan_params=index_definition["planParams"],

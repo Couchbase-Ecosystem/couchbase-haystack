@@ -36,6 +36,7 @@
 
 > **Important Note:**  
 > In version 2.0.0, the following component names have been changed:
+>
 > - `CouchbaseDocumentStore` is now `CouchbaseSearchDocumentStore`
 > - `CouchbaseEmbeddingRetriever` is now `CouchbaseSearchEmbeddingRetriever`
 >
@@ -94,7 +95,7 @@ Couchbase supports three types of vector indexes. This library currently support
 | **Search Type** | Vector + FTS + Geospatial | ANN (Approximate Nearest Neighbor) or KNN | ANN or KNN|
 | **Filtering** | Search query filters | SQL++ WHERE clause | SQL++ WHERE clause|
 
-### When to Use Each:
+### When to Use Each
 
 - **Use `CouchbaseSearchDocumentStore`** when:
   - You need to combine vector searches with full-text or geospatial searches
@@ -608,10 +609,12 @@ result_custom = pipeline.run(
 #### Understanding Search Types and Parameters
 
 **ANN (Approximate Nearest Neighbor) vs KNN:**
+
 - **ANN**: Uses `APPROX_VECTOR_DISTANCE()` - faster, suitable for large datasets, may have slight accuracy trade-off
 - **KNN**: Uses `VECTOR_DISTANCE()` - exact search, slower on very large datasets, guaranteed accuracy
 
 **nprobes Parameter:**
+
 - Only applies to ANN searches
 - Higher values = more accurate but slower
 - Lower values = faster but potentially less accurate
@@ -619,6 +622,7 @@ result_custom = pipeline.run(
 - Typical range: 1-50 (default depends on index configuration)
 
 **Similarity Metrics:**
+
 - `COSINE`: Range [-1, 1], normalized, good for text embeddings
 - `DOT`: Unnormalized, good for normalized vectors
 - `L2` / `EUCLIDEAN`: Euclidean distance, lower is better
@@ -628,17 +632,19 @@ result_custom = pipeline.run(
 
 You can find more examples in the [examples](examples) directory:
 
-#### Search-based (FTS) Examples:
+#### Search-based (FTS) Examples
+
 - [examples/search/indexing_pipeline.py](examples/search/indexing_pipeline.py) - Indexing documents using `CouchbaseSearchDocumentStore`
 - [examples/search/rag_pipeline.py](examples/search/rag_pipeline.py) - RAG pipeline using `CouchbaseSearchEmbeddingRetriever` with [HuggingFaceAPIGenerator](https://docs.haystack.deepset.ai/v2.0/docs/huggingfacetgigenerator)
 
-#### GSI-based Examples:
+#### GSI-based Examples
+
 - [examples/gsi/indexing_pipeline.py](examples/gsi/indexing_pipeline.py) - Indexing documents using `CouchbaseQueryDocumentStore` with BHIVE or Composite indexes
 - [examples/gsi/rag_pipeline.py](examples/gsi/rag_pipeline.py) - RAG pipeline using `CouchbaseQueryEmbeddingRetriever` for high-performance vector retrieval
 
 ## License
 
-`couchbase-haystack` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license.
+`couchbase-haystack` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license
 ---
 
 ## 📢 Support Policy
