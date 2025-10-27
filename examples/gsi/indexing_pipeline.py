@@ -13,7 +13,14 @@ from haystack.components.preprocessors import DocumentCleaner, DocumentSplitter
 from haystack.components.writers import DocumentWriter
 from haystack.utils import Secret
 
-from couchbase_haystack import CouchbasePasswordAuthenticator, CouchbaseSearchDocumentStore
+from couchbase_haystack import (
+    CouchbasePasswordAuthenticator, 
+    CouchbaseQueryDocumentStore, 
+    QueryVectorSearchType, 
+    CouchbaseQueryOptions
+)
+from couchbase.n1ql import QueryScanConsistency
+from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -48,14 +55,21 @@ scope_name = "haystack_scope_name"
 collection_name = "haystack_collection_name"
 index_name = "haystack_index_name"
 
-document_store = CouchbaseSearchDocumentStore(
-    cluster_connection_string=Secret.from_token("localhost"),
+document_store = CouchbaseQueryDocumentStore(
+    cluster_connection_string=Secret.from_env_var("CONNECTION_STRING"),
     authenticator=CouchbasePasswordAuthenticator(username=Secret.from_token("username"), password=Secret.from_token("password")),
     bucket=bucket_name,
     scope=scope_name,
     collection=collection_name,
-    vector_search_index=index_name,
+    search_type=QueryVectorSearchType.ANN,
+    similarity="L2",
+    nprobes=10,
+    query_options=CouchbaseQueryOptions(
+        timeout=timedelta(seconds=300), scan_consistency=QueryScanConsistency.REQUEST_PLUS
+    ),
 )
+
+
 
 # Create components and an indexing pipeline that converts txt to documents, cleans and splits them, and
 # indexes them for dense retrieval.
@@ -85,6 +99,6 @@ cfg = {
     "dimension": 384,
     "train_list": 500,
     "description": "IVF,PQ32x8",
-    "similarity": "L2_SQUARED",
+    "similarity": "L2",
 }
 document_store.scope.query(f"Create Index {index_name} ON {collection_name} (embedding vector) USING GSI WITH {json.dumps(cfg)}")
