@@ -11,7 +11,11 @@ from couchbase_haystack import (
     CouchbasePasswordAuthenticator,
     CouchbaseQueryDocumentStore,
     CouchbaseQueryEmbeddingRetriever,
+    QueryVectorSearchType,
 )
+from couchbase.n1ql import QueryScanConsistency
+from datetime import timedelta
+
 
 # Load HF Token from environment variables.
 HF_TOKEN = Secret.from_env_var("HF_API_TOKEN")
@@ -33,6 +37,9 @@ document_store = CouchbaseQueryDocumentStore(
     bucket="haystack_bucket_name",
     scope="haystack_scope_name",
     collection="haystack_collection_name",
+    search_type=QueryVectorSearchType.ANN,
+    similarity="L2",
+    nprobes=10,
 )
 
 # Build a RAG pipeline with a Retriever to get relevant documents to the query and a HuggingFaceTGIGenerator
