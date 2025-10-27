@@ -2,10 +2,12 @@ import json
 import logging
 import os
 import zipfile
+from datetime import timedelta
 from io import BytesIO
 from pathlib import Path
 
 import requests
+from couchbase.n1ql import QueryScanConsistency
 from haystack import Pipeline
 from haystack.components.converters import TextFileToDocument
 from haystack.components.embedders import SentenceTransformersDocumentEmbedder
@@ -14,13 +16,11 @@ from haystack.components.writers import DocumentWriter
 from haystack.utils import Secret
 
 from couchbase_haystack import (
-    CouchbasePasswordAuthenticator, 
-    CouchbaseQueryDocumentStore, 
-    QueryVectorSearchType, 
-    CouchbaseQueryOptions
+    CouchbasePasswordAuthenticator,
+    CouchbaseQueryDocumentStore,
+    CouchbaseQueryOptions,
+    QueryVectorSearchType,
 )
-from couchbase.n1ql import QueryScanConsistency
-from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -64,11 +64,8 @@ document_store = CouchbaseQueryDocumentStore(
     search_type=QueryVectorSearchType.ANN,
     similarity="L2",
     nprobes=10,
-    query_options=CouchbaseQueryOptions(
-        timeout=timedelta(seconds=300), scan_consistency=QueryScanConsistency.REQUEST_PLUS
-    ),
+    query_options=CouchbaseQueryOptions(timeout=timedelta(seconds=300), scan_consistency=QueryScanConsistency.REQUEST_PLUS),
 )
-
 
 
 # Create components and an indexing pipeline that converts txt to documents, cleans and splits them, and

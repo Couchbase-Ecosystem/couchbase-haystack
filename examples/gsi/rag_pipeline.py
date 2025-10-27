@@ -13,9 +13,6 @@ from couchbase_haystack import (
     CouchbaseQueryEmbeddingRetriever,
     QueryVectorSearchType,
 )
-from couchbase.n1ql import QueryScanConsistency
-from datetime import timedelta
-
 
 # Load HF Token from environment variables.
 HF_TOKEN = Secret.from_env_var("HF_API_TOKEN")

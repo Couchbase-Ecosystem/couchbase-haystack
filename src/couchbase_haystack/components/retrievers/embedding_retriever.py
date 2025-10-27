@@ -154,6 +154,7 @@ class CouchbaseQueryEmbeddingRetriever:
         CouchbasePasswordAuthenticator,
         QueryVectorSearchType,
         CouchbaseQueryOptions,
+        QueryVectorSearchSimilarity
     )
     from haystack.utils import Secret
 
@@ -168,9 +169,8 @@ class CouchbaseQueryEmbeddingRetriever:
         bucket="haystack_test_bucket",
         scope="scope_name",
         collection="collection_name",
-        index_name="vector_gsi_index",
         search_type=QueryVectorSearchType.ANN, # Or KNN depending on index
-        similarity="cosine", # Or dot_product, squared_l2
+        similarity=QueryVectorSearchSimilarity.COSINE, # Or DOT, L2, EUCLIDEAN, L2_SQUARED or EUCLIDEAN_SQUARED
         nprobes=10, # optional Number of probes for the ANN search
         query_options=CouchbaseQueryOptions() # Optional query options
     )
