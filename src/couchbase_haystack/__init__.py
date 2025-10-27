@@ -8,20 +8,17 @@ This package provides components to use Couchbase as a document store and retrie
 It includes authentication methods, document store implementation, and embedding-based retrieval functionality.
 """
 
-from couchbase_haystack.components.retrievers import (
-    CouchbaseSearchEmbeddingRetriever,
-    CouchbaseQueryEmbeddingRetriever
-)
+from couchbase_haystack.components.retrievers import CouchbaseQueryEmbeddingRetriever, CouchbaseSearchEmbeddingRetriever
 from couchbase_haystack.document_stores import (
     CouchbaseAuthenticator,
     CouchbaseCertificateAuthenticator,
     CouchbaseClusterOptions,
     CouchbasePasswordAuthenticator,
-    CouchbaseSearchDocumentStore,
     CouchbaseQueryDocumentStore,
-    QueryVectorSearchType,
+    CouchbaseQueryOptions,
+    CouchbaseSearchDocumentStore,
     QueryVectorSearchSimilarity,
-    CouchbaseQueryOptions
+    QueryVectorSearchType,
 )
 
 __all__ = [
@@ -29,11 +26,11 @@ __all__ = [
     "CouchbaseCertificateAuthenticator",
     "CouchbaseClusterOptions",
     "CouchbasePasswordAuthenticator",
-    "CouchbaseSearchDocumentStore",
-    "CouchbaseSearchEmbeddingRetriever",
     "CouchbaseQueryDocumentStore",
     "CouchbaseQueryEmbeddingRetriever",
+    "CouchbaseQueryOptions",
+    "CouchbaseSearchDocumentStore",
+    "CouchbaseSearchEmbeddingRetriever",
+    "QueryVectorSearchSimilarity",
     "QueryVectorSearchType",
-    "QueryVectorSearchSimilarity"
-    "CouchbaseQueryOptions"
 ]

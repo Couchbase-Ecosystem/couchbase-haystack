@@ -4,20 +4,21 @@
 from .auth import CouchbaseAuthenticator, CouchbaseCertificateAuthenticator, CouchbasePasswordAuthenticator
 from .cluster_options import CouchbaseClusterOptions
 from .document_store import (
-    CouchbaseSearchDocumentStore,   
     CouchbaseQueryDocumentStore,
-    QueryVectorSearchType,
     CouchbaseQueryOptions,
+    CouchbaseSearchDocumentStore,
     QueryVectorSearchSimilarity,
+    QueryVectorSearchType,
 )
+
 __all__ = [
     "CouchbaseAuthenticator",
     "CouchbaseCertificateAuthenticator",
     "CouchbaseClusterOptions",
     "CouchbasePasswordAuthenticator",
-    "CouchbaseSearchDocumentStore",
     "CouchbaseQueryDocumentStore",
-    "QueryVectorSearchType",
-    "QueryVectorSearchSimilarity",
     "CouchbaseQueryOptions",
+    "CouchbaseSearchDocumentStore",
+    "QueryVectorSearchSimilarity",
+    "QueryVectorSearchType",
 ]

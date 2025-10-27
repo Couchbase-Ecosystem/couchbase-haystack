@@ -1,11 +1,10 @@
+from couchbase.options import KnownConfigProfiles
 from haystack import GeneratedAnswer, Pipeline
 from haystack.components.builders.answer_builder import AnswerBuilder
 from haystack.components.builders.prompt_builder import PromptBuilder
 from haystack.components.embedders import SentenceTransformersTextEmbedder
 from haystack.components.generators import HuggingFaceAPIGenerator
 from haystack.utils import Secret
-
-from couchbase.options import KnownConfigProfiles
 
 from couchbase_haystack import (
     CouchbaseClusterOptions,

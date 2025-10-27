@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict
 
 from haystack.errors import FilterError
 from pandas import DataFrame
@@ -11,7 +11,7 @@ from pandas import DataFrame
 def normalize_sql_filters(filters: Dict[str, Any]) -> str:
     """
     Converts Haystack filters to a SQL++ (N1QL) compatible WHERE clause.
-    
+
     :param filters: The Haystack filters dictionary
     :returns: SQL++ compatible WHERE clause string
     :raises FilterError: If the filters are invalid
@@ -28,7 +28,7 @@ def normalize_sql_filters(filters: Dict[str, Any]) -> str:
 def _parse_logical_condition(condition: Dict[str, Any]) -> str:
     """
     Parses a logical condition (AND, OR, NOT) into a SQL++ compatible string.
-    
+
     :param condition: The logical condition dictionary
     :returns: SQL++ compatible logical condition string
     :raises FilterError: If the condition is invalid
@@ -42,10 +42,10 @@ def _parse_logical_condition(condition: Dict[str, Any]) -> str:
 
     operator = condition["operator"]
     conditions = [_parse_comparison_condition(c) for c in condition["conditions"]]
-    
+
     if len(conditions) == 0:
         return "TRUE"  # Default to true for empty conditions
-    
+
     if operator == "AND":
         return f"({' AND '.join(conditions)})"
     elif operator == "OR":
@@ -61,7 +61,7 @@ def _parse_logical_condition(condition: Dict[str, Any]) -> str:
 def _parse_comparison_condition(condition: Dict[str, Any]) -> str:
     """
     Parses a comparison condition (==, !=, >, >=, <, <=, in, not in) into a SQL++ compatible string.
-    
+
     :param condition: The comparison condition dictionary
     :returns: SQL++ compatible comparison condition string
     :raises FilterError: If the condition is invalid
@@ -70,7 +70,7 @@ def _parse_comparison_condition(condition: Dict[str, Any]) -> str:
         # 'field' key is only found in comparison dictionaries.
         # We assume this is a logic dictionary since it's not present.
         return _parse_logical_condition(condition)
-    
+
     field: str = condition["field"]
 
     if "operator" not in condition:
@@ -79,41 +79,41 @@ def _parse_comparison_condition(condition: Dict[str, Any]) -> str:
     if "value" not in condition:
         msg = f"'value' key missing in {condition}"
         raise FilterError(msg)
-    
+
     operator: str = condition["operator"]
     value: Any = condition["value"]
 
     # Format the field path correctly for SQL++ nested field access
     formatted_field = _format_field_path(field)
-    
+
     return COMPARISON_OPERATORS[operator](formatted_field, value)
 
 
 def _format_field_path(field: str) -> str:
     """
     Formats a field path for SQL++ nested field access.
-    
+
     Handles dot notation and converts it to proper SQL++ syntax.
     Example: "metadata.year" becomes "metadata.`year`"
-    
+
     :param field: The field path
     :returns: SQL++ compatible field path
     """
-    parts = field.split('.')
-    
+    parts = field.split(".")
+
     # Keep the first part as is (it's usually the document or alias)
     if len(parts) <= 1:
         return field
-    
+
     # Format remaining parts with backticks to handle reserved keywords and special characters
-    formatted_parts = [parts[0]] + [f'`{part}`' for part in parts[1:]]
-    return '.'.join(formatted_parts)
+    formatted_parts = [parts[0]] + [f"`{part}`" for part in parts[1:]]
+    return ".".join(formatted_parts)
 
 
 def _equal(field: str, value: Any) -> str:
     """
     Generates SQL++ equality comparison
-    
+
     :param field: Field name
     :param value: Value to compare
     :returns: SQL++ equality condition
@@ -130,7 +130,7 @@ def _equal(field: str, value: Any) -> str:
 def _not_equal(field: str, value: Any) -> str:
     """
     Generates SQL++ not equal comparison
-    
+
     :param field: Field name
     :param value: Value to compare
     :returns: SQL++ not equal condition
@@ -139,7 +139,7 @@ def _not_equal(field: str, value: Any) -> str:
         return f"({field} IS NOT NULL AND {field} IS NOT MISSING)"
     if isinstance(value, list):
         # Handle list of values (generate multiple inequality conditions)
-        conditions = [_not_equal(field,v) for v in value]
+        conditions = [_not_equal(field, v) for v in value]
         return f"({' AND '.join(conditions)})"
     return f"({field} != {_format_value(value)} OR {field} IS MISSING)"
 
@@ -147,7 +147,7 @@ def _not_equal(field: str, value: Any) -> str:
 def _greater_than(field: str, value: Any) -> str:
     """
     Generates SQL++ greater than comparison
-    
+
     :param field: Field name
     :param value: Value to compare
     :returns: SQL++ greater than condition
@@ -175,7 +175,7 @@ def _greater_than(field: str, value: Any) -> str:
 def _greater_than_equal(field: str, value: Any) -> str:
     """
     Generates SQL++ greater than or equal comparison
-    
+
     :param field: Field name
     :param value: Value to compare
     :returns: SQL++ greater than or equal condition
@@ -203,7 +203,7 @@ def _greater_than_equal(field: str, value: Any) -> str:
 def _less_than(field: str, value: Any) -> str:
     """
     Generates SQL++ less than comparison
-    
+
     :param field: Field name
     :param value: Value to compare
     :returns: SQL++ less than condition
@@ -231,7 +231,7 @@ def _less_than(field: str, value: Any) -> str:
 def _less_than_equal(field: str, value: Any) -> str:
     """
     Generates SQL++ less than or equal comparison
-    
+
     :param field: Field name
     :param value: Value to compare
     :returns: SQL++ less than or equal condition
@@ -259,7 +259,7 @@ def _less_than_equal(field: str, value: Any) -> str:
 def _in(field: str, value: Any) -> str:
     """
     Generates SQL++ IN comparison
-    
+
     :param field: Field name
     :param value: List of values to check against
     :returns: SQL++ IN condition
@@ -272,14 +272,14 @@ def _in(field: str, value: Any) -> str:
         # Empty list means no matches (impossible condition)
         return "FALSE"
     formatted_values = [_format_value(v) for v in value]
-    values_str = ', '.join(formatted_values)
+    values_str = ", ".join(formatted_values)
     return f"{field} IN [{values_str}]"
 
 
 def _not_in(field: str, value: Any) -> str:
     """
     Generates SQL++ NOT IN comparison
-    
+
     :param field: Field name
     :param value: List of values to check against
     :returns: SQL++ NOT IN condition
@@ -291,9 +291,9 @@ def _not_in(field: str, value: Any) -> str:
     if not value:
         # Empty list means match all (always true)
         return "TRUE"
-    
+
     formatted_values = [_format_value(v) for v in value if v]
-    values_str = ', '.join(formatted_values)
+    values_str = ", ".join(formatted_values)
     # Check if None is in the list
     if None in value:
         # If None is in the list, don't match NULL or MISSING fields
@@ -306,7 +306,7 @@ def _not_in(field: str, value: Any) -> str:
 def _format_value(value: Any) -> str:
     """
     Formats a value for use in a SQL++ query.
-    
+
     :param value: The value to format
     :returns: SQL++ compatible value string
     """
@@ -346,4 +346,4 @@ COMPARISON_OPERATORS = {
     "<=": _less_than_equal,
     "in": _in,
     "not in": _not_in,
-} 
+}

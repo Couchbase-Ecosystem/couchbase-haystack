@@ -6,13 +6,11 @@ from typing import Any, Dict, List, Optional
 from couchbase.search import SearchQuery
 from haystack import component, default_from_dict, default_to_dict
 from haystack.dataclasses import Document
-from haystack.utils.auth import Secret
 
 from couchbase_haystack.document_stores import (
-    CouchbaseSearchDocumentStore,
     CouchbaseQueryDocumentStore,
+    CouchbaseSearchDocumentStore,
 )
-from couchbase_haystack.document_stores.auth import CouchbasePasswordAuthenticator
 
 
 @component
@@ -134,12 +132,9 @@ class CouchbaseSearchEmbeddingRetriever:
         top_k = top_k or self.top_k
 
         docs = self.document_store._embedding_retrieval(
-            query_embedding=query_embedding, top_k=top_k, search_query=search_query, 
-            filters=filters, limit=limit
+            query_embedding=query_embedding, top_k=top_k, search_query=search_query, filters=filters, limit=limit
         )
         return {"documents": docs}
-
-
 
 
 @component
@@ -153,7 +148,13 @@ class CouchbaseQueryEmbeddingRetriever:
 
     ```python
     import numpy as np
-    from couchbase_haystack import CouchbaseQueryDocumentStore, CouchbaseQueryEmbeddingRetriever, CouchbasePasswordAuthenticator, QueryVectorSearchType, CouchbaseQueryOptions
+    from couchbase_haystack import (
+        CouchbaseQueryDocumentStore,
+        CouchbaseQueryEmbeddingRetriever,
+        CouchbasePasswordAuthenticator,
+        QueryVectorSearchType,
+        CouchbaseQueryOptions,
+    )
     from haystack.utils import Secret
 
     # Assume a Couchbase GSI index named "vector_gsi_index" exists on the "embedding" field
@@ -259,7 +260,8 @@ class CouchbaseQueryEmbeddingRetriever:
                    Overrides the value specified at initialization.
             filters: Optional dictionary of filters to apply before the vector search.
                      Refer to Haystack documentation for filter structure (https://docs.haystack.deepset.ai/v2.0/docs/metadata-filtering).
-            nprobes: Number of probes for the ANN search. If None, uses the value set at index creation time or the value set at the document store level.
+            nprobes: Number of probes for the ANN search. If None, uses the value set at index creation time
+            or the value set at the document store level.
         Returns:
             A dictionary with the following keys:
             - documents: List of Documents most similar to the given `query_embedding`, potentially filtered.
@@ -269,4 +271,4 @@ class CouchbaseQueryEmbeddingRetriever:
         docs = self.document_store._embedding_retrieval(
             query_embedding=query_embedding, top_k=top_k, filters=filters, nprobes=nprobes
         )
-        return {"documents": docs} 
+        return {"documents": docs}

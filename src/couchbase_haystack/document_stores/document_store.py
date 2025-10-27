@@ -3,21 +3,22 @@
 # SPDX-License-Identifier: Apache-2.0
 import logging
 import re
+from dataclasses import dataclass
 from datetime import timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
-from dataclasses import dataclass
 
 from couchbase import search
+from couchbase.bucket import Bucket
 from couchbase.cluster import Cluster
 from couchbase.collection import Collection
 from couchbase.exceptions import DocumentExistsException
+from couchbase.n1ql import QueryScanConsistency
+
 # needed for options -- cluster, timeout, SQL++ (N1QL) query, etc.
 from couchbase.options import QueryOptions, SearchOptions
-from couchbase.n1ql import QueryScanConsistency
 from couchbase.result import MultiMutationResult, QueryResult, SearchResult
 from couchbase.scope import Scope
-from couchbase.bucket import Bucket
 from couchbase.search import SearchQuery
 from couchbase.vector_search import VectorQuery, VectorSearch
 from haystack import default_from_dict, default_to_dict
@@ -39,7 +40,7 @@ class QueryVectorSearchType(str, Enum):
     """Enum for search types supported by Couchbase GSI."""
 
     ANN = "ANN"
-    KNN = "KNN" 
+    KNN = "KNN"
 
 
 class QueryVectorSearchSimilarity(str, Enum):
@@ -51,6 +52,7 @@ class QueryVectorSearchSimilarity(str, Enum):
     EUCLIDEAN = "EUCLIDEAN"
     L2_SQUARED = "L2_SQUARED"
     EUCLIDEAN_SQUARED = "EUCLIDEAN_SQUARED"
+
 
 @dataclass
 class CouchbaseQueryOptions:
@@ -64,7 +66,7 @@ class CouchbaseQueryOptions:
 
     timeout: timedelta = timedelta(seconds=60)
     scan_consistency: Optional[Union[QueryScanConsistency, str]] = None
-    
+
     __cb_query_options: Optional[QueryOptions] = None
 
     def to_dict(self) -> Dict[str, Any]:
@@ -76,37 +78,41 @@ class CouchbaseQueryOptions:
         return default_to_dict(
             self,
             timeout=self.timeout.total_seconds(),
-            scan_consistency=self.scan_consistency.value if isinstance(self.scan_consistency, QueryScanConsistency) else self.scan_consistency,
+            scan_consistency=(
+                self.scan_consistency.value if isinstance(self.scan_consistency, QueryScanConsistency) else self.scan_consistency
+            ),
         )
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "CouchbaseQueryOptions":
         """Deserializes a dictionary into a CouchbaseQueryOptions object.
 
         Args:
             data: The dictionary to deserialize from.
-            
+
         Returns:
             A CouchbaseQueryOptions instance.
         """
         init_parameters = data.get("init_parameters", {})
-        init_parameters["scan_consistency"] = QueryScanConsistency(init_parameters["scan_consistency"]) if init_parameters.get("scan_consistency") else None
+        init_parameters["scan_consistency"] = (
+            QueryScanConsistency(init_parameters["scan_consistency"]) if init_parameters.get("scan_consistency") else None
+        )
         init_parameters["timeout"] = timedelta(seconds=init_parameters.get("timeout")) if init_parameters.get("timeout") else None
         return default_from_dict(cls, data)
 
-    @property
     def cb_query_options(self) -> QueryOptions:
         """Returns the underlying Couchbase SDK `QueryOptions` object.
 
         Returns:
             The configured `couchbase.options.QueryOptions` instance.
         """
-        if self.__cb_query_options is None:
-            self.__cb_query_options = QueryOptions(
-                timeout=self.timeout.total_seconds(),
-                scan_consistency=self.scan_consistency.value if isinstance(self.scan_consistency, QueryScanConsistency) else self.scan_consistency,
-            )
-        return self.__cb_query_options
+        return QueryOptions(
+            timeout=self.timeout.total_seconds(),
+            scan_consistency=(
+                self.scan_consistency.value if isinstance(self.scan_consistency, QueryScanConsistency) else self.scan_consistency
+            ),
+        )
+
 
 class CouchbaseDocumentStore:
     """Base class for Couchbase document stores that provides common functionality
@@ -134,7 +140,7 @@ class CouchbaseDocumentStore:
             scope: Name of the scope within the bucket
             collection: Name of the collection within the scope
             kwargs: Additional keyword arguments passed to the Cluster constructor
-            
+
         Raises:
             ValueError: If the provided collection name contains invalid characters.
         """
@@ -163,7 +169,7 @@ class CouchbaseDocumentStore:
 
         Returns:
             The active `couchbase.cluster.Cluster` instance.
-            
+
         Raises:
             DocumentStoreError: If the connection cannot be established or times out.
         """
@@ -171,7 +177,7 @@ class CouchbaseDocumentStore:
             try:
                 cluster_options = self.cluster_options.get_cluster_options(self.authenticator.get_cb_auth())
                 if self.cluster_options.get("profile") is not None:
-                    cluster_options.apply_profile(self.cluster_options["profile"])   
+                    cluster_options.apply_profile(self.cluster_options["profile"])
                 self._connection = Cluster(
                     self.cluster_connection_string.resolve_value(),
                     cluster_options,
@@ -185,14 +191,14 @@ class CouchbaseDocumentStore:
                 msg = f"Failed to establish connection: {e}"
                 raise DocumentStoreError(msg) from e
         return self._connection
-    
+
     @property
     def bucket(self) -> Bucket:
         """Returns the Couchbase `Bucket` object associated with this document store.
 
         Returns:
             The `couchbase.bucket.Bucket` instance.
-            
+
         Raises:
             Exceptions from the underlying `connection.bucket()` call if the bucket doesn't exist or is inaccessible.
         """
@@ -206,7 +212,7 @@ class CouchbaseDocumentStore:
 
         Returns:
             The `couchbase.scope.Scope` instance.
-            
+
         Raises:
             ValueError: If the specified scope or collection does not exist in the bucket.
         """
@@ -235,14 +241,13 @@ class CouchbaseDocumentStore:
 
         Returns:
             The `couchbase.collection.Collection` instance.
-            
+
         Raises:
             Exceptions from the underlying `scope.collection()` call if the collection is inaccessible.
         """
         if self._collection is None:
             self._collection = self.scope.collection(self.collection_name)
         return self._collection
-
 
     def _base_to_dict(self) -> Dict[str, Any]:
         """Creates a base dictionary containing common configuration parameters for serialization.
@@ -261,7 +266,7 @@ class CouchbaseDocumentStore:
             "collection": self.collection_name,
             **self._kwargs,
         }
-    
+
     def write_documents(self, documents: List[Document], policy: DuplicatePolicy = DuplicatePolicy.NONE) -> int:
         """Writes documents into the couchbase collection.
 
@@ -270,12 +275,12 @@ class CouchbaseDocumentStore:
             policy: The duplicate policy to use when writing documents.
                     `FAIL`: (Default if `NONE`) Raise an error if a document ID already exists.
                     `OVERWRITE`: Replace existing documents with the same ID.
-                    
+
         Raises:
             DuplicateDocumentError: If `policy` is `FAIL` and a document with the same ID already exists.
             ValueError: If `documents` is not a list of `Document` objects.
             DocumentStoreError: If any other error occurs during the write operation.
-            
+
         Returns:
             The number of documents successfully written to the document store.
         """
@@ -416,7 +421,7 @@ class CouchbaseSearchDocumentStore(CouchbaseDocumentStore):
 
         Args:
             data: Dictionary to deserialize from.
-            
+
         Returns:
             Deserialized component.
         """
@@ -459,10 +464,10 @@ class CouchbaseSearchDocumentStore(CouchbaseDocumentStore):
 
         Args:
             filters: The filters to apply. It returns only the documents that match the filters.
-            
+
         Returns:
             A list of Documents that match the given filters.
-            
+
         Raises:
             DocumentStoreError: If the search request fails.
         """
@@ -500,10 +505,10 @@ class CouchbaseSearchDocumentStore(CouchbaseDocumentStore):
             search_query: Search filters param which is parsed to the Couchbase search query. The vector query and
                           search query are ORed operation.
             limit: Maximum number of Documents to return. Defaults to top_k if not specified.
-            
+
         Returns:
             A list of Documents that are most similar to the given `query_embedding`
-            
+
         Raises:
             ValueError: If `query_embedding` is empty
             DocumentStoreError: If the retrieval of documents from Couchbase fails
@@ -517,12 +522,7 @@ class CouchbaseSearchDocumentStore(CouchbaseDocumentStore):
             logger.debug(f"pre_filter.encodable: {pre_filter.encodable}")
 
         vector_search = VectorSearch.from_vector_query(
-            VectorQuery(
-                field_name="embedding",
-                  vector=query_embedding, 
-                  num_candidates=top_k,
-                  prefilter=pre_filter
-            )
+            VectorQuery(field_name="embedding", vector=query_embedding, num_candidates=top_k, prefilter=pre_filter)
         )
         request = search.SearchRequest.create(vector_search)
         if search_query:
@@ -547,10 +547,10 @@ class CouchbaseSearchDocumentStore(CouchbaseDocumentStore):
 
         Args:
             response: The `SearchResult` object containing document IDs and scores.
-            
+
         Returns:
             A list of Haystack `Document` objects, populated with content and scores.
-            
+
         Raises:
             DocumentStoreError: If fetching documents from KV fails for any ID.
         """
@@ -604,8 +604,8 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         similarity: Union[QueryVectorSearchSimilarity, str],
         nprobes: Optional[int] = None,
         query_options: CouchbaseQueryOptions = CouchbaseQueryOptions(
-            timeout=timedelta(seconds=60), 
-            scan_consistency=QueryScanConsistency.NOT_BOUNDED),
+            timeout=timedelta(seconds=60), scan_consistency=QueryScanConsistency.NOT_BOUNDED
+        ),
         **kwargs: Dict[str, Any],
     ):
         """Creates a new CouchbaseGSIDocumentStore instance.
@@ -618,7 +618,8 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
             scope: Name of the scope within the bucket
             collection: Name of the collection within the scope
             search_type: Type of vector search (ANN or KNN).
-            similarity: Similarity metric to use (COSINE, DOT, L2 or EUCLIDEAN, L2_SQUARED or EUCLIDEAN_SQUARED) or string representation of the enum.
+            similarity: Similarity metric to use (COSINE, DOT, L2 or EUCLIDEAN, L2_SQUARED or EUCLIDEAN_SQUARED) or
+            string representation of the enum.
             nprobes: Number of probes for the ANN search.
                 Defaults to None, uses the value set at index creation time.
             query_options: Options controlling SQL++ query execution (timeout, scan consistency).
@@ -634,11 +635,17 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
             **kwargs,
         )
         self.search_type = QueryVectorSearchType(search_type) if isinstance(search_type, str) else search_type
-        self.similarity:str =  similarity.upper() if isinstance(similarity, str) else (similarity.value if isinstance(similarity, QueryVectorSearchSimilarity) else None)
+        self.similarity: str = (
+            similarity.upper()
+            if isinstance(similarity, str)
+            else (similarity.value if isinstance(similarity, QueryVectorSearchSimilarity) else None)
+        )
         if self.similarity is None:
-            raise ValueError(f"Invalid similarity metric: {similarity}")
+            err_msg = f"Invalid similarity metric: {similarity}"
+            raise ValueError(err_msg)
         self.nprobes = nprobes
         self.query_options = query_options
+
     def to_dict(self) -> Dict[str, Any]:
         """Serializes the component to a dictionary.
 
@@ -647,11 +654,11 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         """
         return default_to_dict(
             self,
-            **self._base_to_dict(), # cluster details
+            **self._base_to_dict(),  # cluster details
             query_options=self.query_options.to_dict() if self.query_options else None,
             search_type=self.search_type.value if isinstance(self.search_type, QueryVectorSearchType) else self.search_type,
             similarity=self.similarity,
-            nprobes = self.nprobes,
+            nprobes=self.nprobes,
             **self._kwargs,
         )
 
@@ -661,29 +668,28 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
 
         Args:
             data: Dictionary to deserialize from.
-            
+
         Returns:
             Deserialized component.
         """
         init_params = data.get("init_parameters", {})
-        
+
         # Handle authenticator deserialization
         if init_params["authenticator"]["type"] == generate_qualified_class_name(CouchbasePasswordAuthenticator):
             init_params["authenticator"] = CouchbasePasswordAuthenticator.from_dict(init_params["authenticator"])
         else:
             init_params["authenticator"] = CouchbaseCertificateAuthenticator.from_dict(init_params["authenticator"])
-            
+
         # Handle cluster options deserialization
         init_params["cluster_options"] = CouchbaseClusterOptions.from_dict(init_params["cluster_options"])
-        
+
         if init_params["query_options"]:
             init_params["query_options"] = CouchbaseQueryOptions.from_dict(init_params["query_options"])
-        
+
         # Handle secrets
         deserialize_secrets_inplace(init_params, keys=["cluster_connection_string"])
-        
-        return default_from_dict(cls, data)
 
+        return default_from_dict(cls, data)
 
     def count_documents(self) -> int:
         """Returns how many documents are present in the document store.
@@ -691,8 +697,12 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         Returns:
             The number of documents in the document store.
         """
-        query = f"SELECT COUNT(*) as count FROM `{self.collection_name}`"
-        result = self.scope.query(query, self.query_options.cb_query_options).execute()
+        query = "SELECT COUNT(*) as count FROM $collection"
+        query_options = self.query_options.cb_query_options()
+        query_options["named_parameters"] = {
+            "collection": self.collection_name,
+        }
+        result = self.scope.query(query, query_options).execute()
         return result[0]["count"]
 
     def filter_documents(self, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
@@ -704,31 +714,35 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         Args:
             filters: The filters to apply using SQL++ WHERE clause syntax.
                     Refer to the Haystack documentation for filter structure.
-                    
+
         Returns:
             A list of Documents that match the given filters.
-            
+
         Raises:
             DocumentStoreError: If the SQL++ query execution fails.
         """
-        query_str = f"SELECT d.*, meta().id as id FROM `{self.collection_name}` as d"
+        query_str = "SELECT d.*, meta().id as id FROM $collection as d"
         where_clause = ""
-        
+
         if filters:
             normalized_filters = normalize_sql_filters(filters)
             where_clause = f" WHERE {normalized_filters}"
             query_str += where_clause
         try:
-            result = self.scope.query(query_str, self.query_options.cb_query_options)
+            query_options = self.query_options.cb_query_options()
+            query_options["named_parameters"] = {
+                "collection": self.collection_name,
+            }
+            result = self.scope.query(query_str, query_options)
             documents = []
-            
+
             for row in result.rows():
                 # Convert row to Document
                 doc_dict = row.copy()
                 documents.append(Document.from_dict(doc_dict))
-                
+
             return documents
-            
+
         except Exception as e:
             msg = f"Failed to filter documents: {e}"
             logger.error(msg)
@@ -747,11 +761,12 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
             query_embedding: Embedding of the query
             top_k: How many documents to retrieve based on vector similarity.
             filters: Optional dictionary of filters to apply using a SQL++ WHERE clause before the vector search.
-            nprobes: Number of probes for the ANN search. If None, uses the value set at index creation time or the value set at the document store level.
-            
+            nprobes: Number of probes for the ANN search. If None, uses the value set at index creation time
+            or the value set at the document store level.
+
         Returns:
             A list of Documents most similar to the `query_embedding`, potentially pre-filtered.
-            
+
         Raises:
             ValueError: If `query_embedding` is empty.
             DocumentStoreError: If the SQL++ query execution fails.
@@ -760,19 +775,18 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
             msg = "Query embedding must not be empty"
             raise ValueError(msg)
 
-
         # Construct the SQL++ query with vector search
         query_context = f"`{self.bucket_name}`.`{self.scope_name}`.`{self.collection_name}`"
-        
+
         # Convert embedding to string representation for query
         query_vector_str = str(query_embedding)
-        
+
         # Handle filters if provided
         where_clause = ""
         if filters:
             normalized_filters = normalize_sql_filters(filters)
             where_clause = f"WHERE {normalized_filters}"
-        
+
         if nprobes is None:
             nprobes = self.nprobes
         # Determine the appropriate distance function based on search type
@@ -782,7 +796,6 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         else:
             distance_function_exp = f"VECTOR_DISTANCE(d.embedding, {query_vector_str}, '{self.similarity}')"
 
-
         # Build the query
         query_str = f"""
         SELECT d.*, meta().id as id, {distance_function_exp} as distance
@@ -790,15 +803,17 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         {where_clause}
         ORDER BY distance
         LIMIT {top_k}
-        """
-        
+        """  # noqa: S608  # query_vector_str is a float array, where_clause is normalized by normalize_sql_filters
+
         try:
+
+            query_options = self.query_options.cb_query_options()
             # Execute the query
             result: QueryResult = self.connection.query(
-                query_str, 
-                self.query_options.cb_query_options,
+                query_str,
+                query_options,
             )
-            
+
             # Process results
             documents = []
             for row in result.rows():
@@ -807,14 +822,13 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
                 doc_dict["score"] = self.normalize_score(row["distance"])
                 del doc_dict["distance"]
                 documents.append(Document.from_dict(doc_dict))
-                
+
             return documents
-            
+
         except Exception as e:
             msg = f"Failed to retrieve documents with vector search: {e}"
             logger.error(msg)
             raise DocumentStoreError(msg) from e
-        
 
     def normalize_score(self, score: float) -> float:
         """
@@ -830,9 +844,7 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         Returns:
             The normalized score.
         """
-        if self.similarity == "L2" or self.similarity == "EUCLIDEAN" or self.similarity == "L2_SQUARED" or self.similarity == "EUCLIDEAN_SQUARED":
+        if self.similarity in {"L2", "EUCLIDEAN", "L2_SQUARED", "EUCLIDEAN_SQUARED"}:
             return 1.0 / score if score != 0 else float("inf")
-        elif self.similarity in ("COSINE", "DOT"):
-            return score
         else:
-            raise ValueError(f"Unknown similarity metric: {self.similarity}")
+            return score

@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import zipfile
@@ -78,9 +79,12 @@ result = p.run({"text_file_converter": {"sources": file_paths}})
 # to open the Couchbase Web Console and explore your data.
 
 
-
 # currently index needs to be created after some documents are available in the collection for training
 # this is a current limitation of the couchbase gsi vector index
-
-document_store.scope.query(f"Create Index {index_name} ON {collection_name} (embedding vector) "+
-                           'USING GSI WITH {"dimension":384, "train_list":500, "description": "IVF,PQ32x8", "similarity": "L2_SQUARED"}')
+cfg = {
+    "dimension": 384,
+    "train_list": 500,
+    "description": "IVF,PQ32x8",
+    "similarity": "L2_SQUARED",
+}
+document_store.scope.query(f"Create Index {index_name} ON {collection_name} (embedding vector) USING GSI WITH {json.dumps(cfg)}")

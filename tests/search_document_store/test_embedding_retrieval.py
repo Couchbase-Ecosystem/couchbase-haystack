@@ -68,9 +68,7 @@ class TestEmbeddingRetrieval:
         index_definition = common.load_json_file(f"{os.path.dirname(__file__)}/vector_index.json")
         mapping_type = index_definition["params"]["mapping"]["types"]["____scope.collection_____"]
         del index_definition["params"]["mapping"]["types"]["____scope.collection_____"]
-        mapping_type["properties"]["embedding"][
-            "fields"
-        ][0]["dims"] = 3
+        mapping_type["properties"]["embedding"]["fields"][0]["dims"] = 3
         index_definition["params"]["mapping"]["types"][f"{scope_name}.{collection_name}"] = mapping_type
 
         if IS_GLOBAL_LEVEL_INDEX:

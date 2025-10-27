@@ -34,20 +34,17 @@ def logical_filters() -> Dict[str, Dict[str, Any]]:
             "operator": "AND",
             "conditions": [
                 {"field": "age", "operator": ">", "value": 18},
-                {"field": "status", "operator": "==", "value": "active"}
-            ]
+                {"field": "status", "operator": "==", "value": "active"},
+            ],
         },
         "or_filter": {
             "operator": "OR",
             "conditions": [
                 {"field": "category", "operator": "==", "value": "books"},
-                {"field": "category", "operator": "==", "value": "magazines"}
-            ]
+                {"field": "category", "operator": "==", "value": "magazines"},
+            ],
         },
-        "empty_conditions": {
-            "operator": "AND", 
-            "conditions": []
-        }
+        "empty_conditions": {"operator": "AND", "conditions": []},
     }
 
 
@@ -65,10 +62,10 @@ def nested_filters() -> Dict[str, Dict[str, Any]]:
                     "operator": "OR",
                     "conditions": [
                         {"field": "role", "operator": "==", "value": "admin"},
-                        {"field": "role", "operator": "==", "value": "moderator"}
-                    ]
-                }
-            ]
+                        {"field": "role", "operator": "==", "value": "moderator"},
+                    ],
+                },
+            ],
         },
         "or_with_and": {
             "operator": "OR",
@@ -77,17 +74,17 @@ def nested_filters() -> Dict[str, Dict[str, Any]]:
                     "operator": "AND",
                     "conditions": [
                         {"field": "category", "operator": "==", "value": "books"},
-                        {"field": "price", "operator": "<", "value": 20}
-                    ]
+                        {"field": "price", "operator": "<", "value": 20},
+                    ],
                 },
                 {
                     "operator": "AND",
                     "conditions": [
                         {"field": "category", "operator": "==", "value": "electronics"},
-                        {"field": "discount", "operator": ">", "value": 0.2}
-                    ]
-                }
-            ]
+                        {"field": "discount", "operator": ">", "value": 0.2},
+                    ],
+                },
+            ],
         },
         "deeply_nested": {
             "operator": "OR",
@@ -101,13 +98,13 @@ def nested_filters() -> Dict[str, Dict[str, Any]]:
                             "operator": "OR",
                             "conditions": [
                                 {"field": "category", "operator": "==", "value": "clothing"},
-                                {"field": "sale", "operator": "==", "value": True}
-                            ]
-                        }
-                    ]
-                }
-            ]
-        }
+                                {"field": "sale", "operator": "==", "value": True},
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
     }
 
 
@@ -125,7 +122,7 @@ def invalid_filters() -> Dict[str, Any]:
         "unknown_logical_operator": {"operator": "XOR", "conditions": [{"field": "age", "operator": ">", "value": 18}]},
         "invalid_type_comparison": {"field": "age", "operator": ">", "value": [1, 2, 3]},
         "string_comparison": {"field": "name", "operator": ">", "value": "John"},
-        "in_with_non_list": {"field": "status", "operator": "in", "value": "active"}
+        "in_with_non_list": {"field": "status", "operator": "in", "value": "active"},
     }
 
 
@@ -141,7 +138,7 @@ def date_filters() -> Dict[str, Dict[str, Any]]:
         "less_than": {"field": "created_at", "operator": "<", "value": date_str},
         "less_than_equal": {"field": "created_at", "operator": "<=", "value": date_str},
         "equality": {"field": "created_at", "operator": "==", "value": date_str},
-        "inequality": {"field": "created_at", "operator": "!=", "value": date_str}
+        "inequality": {"field": "created_at", "operator": "!=", "value": date_str},
     }
 
 
@@ -158,7 +155,7 @@ def field_path_filters() -> Dict[str, Dict[str, Any]]:
             "operator": "AND",
             "conditions": [
                 {"field": "metadata.author.name", "operator": "==", "value": "John Doe"},
-                {"field": "metadata.published.year", "operator": ">", "value": 2020}
-            ]
-        }
-    } 
+                {"field": "metadata.published.year", "operator": ">", "value": 2020},
+            ],
+        },
+    }

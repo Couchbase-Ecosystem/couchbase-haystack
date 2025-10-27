@@ -10,7 +10,7 @@ from couchbase_haystack import (
     CouchbaseClusterOptions,
     CouchbaseQueryOptions,
     QueryVectorSearchType,
-    QueryVectorSearchSimilarity
+    QueryVectorSearchSimilarity,
 )
 
 from haystack.dataclasses import Document
@@ -31,7 +31,7 @@ class TestQueryRetrieverUnit:
             collection="test_collection",
             search_type=QueryVectorSearchType.ANN,
             similarity=QueryVectorSearchSimilarity.COSINE,
-            query_options=CouchbaseQueryOptions(scan_consistency=QueryScanConsistency.NOT_BOUNDED)
+            query_options=CouchbaseQueryOptions(scan_consistency=QueryScanConsistency.NOT_BOUNDED),
         )
         # Mock the to_dict method of the fixture to return the actual dict
         query_doc_store.to_dict.return_value = ac_doc_store.to_dict()
@@ -65,13 +65,10 @@ class TestQueryRetrieverUnit:
                         "search_type": "ANN",
                         "similarity": "COSINE",
                         "nprobes": None,
-                         "query_options": {
-                             "type": "couchbase_haystack.document_stores.document_store.CouchbaseQueryOptions",
-                             "init_parameters": {
-                                "timeout": 60.0,
-                                "scan_consistency": "not_bounded"
-                             }
-                         }
+                        "query_options": {
+                            "type": "couchbase_haystack.document_stores.document_store.CouchbaseQueryOptions",
+                            "init_parameters": {"timeout": 60.0, "scan_consistency": "not_bounded"},
+                        },
                     },
                 },
             },
@@ -86,7 +83,11 @@ class TestQueryRetrieverUnit:
                     "document_store": {
                         "type": "couchbase_haystack.document_stores.document_store.CouchbaseQueryDocumentStore",
                         "init_parameters": {
-                            "cluster_connection_string": {"type": "env_var", "env_vars": ["CB_CONNECTION_STRING"], "strict": True},
+                            "cluster_connection_string": {
+                                "type": "env_var",
+                                "env_vars": ["CB_CONNECTION_STRING"],
+                                "strict": True,
+                            },
                             "authenticator": {
                                 "type": "couchbase_haystack.document_stores.auth.CouchbasePasswordAuthenticator",
                                 "init_parameters": {
@@ -98,19 +99,16 @@ class TestQueryRetrieverUnit:
                                 "type": "couchbase_haystack.document_stores.cluster_options.CouchbaseClusterOptions",
                                 "init_parameters": {},
                             },
-                             "bucket": "test_bucket",
-                             "scope": "test_scope",
-                             "collection": "test_collection",
-                             "search_type": "KNN",
-                             "similarity": QueryVectorSearchSimilarity.DOT.value,
-                             "nprobes": None,
-                             "query_options": {
+                            "bucket": "test_bucket",
+                            "scope": "test_scope",
+                            "collection": "test_collection",
+                            "search_type": "KNN",
+                            "similarity": QueryVectorSearchSimilarity.DOT.value,
+                            "nprobes": None,
+                            "query_options": {
                                 "type": "couchbase_haystack.document_stores.document_store.CouchbaseQueryOptions",
-                                "init_parameters": {
-                                    "scan_consistency": "request_plus",
-                                    "timeout": 30.0
-                                }
-                            }
+                                "init_parameters": {"scan_consistency": "request_plus", "timeout": 30.0},
+                            },
                         },
                     },
                 },
@@ -127,16 +125,15 @@ class TestQueryRetrieverUnit:
         assert retriever.document_store.query_options.scan_consistency == QueryScanConsistency.REQUEST_PLUS
         assert retriever.document_store.query_options.timeout.total_seconds() == 30.0
 
-
     def test_run(self, query_doc_store: MagicMock):
         mock_docs = [Document(content="Test doc 1"), Document(content="Test doc 2")]
         query_doc_store._embedding_retrieval.return_value = mock_docs
 
         retriever = CouchbaseQueryEmbeddingRetriever(document_store=query_doc_store, top_k=5)
-        
-        test_embedding = [0.1] * 768 # Example embedding
+
+        test_embedding = [0.1] * 768  # Example embedding
         test_filters = {"field": "meta.genre", "operator": "==", "value": "fiction"}
-        
+
         result = retriever.run(query_embedding=test_embedding, top_k=3, filters=test_filters, nprobes=10)
 
         # Assert _embedding_retrieval was called correctly
@@ -148,24 +145,24 @@ class TestQueryRetrieverUnit:
         )
         # Assert the result contains the documents returned by the mock
         assert result["documents"] == mock_docs
+
     def test_run_with_limit(self, query_doc_store: MagicMock):
         mock_docs = [Document(content="Test doc limit")]
         query_doc_store._embedding_retrieval.return_value = mock_docs
 
-        retriever = CouchbaseQueryEmbeddingRetriever(document_store=query_doc_store, top_k=10) # Default top_k
+        retriever = CouchbaseQueryEmbeddingRetriever(document_store=query_doc_store, top_k=10)  # Default top_k
 
         test_embedding = [0.5] * 768
         test_filters = {"field": "meta.year", "operator": ">", "value": 2000}
-        test_limit = 2 # Explicit limit different from top_k
+        test_limit = 2  # Explicit limit different from top_k
 
         result = retriever.run(query_embedding=test_embedding, top_k=5, filters=test_filters, nprobes=10)
 
         # Assert _embedding_retrieval was called with the explicit limit
         query_doc_store._embedding_retrieval.assert_called_once_with(
             query_embedding=test_embedding,
-            top_k=5, # top_k from run call
+            top_k=5,  # top_k from run call
             filters=test_filters,
-            nprobes=10, # Explicit limit passed
+            nprobes=10,  # Explicit limit passed
         )
         assert result["documents"] == mock_docs
-
