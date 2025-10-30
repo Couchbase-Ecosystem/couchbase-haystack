@@ -1340,7 +1340,7 @@ by <a href="https://www.deepset.ai">deepset</a>. Couchbase supports three types 
 <li>
 <p><strong><code>CouchbaseQueryDocumentStore</code></strong> - Uses Couchbase Global Secondary Index (GSI) with vector support</p>
 </li>
-<li>Supports both <strong>Hyperscale Vector Index (BHIVE)</strong> and <strong>Composite Vector Index</strong></li>
+<li>Supports both <strong>Hyperscale Vector Index</strong> and <strong>Composite Vector Index</strong></li>
 <li>Best for: Pure vector searches or filtered vector searches at massive scale</li>
 <li>Dataset size: Tens of millions to billions of documents</li>
 <li>Use case: Content recommendations, chatbots, anomaly detection, job searches</li>
@@ -1355,7 +1355,7 @@ by <a href="https://www.deepset.ai">deepset</a>. Couchbase supports three types 
 <p><strong><code>CouchbaseSearchEmbeddingRetriever</code></strong> - Works with <code>CouchbaseSearchDocumentStore</code> to perform hybrid searches combining vector similarity with full-text and geospatial queries.</p>
 </li>
 <li>
-<p><strong><code>CouchbaseQueryEmbeddingRetriever</code></strong> - Works with <code>CouchbaseQueryDocumentStore</code> to perform high-performance vector similarity searches using GSI indexes (BHIVE or Composite).</p>
+<p><strong><code>CouchbaseQueryEmbeddingRetriever</code></strong> - Works with <code>CouchbaseQueryDocumentStore</code> to perform vector similarity searches using Hyperscale or Composite indexes.</p>
 </li>
 </ul>
 <p>The <code>couchbase-haystack</code> library uses the <a href="https://docs.couchbase.com/python-sdk/current/hello-world/start-using-sdk.html">Couchbase Python SDK</a>.</p>
@@ -1367,15 +1367,15 @@ by <a href="https://www.deepset.ai">deepset</a>. Couchbase supports three types 
 <tr>
 <th>Feature</th>
 <th>CouchbaseSearchDocumentStore (FTS)</th>
-<th>CouchbaseQueryDocumentStore (GSI - BHIVE)</th>
-<th>CouchbaseQueryDocumentStore (GSI - Composite)</th>
+<th>CouchbaseQueryDocumentStore (Hyperscale)</th>
+<th>CouchbaseQueryDocumentStore (Composite)</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><strong>Index Type</strong></td>
 <td>Search Vector Index</td>
-<td>Hyperscale Vector Index (BHIVE)</td>
+<td>Hyperscale Vector Index</td>
 <td>Composite Vector Index</td>
 </tr>
 <tr>
@@ -1431,7 +1431,7 @@ by <a href="https://www.deepset.ai">deepset</a>. Couchbase supports three types 
 <p>You want hybrid search capabilities in a single query</p>
 </li>
 <li>
-<p><strong>Use <code>CouchbaseQueryDocumentStore</code> with BHIVE (ANN search)</strong> when:</p>
+<p><strong>Use <code>CouchbaseQueryDocumentStore</code> with Hyperscale Index</strong> when:</p>
 </li>
 <li>You need pure vector similarity searches at massive scale</li>
 <li>You want the lowest memory footprint and best performance</li>
@@ -1482,7 +1482,7 @@ Assuming you have a Docker container running, navigate to <a href="http://localh
 </span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>                                   |                             |
 </span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>                                   |      +----------------+     |
 </span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>                                   |      |  Data service  |     |
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>                                   write_documents    |      +----------------+     |
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>                write_documents    |      +----------------+     |
 </span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>          +------------------------+-----&gt;|   properties   |     |
 </span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>          |                        |      |                |     |
 </span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>+---------+--------------------+   |      |   embedding    |     |
@@ -1677,14 +1677,14 @@ Most of the time you will be using <a href="https://docs.haystack.deepset.ai/v2.
 </span></code></pre></div>
 <hr />
 <h3 id="couchbasequerydocumentstore-gsi-based">CouchbaseQueryDocumentStore (GSI-based)<a class="headerlink" href="#couchbasequerydocumentstore-gsi-based" title="Permanent link">¤</a></h3>
-<p>The <code>CouchbaseQueryDocumentStore</code> uses Couchbase Global Secondary Index (GSI) for high-performance vector search at massive scale. Supports both <strong>Hyperscale Vector Index (BHIVE)</strong> and <strong>Composite Vector Index</strong> using SQL++ queries.</p>
+<p>The <code>CouchbaseQueryDocumentStore</code> uses Couchbase Global Secondary Index (GSI) for high-performance vector search at massive scale. Supports both <strong>Hyperscale Vector Index</strong> and <strong>Composite Vector Index</strong> using SQL++ queries.</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>                                   +-----------------------------+
 </span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>                                   |       Couchbase Database    |
 </span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>                                   +-----------------------------+
 </span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>                                   |                             |
 </span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>                                   |      +----------------+     |
 </span><span id="__span-14-6"><a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>                                   |      |  Data service  |     |
-</span><span id="__span-14-7"><a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>                                   write_documents    |      +----------------+     |
+</span><span id="__span-14-7"><a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>                write_documents    |      +----------------+     |
 </span><span id="__span-14-8"><a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>          +------------------------+-----&gt;|   properties   |     |
 </span><span id="__span-14-9"><a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>          |                        |      |                |     |
 </span><span id="__span-14-10"><a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>+---------+--------------------+   |      |   embedding    |     |
@@ -1695,8 +1695,8 @@ Most of the time you will be using <a href="https://docs.haystack.deepset.ai/v2.
 </span><span id="__span-14-15"><a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a>          |                        |      +--------+--------+    |
 </span><span id="__span-14-16"><a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a>          |                        |      |  Index service  |    |
 </span><span id="__span-14-17"><a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a>          |                        |      +-----------------+    |
-</span><span id="__span-14-18"><a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a>          +-----------------------&gt;|      |       GSI       |    |
-</span><span id="__span-14-19"><a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a>               query_embeddings    |      |  BHIVE/Composite|    |
+</span><span id="__span-14-18"><a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a>          +-----------------------&gt;|      |   Hyperscale    |    |
+</span><span id="__span-14-19"><a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a>               query_embeddings    |      |  /Composite     |    |
 </span><span id="__span-14-20"><a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a>                                   |      | (for embedding) |    |
 </span><span id="__span-14-21"><a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a>                                   |      +-----------------+    |
 </span><span id="__span-14-22"><a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a>                                   |                             |
@@ -1705,7 +1705,7 @@ Most of the time you will be using <a href="https://docs.haystack.deepset.ai/v2.
 <h4 id="key-features">Key Features<a class="headerlink" href="#key-features" title="Permanent link">¤</a></h4>
 <ul>
 <li><strong>Two Index Types Supported:</strong></li>
-<li><strong>Hyperscale Vector Index (BHIVE)</strong>: Optimized for pure vector searches, scales to billions of documents</li>
+<li><strong>Hyperscale Vector Index</strong>: Optimized for pure vector searches, scales to billions of documents</li>
 <li>
 <p><strong>Composite Vector Index</strong>: Combines scalar and vector indexing for filtered searches</p>
 </li>
@@ -1730,8 +1730,8 @@ Most of the time you will be using <a href="https://docs.haystack.deepset.ai/v2.
 </span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">couchbase.n1ql</span><span class="w"> </span><span class="kn">import</span> <span class="n">QueryScanConsistency</span>
 </span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">timedelta</span>
 </span><span id="__span-15-5"><a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>
-</span><span id="__span-15-6"><a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="c1"># Example 1: Using BHIVE (Hyperscale Vector Index) for pure vector search</span>
-</span><span id="__span-15-7"><a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="n">document_store_bhive</span> <span class="o">=</span> <span class="n">CouchbaseQueryDocumentStore</span><span class="p">(</span>
+</span><span id="__span-15-6"><a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="c1"># Example 1: Using (Hyperscale Vector Index) for pure vector search</span>
+</span><span id="__span-15-7"><a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="n">document_store_hyperscale</span> <span class="o">=</span> <span class="n">CouchbaseQueryDocumentStore</span><span class="p">(</span>
 </span><span id="__span-15-8"><a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>    <span class="n">cluster_connection_string</span><span class="o">=</span><span class="n">Secret</span><span class="o">.</span><span class="n">from_env_var</span><span class="p">(</span><span class="s2">&quot;CB_CONNECTION_STRING&quot;</span><span class="p">),</span>
 </span><span id="__span-15-9"><a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>    <span class="n">authenticator</span><span class="o">=</span><span class="n">CouchbasePasswordAuthenticator</span><span class="p">(</span>
 </span><span id="__span-15-10"><a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>        <span class="n">username</span><span class="o">=</span><span class="n">Secret</span><span class="o">.</span><span class="n">from_env_var</span><span class="p">(</span><span class="s2">&quot;CB_USERNAME&quot;</span><span class="p">),</span>
@@ -1916,7 +1916,7 @@ Most of the time you will be using <a href="https://docs.haystack.deepset.ai/v2.
 </ul>
 <h4 id="gsi-based-examples">GSI-based Examples<a class="headerlink" href="#gsi-based-examples" title="Permanent link">¤</a></h4>
 <ul>
-<li><a href="examples/gsi/indexing_pipeline.py">examples/gsi/indexing_pipeline.py</a> - Indexing documents using <code>CouchbaseQueryDocumentStore</code> with BHIVE or Composite indexes</li>
+<li><a href="examples/gsi/indexing_pipeline.py">examples/gsi/indexing_pipeline.py</a> - Indexing documents using <code>CouchbaseQueryDocumentStore</code> with Hyperscale or Composite indexes</li>
 <li><a href="examples/gsi/rag_pipeline.py">examples/gsi/rag_pipeline.py</a> - RAG pipeline using <code>CouchbaseQueryEmbeddingRetriever</code> for high-performance vector retrieval</li>
 </ul>
 <h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">¤</a></h2>
