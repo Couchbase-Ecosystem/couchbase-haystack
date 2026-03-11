@@ -80,6 +80,7 @@ class CouchbaseClusterOptions(dict):
     @overload
     def __init__(
         self,
+        *
         profile: Optional[KnownConfigProfiles] = None,
         # timeout_options
         bootstrap_timeout: Optional[timedelta] = None,
