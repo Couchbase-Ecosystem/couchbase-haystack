@@ -131,13 +131,13 @@ class TestRetrieverUnit:
             "retriever": {"top_k": 3, "search_query": sq, "filters": {"field": "meta.color", "operator": "==", "value": "red"}},
         }
         result = rag_pipeline.run(data, include_outputs_from={"query_embedder"})
-        doc_store._embedding_retrieval.assert_called_once_with(
-            query_embedding=result["query_embedder"]["embedding"],
-            top_k=3,
-            search_query=data["retriever"]["search_query"],  # type: ignore
-            filters=data["retriever"]["filters"],  # type: ignore
-            limit=None,
-        )
+        doc_store._embedding_retrieval.assert_called_once()
+        called_kwargs = doc_store._embedding_retrieval.call_args.kwargs
+        assert called_kwargs["query_embedding"] == result["query_embedder"]["embedding"]
+        assert called_kwargs["top_k"] == 3
+        assert called_kwargs["search_query"].encodable == data["retriever"]["search_query"].encodable
+        assert called_kwargs["filters"] == data["retriever"]["filters"]
+        assert called_kwargs["limit"] is None
         assert result["retriever"]["documents"] == doc_store._embedding_retrieval.return_value
 
     def test_run_with_limit(self, doc_store: MagicMock):

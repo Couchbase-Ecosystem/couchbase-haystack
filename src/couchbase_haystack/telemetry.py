@@ -8,39 +8,38 @@ All errors are silently suppressed — telemetry must never interrupt the user.
 
 import platform
 import threading
+from contextlib import suppress
+from importlib.metadata import version
 
 SCARF_ENDPOINT_URL = "https://couchbase.gateway.scarf.sh/couchbase-haystack"
 
-_telemetry_sent = False
+_telemetry_sent = threading.Event()
 _telemetry_lock = threading.Lock()
+
 
 def _get_package_version() -> str:
     """Return the installed package version, or 'unknown' if unavailable."""
-    try:
-        from importlib.metadata import version
-
+    with suppress(Exception):
         return version("couchbase-haystack")
-    except Exception:
-        return "unknown"
+    return "unknown"
+
 
 def _send_telemetry() -> None:
     """Send a single telemetry event to Scarf."""
-    global _telemetry_sent 
-
     with _telemetry_lock:
-        if _telemetry_sent:
+        if _telemetry_sent.is_set():
             return
-        _telemetry_sent = True
+        _telemetry_sent.set()
 
-    try:
-        from scarf import ScarfEventLogger
+    with suppress(Exception):
+        from scarf import ScarfEventLogger  # noqa: PLC0415
 
-        logger = ScarfEventLogger(
+        event_logger = ScarfEventLogger(
             endpoint_url=SCARF_ENDPOINT_URL,
             timeout=2.0,
         )
 
-        logger.log_event(
+        event_logger.log_event(
             {
                 "package": "couchbase-haystack",
                 "version": _get_package_version(),
@@ -49,17 +48,13 @@ def _send_telemetry() -> None:
                 "arch": platform.machine(),
             }
         )
-    except Exception:
-        # Telemetry must never raise — silently ignore all errors.
-        pass
+
 
 def send_telemetry() -> None:
     """Fire-and-forget telemetry in a background daemon thread.
 
     Safe to call multiple times; only the first invocation actually sends.
     """
-    try:
+    with suppress(Exception):
         t = threading.Thread(target=_send_telemetry, daemon=True)
         t.start()
-    except Exception:
-        pass
