@@ -27,7 +27,8 @@ class DateRangeQuery(search.DateRangeQuery):
 
     @inclusive_start.setter
     def inclusive_start(
-        self, value  # type: bool
+        self,
+        value,  # type: bool
     ) -> None:
         self.set_prop("inclusive_start", value)
 
@@ -37,7 +38,8 @@ class DateRangeQuery(search.DateRangeQuery):
 
     @inclusive_end.setter
     def inclusive_end(
-        self, value  # type: bool
+        self,
+        value,  # type: bool
     ) -> None:
         self.set_prop("inclusive_end", value)
 
@@ -49,7 +51,8 @@ class NumericRangeQuery(search.NumericRangeQuery):
 
     @inclusive_min.setter
     def inclusive_min(
-        self, value  # type: bool
+        self,
+        value,  # type: bool
     ) -> None:
         self.set_prop("inclusive_min", value)
 
@@ -59,7 +62,8 @@ class NumericRangeQuery(search.NumericRangeQuery):
 
     @inclusive_max.setter
     def inclusive_max(
-        self, value  # type: bool
+        self,
+        value,  # type: bool
     ) -> None:
         self.set_prop("inclusive_max", value)
 

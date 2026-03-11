@@ -41,5 +41,5 @@ def create_collection_if_not_exists(collection_manager: CollectionManager, scope
 
 
 def load_json_file(file_path):
-    with open(file_path, 'r') as file:
+    with open(file_path, "r") as file:
         return json.load(file)

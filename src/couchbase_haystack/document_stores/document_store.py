@@ -802,7 +802,6 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         """  # noqa: S608  # query_vector_str is a float array, where_clause is normalized by normalize_sql_filters
 
         try:
-
             query_options = self.query_options.cb_query_options()
             # Execute the query
             result: QueryResult = self.connection.query(

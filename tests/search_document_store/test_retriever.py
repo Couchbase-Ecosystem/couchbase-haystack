@@ -62,7 +62,7 @@ class TestRetrieverUnit:
                         "scope": "test_scope",
                         "collection": "test_collection",
                         "vector_search_index": "vector_search",
-                        'is_global_level_index': IS_GLOBAL_LEVEL_INDEX,
+                        "is_global_level_index": IS_GLOBAL_LEVEL_INDEX,
                     },
                 },
             },

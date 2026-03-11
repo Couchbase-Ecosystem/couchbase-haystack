@@ -29,7 +29,7 @@ import json
 from pandas import DataFrame
 from uuid import uuid1
 
-model = SentenceTransformer('all-MiniLM-L6-v2')
+model = SentenceTransformer("all-MiniLM-L6-v2")
 
 # Test configuration
 TEST_BUCKET = os.getenv("BUCKET_NAME")
@@ -218,7 +218,7 @@ class TestGSIDocumentStoreIntegration(DocumentStoreBaseTests):
         documents = [Document(blob=bytestream)]
         for doc in documents:
             # Assuming blob_content is in bytes, decode it to string if necessary
-            embedding = model.encode(bytestream.data.decode('utf-8')).tolist()
+            embedding = model.encode(bytestream.data.decode("utf-8")).tolist()
             doc.embedding = embedding
         assert document_store.write_documents(documents) == 1
         retrieved_docs = document_store.filter_documents()

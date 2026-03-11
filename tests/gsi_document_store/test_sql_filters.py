@@ -221,7 +221,7 @@ class TestSQLFilters:
 
         # Compare by normalizing whitespace in both strings
         def normalize_whitespace(s):
-            return ' '.join(s.split())
+            return " ".join(s.split())
 
         assert normalize_whitespace(actual) == normalize_whitespace(expected)
 

@@ -29,7 +29,7 @@ from ..common.common import IS_GLOBAL_LEVEL_INDEX
 from ..common import common
 
 
-model = SentenceTransformer('all-MiniLM-L6-v2')
+model = SentenceTransformer("all-MiniLM-L6-v2")
 
 
 @patch("couchbase_haystack.document_stores.document_store.Cluster")
@@ -149,7 +149,6 @@ class TestSearchDocumentStore(DocumentStoreBaseTests):
         cluster.close()
 
     def assert_documents_are_equal(self, received: List[Document], expected: List[Document]):
-
         for r in received:
             r.score = None
             r.embedding = None
@@ -192,7 +191,7 @@ class TestSearchDocumentStore(DocumentStoreBaseTests):
         documents = [Document(blob=bytestream)]
         for doc in documents:
             # Assuming blob_content is in bytes, decode it to string if necessary
-            embedding = model.encode(bytestream.data.decode('utf-8')).tolist()
+            embedding = model.encode(bytestream.data.decode("utf-8")).tolist()
             doc.embedding = embedding
         assert document_store.write_documents(documents) == 1
         retrieved_docs = document_store.filter_documents()
@@ -283,7 +282,6 @@ class TestSearchDocumentStoreUnit:
     @pytest.fixture
     def document_store(self):
         with patch("couchbase_haystack.document_stores.document_store.Cluster") as mock_cb_cluster:
-
             cluster = mock_cb_cluster.return_value
             bucket = cluster.bucket.return_value
             scope = bucket.scope.return_value
@@ -310,59 +308,59 @@ class TestSearchDocumentStoreUnit:
         serialized_store = document_store.document_store.to_dict()
         # assert serialized_store["init_parameters"].pop("collection_name").startswith("test_collection_")
         assert serialized_store == {
-            'type': 'couchbase_haystack.document_stores.document_store.CouchbaseSearchDocumentStore',
-            'init_parameters': {
-                'cluster_connection_string': {'type': 'env_var', 'env_vars': ['CONNECTION_STRING'], 'strict': True},
-                'authenticator': {
-                    'type': 'couchbase_haystack.document_stores.auth.CouchbasePasswordAuthenticator',
-                    'init_parameters': {
-                        'username': {'type': 'env_var', 'env_vars': ['USER_NAME'], 'strict': True},
-                        'password': {'type': 'env_var', 'env_vars': ['PASSWORD'], 'strict': True},
-                        'cert_path': None,
+            "type": "couchbase_haystack.document_stores.document_store.CouchbaseSearchDocumentStore",
+            "init_parameters": {
+                "cluster_connection_string": {"type": "env_var", "env_vars": ["CONNECTION_STRING"], "strict": True},
+                "authenticator": {
+                    "type": "couchbase_haystack.document_stores.auth.CouchbasePasswordAuthenticator",
+                    "init_parameters": {
+                        "username": {"type": "env_var", "env_vars": ["USER_NAME"], "strict": True},
+                        "password": {"type": "env_var", "env_vars": ["PASSWORD"], "strict": True},
+                        "cert_path": None,
                     },
                 },
-                'cluster_options': {
-                    'type': 'couchbase_haystack.document_stores.cluster_options.CouchbaseClusterOptions',
-                    'init_parameters': {'profile': 'wan_development'},
+                "cluster_options": {
+                    "type": "couchbase_haystack.document_stores.cluster_options.CouchbaseClusterOptions",
+                    "init_parameters": {"profile": "wan_development"},
                 },
-                'bucket': 'test_bucket',
-                'scope': 'test_scope',
-                'collection': 'test_collection',
-                'vector_search_index': 'vector_search',
-                'is_global_level_index': IS_GLOBAL_LEVEL_INDEX,
+                "bucket": "test_bucket",
+                "scope": "test_scope",
+                "collection": "test_collection",
+                "vector_search_index": "vector_search",
+                "is_global_level_index": IS_GLOBAL_LEVEL_INDEX,
             },
         }
 
     def test_from_dict(self):
         docstore = CouchbaseSearchDocumentStore.from_dict(
             {
-                'type': 'couchbase_haystack.document_stores.document_store.CouchbaseSearchDocumentStore',
-                'init_parameters': {
-                    'cluster_connection_string': {'type': 'env_var', 'env_vars': ['CONNECTION_STRING'], 'strict': True},
-                    'authenticator': {
-                        'type': 'couchbase_haystack.document_stores.auth.CouchbasePasswordAuthenticator',
-                        'init_parameters': {
-                            'username': {'type': 'env_var', 'env_vars': ['USER_NAME'], 'strict': True},
-                            'password': {'type': 'env_var', 'env_vars': ['PASSWORD'], 'strict': True},
-                            'cert_path': None,
+                "type": "couchbase_haystack.document_stores.document_store.CouchbaseSearchDocumentStore",
+                "init_parameters": {
+                    "cluster_connection_string": {"type": "env_var", "env_vars": ["CONNECTION_STRING"], "strict": True},
+                    "authenticator": {
+                        "type": "couchbase_haystack.document_stores.auth.CouchbasePasswordAuthenticator",
+                        "init_parameters": {
+                            "username": {"type": "env_var", "env_vars": ["USER_NAME"], "strict": True},
+                            "password": {"type": "env_var", "env_vars": ["PASSWORD"], "strict": True},
+                            "cert_path": None,
                         },
                     },
-                    'cluster_options': {
-                        'type': 'couchbase_haystack.document_stores.cluster_options.CouchbaseClusterOptions',
-                        'init_parameters': {'profile': 'wan_development'},
+                    "cluster_options": {
+                        "type": "couchbase_haystack.document_stores.cluster_options.CouchbaseClusterOptions",
+                        "init_parameters": {"profile": "wan_development"},
                     },
-                    'bucket': 'test_bucket',
-                    'scope': 'test_scope',
-                    'collection': 'test_collection',
-                    'vector_search_index': 'vector_search',
-                    'is_global_level_index': IS_GLOBAL_LEVEL_INDEX,
+                    "bucket": "test_bucket",
+                    "scope": "test_scope",
+                    "collection": "test_collection",
+                    "vector_search_index": "vector_search",
+                    "is_global_level_index": IS_GLOBAL_LEVEL_INDEX,
                 },
             }
         )
         assert docstore.cluster_connection_string == Secret.from_env_var("CONNECTION_STRING")
-        assert docstore.bucket_name == 'test_bucket'
-        assert docstore.scope_name == 'test_scope'
-        assert docstore.collection_name == 'test_collection'
+        assert docstore.bucket_name == "test_bucket"
+        assert docstore.scope_name == "test_scope"
+        assert docstore.collection_name == "test_collection"
         assert docstore.vector_search_index == "vector_search"
         assert docstore.cluster_options["profile"] == KnownConfigProfiles.WanDevelopment
         assert docstore.is_global_level_index == IS_GLOBAL_LEVEL_INDEX
@@ -383,6 +381,6 @@ class TestSearchDocumentStoreUnit:
         if IS_GLOBAL_LEVEL_INDEX:
             document_store.cluster.search.assert_called_once()
         else:
-            document_store.cluster.bucket.return_value.scope.assert_called_once_with('test_scope')
+            document_store.cluster.bucket.return_value.scope.assert_called_once_with("test_scope")
             document_store.cluster.bucket.return_value.scope.return_value.search.assert_called_once()
         assert doc == [Document(id="1a", content="text", score=1)]
