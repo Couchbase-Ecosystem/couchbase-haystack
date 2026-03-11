@@ -33,6 +33,7 @@ def _send_telemetry() -> None:
 
     with suppress(Exception):
         from scarf import ScarfEventLogger  # noqa: PLC0415
+
         event_logger = ScarfEventLogger(
             endpoint_url=SCARF_ENDPOINT_URL,
             timeout=2.0,
