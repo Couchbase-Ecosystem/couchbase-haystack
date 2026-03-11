@@ -2,15 +2,15 @@ from unittest.mock import MagicMock
 
 import pytest
 from couchbase import search
+from haystack import Pipeline
+from haystack.components.embedders import SentenceTransformersTextEmbedder
+from haystack.dataclasses import Document
+
 from couchbase_haystack import (
     CouchbaseSearchDocumentStore,
     CouchbaseSearchEmbeddingRetriever,
     CouchbasePasswordAuthenticator,
 )
-from haystack import Pipeline
-from haystack.components.embedders import SentenceTransformersTextEmbedder
-from haystack.dataclasses import Document
-
 from tests.common.common import IS_GLOBAL_LEVEL_INDEX
 
 
