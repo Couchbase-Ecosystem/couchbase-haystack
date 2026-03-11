@@ -149,7 +149,6 @@ class TestSearchDocumentStore(DocumentStoreBaseTests):
         cluster.close()
 
     def assert_documents_are_equal(self, received: List[Document], expected: List[Document]):
-
         for r in received:
             r.score = None
             r.embedding = None
@@ -283,7 +282,6 @@ class TestSearchDocumentStoreUnit:
     @pytest.fixture
     def document_store(self):
         with patch("couchbase_haystack.document_stores.document_store.Cluster") as mock_cb_cluster:
-
             cluster = mock_cb_cluster.return_value
             bucket = cluster.bucket.return_value
             scope = bucket.scope.return_value

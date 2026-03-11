@@ -580,18 +580,18 @@ class CouchbaseSearchDocumentStore(CouchbaseDocumentStore):
 
 class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
     """CouchbaseQueryDocumentStore uses Couchbase Global Secondary Index (GSI) for high-performance vector search.
-    
+
     Supports two types of vector indexes:
-    
+
     - **Hyperscale Vector Indexes**: Optimized for pure vector searches, scales to billions of documents.
       Best for chatbot context (RAG), reverse image search, and anomaly detection.
-    
+
     - **Composite Vector Indexes**: Combines vector and scalar indexing. Applies scalar filters before vector search.
       Best for filtered recommendations, job searches, and supply chain management.
-    
+
     Search types: ANN (fast, approximate) or KNN (exact).
     Similarity metrics: COSINE, DOT, L2/EUCLIDEAN, L2_SQUARED/EUCLIDEAN_SQUARED.
-    
+
     See [Couchbase documentation](https://docs.couchbase.com/server/current/vector-index/use-vector-indexes.html).
     """
 
@@ -802,7 +802,6 @@ class CouchbaseQueryDocumentStore(CouchbaseDocumentStore):
         """  # noqa: S608  # query_vector_str is a float array, where_clause is normalized by normalize_sql_filters
 
         try:
-
             query_options = self.query_options.cb_query_options()
             # Execute the query
             result: QueryResult = self.connection.query(
