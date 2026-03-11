@@ -7,9 +7,9 @@ from haystack.components.embedders import SentenceTransformersTextEmbedder
 from haystack.dataclasses import Document
 
 from couchbase_haystack import (
+    CouchbasePasswordAuthenticator,
     CouchbaseSearchDocumentStore,
     CouchbaseSearchEmbeddingRetriever,
-    CouchbasePasswordAuthenticator,
 )
 from tests.common.common import IS_GLOBAL_LEVEL_INDEX
 
