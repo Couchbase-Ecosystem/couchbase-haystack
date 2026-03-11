@@ -1,12 +1,15 @@
 import os
+
+from couchbase.options import KnownConfigProfiles
 from haystack import GeneratedAnswer, Pipeline
 from haystack.components.builders.answer_builder import AnswerBuilder
 from haystack.components.builders.chat_prompt_builder import ChatPromptBuilder
-from haystack.dataclasses import ChatMessage
 from haystack.components.embedders import SentenceTransformersTextEmbedder
 from haystack.components.generators.chat import HuggingFaceAPIChatGenerator
-from haystack.utils.hf import HFGenerationAPIType
+from haystack.dataclasses import ChatMessage
 from haystack.utils import Secret
+from haystack.utils.hf import HFGenerationAPIType
+
 from couchbase_haystack import (
     CouchbaseClusterOptions,
     CouchbasePasswordAuthenticator,
@@ -14,7 +17,6 @@ from couchbase_haystack import (
     CouchbaseQueryEmbeddingRetriever,
     QueryVectorSearchType,
 )
-from couchbase.options import KnownConfigProfiles
 
 # Load HF Token from environment variables.
 HF_TOKEN = Secret.from_env_var("HF_API_TOKEN")
@@ -29,7 +31,9 @@ HF_TOKEN = Secret.from_env_var("HF_API_TOKEN")
 
 document_store = CouchbaseQueryDocumentStore(
     cluster_connection_string=Secret.from_env_var("CONNECTION_STRING"),
-    authenticator=CouchbasePasswordAuthenticator(username=Secret.from_env_var("USER_NAME"), password=Secret.from_env_var("PASSWORD")),
+    authenticator=CouchbasePasswordAuthenticator(
+        username=Secret.from_env_var("USER_NAME"), password=Secret.from_env_var("PASSWORD")
+    ),
     cluster_options=CouchbaseClusterOptions(
         profile=KnownConfigProfiles.WanDevelopment,
     ),
@@ -45,14 +49,16 @@ document_store = CouchbaseQueryDocumentStore(
 # interacting with LLMs using a custom prompt.
 prompt_messages = [
     ChatMessage.from_system("You are a helpful assistant that answers questions based on the provided documents."),
-    ChatMessage.from_user("""Given these documents, answer the question.
+    ChatMessage.from_user(
+        """Given these documents, answer the question.
 Documents:
 {% for doc in documents %}
     {{ doc.content }}
 {% endfor %}
 
 Question: {{question}}
-Answer:""")
+Answer:"""
+    ),
 ]
 rag_pipeline = Pipeline()
 rag_pipeline.add_component(
@@ -61,10 +67,13 @@ rag_pipeline.add_component(
 )
 rag_pipeline.add_component("retriever", CouchbaseQueryEmbeddingRetriever(document_store=document_store))
 rag_pipeline.add_component("prompt_builder", ChatPromptBuilder(template=prompt_messages, required_variables=["question"]))
-rag_pipeline.add_component("llm", HuggingFaceAPIChatGenerator(
-    api_type=HFGenerationAPIType.SERVERLESS_INFERENCE_API, 
-    api_params={"model": "mistralai/Mistral-7B-Instruct-v0.2"},
-))
+rag_pipeline.add_component(
+    "llm",
+    HuggingFaceAPIChatGenerator(
+        api_type=HFGenerationAPIType.SERVERLESS_INFERENCE_API,
+        api_params={"model": "mistralai/Mistral-7B-Instruct-v0.2"},
+    ),
+)
 rag_pipeline.add_component("answer_builder", AnswerBuilder())
 
 rag_pipeline.connect("query_embedder", "retriever.query_embedding")
