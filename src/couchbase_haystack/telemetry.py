@@ -9,7 +9,6 @@ All errors are silently suppressed — telemetry must never interrupt the user.
 import platform
 import threading
 from contextlib import suppress
-from importlib import import_module
 from importlib.metadata import version
 
 SCARF_ENDPOINT_URL = "https://couchbase.gateway.scarf.sh/couchbase-haystack"
@@ -33,7 +32,8 @@ def _send_telemetry() -> None:
         _telemetry_sent.set()
 
     with suppress(Exception):
-        event_logger = import_module("scarf").ScarfEventLogger(
+        from scarf import ScarfEventLogger  # noqa: PLC0415
+        event_logger = ScarfEventLogger(
             endpoint_url=SCARF_ENDPOINT_URL,
             timeout=2.0,
         )
