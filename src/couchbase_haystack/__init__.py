@@ -34,3 +34,8 @@ __all__ = [
     "QueryVectorSearchSimilarity",
     "QueryVectorSearchType",
 ]
+
+# --- Package-level telemetry (non-blocking, fire-and-forget) ---
+from couchbase_haystack.telemetry import send_telemetry as _send_telemetry
+
+_send_telemetry()
