@@ -2,34 +2,34 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://couchbase-ecosystem.github.io/couchbase-haystack/</loc>
-         <lastmod>2026-03-11</lastmod>
+         <lastmod>2026-03-12</lastmod>
     </url>
     <url>
          <loc>https://couchbase-ecosystem.github.io/couchbase-haystack/changelog/</loc>
-         <lastmod>2026-03-11</lastmod>
+         <lastmod>2026-03-12</lastmod>
     </url>
     <url>
          <loc>https://couchbase-ecosystem.github.io/couchbase-haystack/license/</loc>
-         <lastmod>2026-03-11</lastmod>
+         <lastmod>2026-03-12</lastmod>
     </url>
     <url>
          <loc>https://couchbase-ecosystem.github.io/couchbase-haystack/reference/components/retrievers/embedding_retriever/</loc>
-         <lastmod>2026-03-11</lastmod>
+         <lastmod>2026-03-12</lastmod>
     </url>
     <url>
          <loc>https://couchbase-ecosystem.github.io/couchbase-haystack/reference/document_stores/auth/</loc>
-         <lastmod>2026-03-11</lastmod>
+         <lastmod>2026-03-12</lastmod>
     </url>
     <url>
          <loc>https://couchbase-ecosystem.github.io/couchbase-haystack/reference/document_stores/cluster_options/</loc>
-         <lastmod>2026-03-11</lastmod>
+         <lastmod>2026-03-12</lastmod>
     </url>
     <url>
          <loc>https://couchbase-ecosystem.github.io/couchbase-haystack/reference/document_stores/document_store/</loc>
-         <lastmod>2026-03-11</lastmod>
+         <lastmod>2026-03-12</lastmod>
     </url>
     <url>
          <loc>https://couchbase-ecosystem.github.io/couchbase-haystack/reference/document_stores/filters/</loc>
-         <lastmod>2026-03-11</lastmod>
+         <lastmod>2026-03-12</lastmod>
     </url>
 </urlset>

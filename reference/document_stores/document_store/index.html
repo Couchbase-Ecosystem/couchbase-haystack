@@ -4719,8 +4719,7 @@ Similarity metrics: COSINE, DOT, L2/EUCLIDEAN, L2_SQUARED/EUCLIDEAN_SQUARED.</p>
 <span class="normal"><a href="#__codelineno-0-821">821</a></span>
 <span class="normal"><a href="#__codelineno-0-822">822</a></span>
 <span class="normal"><a href="#__codelineno-0-823">823</a></span>
-<span class="normal"><a href="#__codelineno-0-824">824</a></span>
-<span class="normal"><a href="#__codelineno-0-825">825</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-581"><a id="__codelineno-0-581" name="__codelineno-0-581"></a><span class="k">class</span><span class="w"> </span><span class="nc">CouchbaseQueryDocumentStore</span><span class="p">(</span><span class="n">CouchbaseDocumentStore</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-824">824</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-581"><a id="__codelineno-0-581" name="__codelineno-0-581"></a><span class="k">class</span><span class="w"> </span><span class="nc">CouchbaseQueryDocumentStore</span><span class="p">(</span><span class="n">CouchbaseDocumentStore</span><span class="p">):</span>
 </span><span id="__span-0-582"><a id="__codelineno-0-582" name="__codelineno-0-582"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;CouchbaseQueryDocumentStore uses Couchbase Global Secondary Index (GSI) for high-performance vector search.</span>
 </span><span id="__span-0-583"><a id="__codelineno-0-583" name="__codelineno-0-583"></a>
 </span><span id="__span-0-584"><a id="__codelineno-0-584" name="__codelineno-0-584"></a><span class="sd">    Supports two types of vector indexes:</span>
@@ -4944,27 +4943,26 @@ Similarity metrics: COSINE, DOT, L2/EUCLIDEAN, L2_SQUARED/EUCLIDEAN_SQUARED.</p>
 </span><span id="__span-0-802"><a id="__codelineno-0-802" name="__codelineno-0-802"></a><span class="s2">        &quot;&quot;&quot;</span>  <span class="c1"># noqa: S608  # query_vector_str is a float array, where_clause is normalized by normalize_sql_filters</span>
 </span><span id="__span-0-803"><a id="__codelineno-0-803" name="__codelineno-0-803"></a>
 </span><span id="__span-0-804"><a id="__codelineno-0-804" name="__codelineno-0-804"></a>        <span class="k">try</span><span class="p">:</span>
-</span><span id="__span-0-805"><a id="__codelineno-0-805" name="__codelineno-0-805"></a>
-</span><span id="__span-0-806"><a id="__codelineno-0-806" name="__codelineno-0-806"></a>            <span class="n">query_options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_options</span><span class="o">.</span><span class="n">cb_query_options</span><span class="p">()</span>
-</span><span id="__span-0-807"><a id="__codelineno-0-807" name="__codelineno-0-807"></a>            <span class="c1"># Execute the query</span>
-</span><span id="__span-0-808"><a id="__codelineno-0-808" name="__codelineno-0-808"></a>            <span class="n">result</span><span class="p">:</span> <span class="n">QueryResult</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
-</span><span id="__span-0-809"><a id="__codelineno-0-809" name="__codelineno-0-809"></a>                <span class="n">query_str</span><span class="p">,</span>
-</span><span id="__span-0-810"><a id="__codelineno-0-810" name="__codelineno-0-810"></a>                <span class="n">query_options</span><span class="p">,</span>
-</span><span id="__span-0-811"><a id="__codelineno-0-811" name="__codelineno-0-811"></a>            <span class="p">)</span>
-</span><span id="__span-0-812"><a id="__codelineno-0-812" name="__codelineno-0-812"></a>
-</span><span id="__span-0-813"><a id="__codelineno-0-813" name="__codelineno-0-813"></a>            <span class="c1"># Process results</span>
-</span><span id="__span-0-814"><a id="__codelineno-0-814" name="__codelineno-0-814"></a>            <span class="n">documents</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="__span-0-815"><a id="__codelineno-0-815" name="__codelineno-0-815"></a>            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">rows</span><span class="p">():</span>
-</span><span id="__span-0-816"><a id="__codelineno-0-816" name="__codelineno-0-816"></a>                <span class="c1"># Convert row to Document</span>
-</span><span id="__span-0-817"><a id="__codelineno-0-817" name="__codelineno-0-817"></a>                <span class="n">doc_dict</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-</span><span id="__span-0-818"><a id="__codelineno-0-818" name="__codelineno-0-818"></a>                <span class="n">documents</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Document</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">doc_dict</span><span class="p">))</span>
-</span><span id="__span-0-819"><a id="__codelineno-0-819" name="__codelineno-0-819"></a>
-</span><span id="__span-0-820"><a id="__codelineno-0-820" name="__codelineno-0-820"></a>            <span class="k">return</span> <span class="n">documents</span>
-</span><span id="__span-0-821"><a id="__codelineno-0-821" name="__codelineno-0-821"></a>
-</span><span id="__span-0-822"><a id="__codelineno-0-822" name="__codelineno-0-822"></a>        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-</span><span id="__span-0-823"><a id="__codelineno-0-823" name="__codelineno-0-823"></a>            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Failed to retrieve documents with vector search: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span id="__span-0-824"><a id="__codelineno-0-824" name="__codelineno-0-824"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-</span><span id="__span-0-825"><a id="__codelineno-0-825" name="__codelineno-0-825"></a>            <span class="k">raise</span> <span class="n">DocumentStoreError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+</span><span id="__span-0-805"><a id="__codelineno-0-805" name="__codelineno-0-805"></a>            <span class="n">query_options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_options</span><span class="o">.</span><span class="n">cb_query_options</span><span class="p">()</span>
+</span><span id="__span-0-806"><a id="__codelineno-0-806" name="__codelineno-0-806"></a>            <span class="c1"># Execute the query</span>
+</span><span id="__span-0-807"><a id="__codelineno-0-807" name="__codelineno-0-807"></a>            <span class="n">result</span><span class="p">:</span> <span class="n">QueryResult</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
+</span><span id="__span-0-808"><a id="__codelineno-0-808" name="__codelineno-0-808"></a>                <span class="n">query_str</span><span class="p">,</span>
+</span><span id="__span-0-809"><a id="__codelineno-0-809" name="__codelineno-0-809"></a>                <span class="n">query_options</span><span class="p">,</span>
+</span><span id="__span-0-810"><a id="__codelineno-0-810" name="__codelineno-0-810"></a>            <span class="p">)</span>
+</span><span id="__span-0-811"><a id="__codelineno-0-811" name="__codelineno-0-811"></a>
+</span><span id="__span-0-812"><a id="__codelineno-0-812" name="__codelineno-0-812"></a>            <span class="c1"># Process results</span>
+</span><span id="__span-0-813"><a id="__codelineno-0-813" name="__codelineno-0-813"></a>            <span class="n">documents</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="__span-0-814"><a id="__codelineno-0-814" name="__codelineno-0-814"></a>            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">rows</span><span class="p">():</span>
+</span><span id="__span-0-815"><a id="__codelineno-0-815" name="__codelineno-0-815"></a>                <span class="c1"># Convert row to Document</span>
+</span><span id="__span-0-816"><a id="__codelineno-0-816" name="__codelineno-0-816"></a>                <span class="n">doc_dict</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+</span><span id="__span-0-817"><a id="__codelineno-0-817" name="__codelineno-0-817"></a>                <span class="n">documents</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Document</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">doc_dict</span><span class="p">))</span>
+</span><span id="__span-0-818"><a id="__codelineno-0-818" name="__codelineno-0-818"></a>
+</span><span id="__span-0-819"><a id="__codelineno-0-819" name="__codelineno-0-819"></a>            <span class="k">return</span> <span class="n">documents</span>
+</span><span id="__span-0-820"><a id="__codelineno-0-820" name="__codelineno-0-820"></a>
+</span><span id="__span-0-821"><a id="__codelineno-0-821" name="__codelineno-0-821"></a>        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+</span><span id="__span-0-822"><a id="__codelineno-0-822" name="__codelineno-0-822"></a>            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Failed to retrieve documents with vector search: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span id="__span-0-823"><a id="__codelineno-0-823" name="__codelineno-0-823"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+</span><span id="__span-0-824"><a id="__codelineno-0-824" name="__codelineno-0-824"></a>            <span class="k">raise</span> <span class="n">DocumentStoreError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 </span></code></pre></div></td></tr></table></div>
               </details>
 
@@ -5776,8 +5774,7 @@ refer to the Haystack <a href="https://docs.haystack.deepset.ai/v2.0/docs/metada
 <span class="normal"><a href="#__codelineno-0-821">821</a></span>
 <span class="normal"><a href="#__codelineno-0-822">822</a></span>
 <span class="normal"><a href="#__codelineno-0-823">823</a></span>
-<span class="normal"><a href="#__codelineno-0-824">824</a></span>
-<span class="normal"><a href="#__codelineno-0-825">825</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-747"><a id="__codelineno-0-747" name="__codelineno-0-747"></a><span class="k">def</span><span class="w"> </span><span class="nf">_embedding_retrieval</span><span class="p">(</span>
+<span class="normal"><a href="#__codelineno-0-824">824</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-747"><a id="__codelineno-0-747" name="__codelineno-0-747"></a><span class="k">def</span><span class="w"> </span><span class="nf">_embedding_retrieval</span><span class="p">(</span>
 </span><span id="__span-0-748"><a id="__codelineno-0-748" name="__codelineno-0-748"></a>    <span class="bp">self</span><span class="p">,</span>
 </span><span id="__span-0-749"><a id="__codelineno-0-749" name="__codelineno-0-749"></a>    <span class="n">query_embedding</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
 </span><span id="__span-0-750"><a id="__codelineno-0-750" name="__codelineno-0-750"></a>    <span class="n">top_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
@@ -5835,27 +5832,26 @@ refer to the Haystack <a href="https://docs.haystack.deepset.ai/v2.0/docs/metada
 </span><span id="__span-0-802"><a id="__codelineno-0-802" name="__codelineno-0-802"></a><span class="s2">    &quot;&quot;&quot;</span>  <span class="c1"># noqa: S608  # query_vector_str is a float array, where_clause is normalized by normalize_sql_filters</span>
 </span><span id="__span-0-803"><a id="__codelineno-0-803" name="__codelineno-0-803"></a>
 </span><span id="__span-0-804"><a id="__codelineno-0-804" name="__codelineno-0-804"></a>    <span class="k">try</span><span class="p">:</span>
-</span><span id="__span-0-805"><a id="__codelineno-0-805" name="__codelineno-0-805"></a>
-</span><span id="__span-0-806"><a id="__codelineno-0-806" name="__codelineno-0-806"></a>        <span class="n">query_options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_options</span><span class="o">.</span><span class="n">cb_query_options</span><span class="p">()</span>
-</span><span id="__span-0-807"><a id="__codelineno-0-807" name="__codelineno-0-807"></a>        <span class="c1"># Execute the query</span>
-</span><span id="__span-0-808"><a id="__codelineno-0-808" name="__codelineno-0-808"></a>        <span class="n">result</span><span class="p">:</span> <span class="n">QueryResult</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
-</span><span id="__span-0-809"><a id="__codelineno-0-809" name="__codelineno-0-809"></a>            <span class="n">query_str</span><span class="p">,</span>
-</span><span id="__span-0-810"><a id="__codelineno-0-810" name="__codelineno-0-810"></a>            <span class="n">query_options</span><span class="p">,</span>
-</span><span id="__span-0-811"><a id="__codelineno-0-811" name="__codelineno-0-811"></a>        <span class="p">)</span>
-</span><span id="__span-0-812"><a id="__codelineno-0-812" name="__codelineno-0-812"></a>
-</span><span id="__span-0-813"><a id="__codelineno-0-813" name="__codelineno-0-813"></a>        <span class="c1"># Process results</span>
-</span><span id="__span-0-814"><a id="__codelineno-0-814" name="__codelineno-0-814"></a>        <span class="n">documents</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="__span-0-815"><a id="__codelineno-0-815" name="__codelineno-0-815"></a>        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">rows</span><span class="p">():</span>
-</span><span id="__span-0-816"><a id="__codelineno-0-816" name="__codelineno-0-816"></a>            <span class="c1"># Convert row to Document</span>
-</span><span id="__span-0-817"><a id="__codelineno-0-817" name="__codelineno-0-817"></a>            <span class="n">doc_dict</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-</span><span id="__span-0-818"><a id="__codelineno-0-818" name="__codelineno-0-818"></a>            <span class="n">documents</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Document</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">doc_dict</span><span class="p">))</span>
-</span><span id="__span-0-819"><a id="__codelineno-0-819" name="__codelineno-0-819"></a>
-</span><span id="__span-0-820"><a id="__codelineno-0-820" name="__codelineno-0-820"></a>        <span class="k">return</span> <span class="n">documents</span>
-</span><span id="__span-0-821"><a id="__codelineno-0-821" name="__codelineno-0-821"></a>
-</span><span id="__span-0-822"><a id="__codelineno-0-822" name="__codelineno-0-822"></a>    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-</span><span id="__span-0-823"><a id="__codelineno-0-823" name="__codelineno-0-823"></a>        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Failed to retrieve documents with vector search: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span id="__span-0-824"><a id="__codelineno-0-824" name="__codelineno-0-824"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-</span><span id="__span-0-825"><a id="__codelineno-0-825" name="__codelineno-0-825"></a>        <span class="k">raise</span> <span class="n">DocumentStoreError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+</span><span id="__span-0-805"><a id="__codelineno-0-805" name="__codelineno-0-805"></a>        <span class="n">query_options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_options</span><span class="o">.</span><span class="n">cb_query_options</span><span class="p">()</span>
+</span><span id="__span-0-806"><a id="__codelineno-0-806" name="__codelineno-0-806"></a>        <span class="c1"># Execute the query</span>
+</span><span id="__span-0-807"><a id="__codelineno-0-807" name="__codelineno-0-807"></a>        <span class="n">result</span><span class="p">:</span> <span class="n">QueryResult</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
+</span><span id="__span-0-808"><a id="__codelineno-0-808" name="__codelineno-0-808"></a>            <span class="n">query_str</span><span class="p">,</span>
+</span><span id="__span-0-809"><a id="__codelineno-0-809" name="__codelineno-0-809"></a>            <span class="n">query_options</span><span class="p">,</span>
+</span><span id="__span-0-810"><a id="__codelineno-0-810" name="__codelineno-0-810"></a>        <span class="p">)</span>
+</span><span id="__span-0-811"><a id="__codelineno-0-811" name="__codelineno-0-811"></a>
+</span><span id="__span-0-812"><a id="__codelineno-0-812" name="__codelineno-0-812"></a>        <span class="c1"># Process results</span>
+</span><span id="__span-0-813"><a id="__codelineno-0-813" name="__codelineno-0-813"></a>        <span class="n">documents</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="__span-0-814"><a id="__codelineno-0-814" name="__codelineno-0-814"></a>        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">rows</span><span class="p">():</span>
+</span><span id="__span-0-815"><a id="__codelineno-0-815" name="__codelineno-0-815"></a>            <span class="c1"># Convert row to Document</span>
+</span><span id="__span-0-816"><a id="__codelineno-0-816" name="__codelineno-0-816"></a>            <span class="n">doc_dict</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+</span><span id="__span-0-817"><a id="__codelineno-0-817" name="__codelineno-0-817"></a>            <span class="n">documents</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Document</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">doc_dict</span><span class="p">))</span>
+</span><span id="__span-0-818"><a id="__codelineno-0-818" name="__codelineno-0-818"></a>
+</span><span id="__span-0-819"><a id="__codelineno-0-819" name="__codelineno-0-819"></a>        <span class="k">return</span> <span class="n">documents</span>
+</span><span id="__span-0-820"><a id="__codelineno-0-820" name="__codelineno-0-820"></a>
+</span><span id="__span-0-821"><a id="__codelineno-0-821" name="__codelineno-0-821"></a>    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+</span><span id="__span-0-822"><a id="__codelineno-0-822" name="__codelineno-0-822"></a>        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Failed to retrieve documents with vector search: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span id="__span-0-823"><a id="__codelineno-0-823" name="__codelineno-0-823"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+</span><span id="__span-0-824"><a id="__codelineno-0-824" name="__codelineno-0-824"></a>        <span class="k">raise</span> <span class="n">DocumentStoreError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 </span></code></pre></div></td></tr></table></div>
             </details>
     </div>
