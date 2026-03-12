@@ -216,7 +216,6 @@ class TestFilterLT:
 
 @pytest.mark.unit
 class TestFilterLTE:
-
     # def test_filter_gt_condition_str(self):
     #    _filter = {"field": "meta.years", "operator": "==", "value": "2019"}
     #    normalized_filter = _normalize_filters(_filter)

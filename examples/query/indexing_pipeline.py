@@ -8,6 +8,7 @@ from pathlib import Path
 
 import requests
 from couchbase.n1ql import QueryScanConsistency
+from couchbase.options import KnownConfigProfiles, QueryOptions
 from haystack import Pipeline
 from haystack.components.converters import TextFileToDocument
 from haystack.components.embedders import SentenceTransformersDocumentEmbedder
@@ -16,13 +17,12 @@ from haystack.components.writers import DocumentWriter
 from haystack.utils import Secret
 
 from couchbase_haystack import (
+    CouchbaseClusterOptions,
     CouchbasePasswordAuthenticator,
     CouchbaseQueryDocumentStore,
     CouchbaseQueryOptions,
     QueryVectorSearchType,
-    CouchbaseClusterOptions,
 )
-from couchbase.options import KnownConfigProfiles, QueryOptions
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,9 @@ index_name = os.getenv("INDEX_NAME")
 
 document_store = CouchbaseQueryDocumentStore(
     cluster_connection_string=Secret.from_env_var("CONNECTION_STRING"),
-    authenticator=CouchbasePasswordAuthenticator(username=Secret.from_env_var("USER_NAME"), password=Secret.from_env_var("PASSWORD")),
+    authenticator=CouchbasePasswordAuthenticator(
+        username=Secret.from_env_var("USER_NAME"), password=Secret.from_env_var("PASSWORD")
+    ),
     cluster_options=CouchbaseClusterOptions(profile=KnownConfigProfiles.WanDevelopment),
     bucket=bucket_name,
     scope=scope_name,
@@ -102,6 +104,9 @@ cfg = {
     "description": "IVF,PQ32x8",
     "similarity": "L2",
 }
-document_store.scope.query(f"Create Index {index_name} ON {collection_name} (embedding vector) USING GSI WITH {json.dumps(cfg)}", QueryOptions(timeout=timedelta(seconds=300))).execute()
+document_store.scope.query(
+    f"Create Index {index_name} ON {collection_name} (embedding vector) USING GSI WITH {json.dumps(cfg)}",
+    QueryOptions(timeout=timedelta(seconds=300)),
+).execute()
 
 logger.info(f"Index created: {index_name}")
