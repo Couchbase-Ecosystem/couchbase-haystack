@@ -91,6 +91,9 @@ plugins:
             filters: [] # show private methods
 
 extra:
+  analytics:
+    provider: google
+    property: G-CVKKEY0D6B
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/prosto
