@@ -28,7 +28,6 @@ from couchbase.result import SearchResult
 from ..common.common import IS_GLOBAL_LEVEL_INDEX
 from ..common import common
 
-
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
 

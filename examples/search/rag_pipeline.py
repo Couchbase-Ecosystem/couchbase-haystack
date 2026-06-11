@@ -37,16 +37,14 @@ document_store = CouchbaseSearchDocumentStore(
 # interacting with LLMs using a custom prompt.
 prompt_messages = [
     ChatMessage.from_system("You are a helpful assistant that answers questions based on the provided documents."),
-    ChatMessage.from_user(
-        """Given these documents, answer the question.
+    ChatMessage.from_user("""Given these documents, answer the question.
 Documents:
 {% for doc in documents %}
     {{ doc.content }}
 {% endfor %}
 
 Question: {{question}}
-Answer:"""
-    ),
+Answer:"""),
 ]
 rag_pipeline = Pipeline()
 rag_pipeline.add_component(
