@@ -18,11 +18,11 @@ from couchbase.options import ClusterOptions, KnownConfigProfiles
 from couchbase.auth import PasswordAuthenticator
 from couchbase_haystack import CouchbaseClusterOptions
 from couchbase_haystack import CouchbasePasswordAuthenticator
-from couchbase.management.logic.search_index_logic import SearchIndex
+from couchbase.management.search import SearchIndex
 from couchbase.exceptions import SearchIndexNotFoundException
 from datetime import timedelta
 from sentence_transformers import SentenceTransformer
-from couchbase.management.logic.collections_logic import ScopeSpec, CollectionSpec
+from couchbase.management.collections import ScopeSpec, CollectionSpec
 from couchbase.result import SearchResult
 
 from ..common.common import IS_GLOBAL_LEVEL_INDEX
