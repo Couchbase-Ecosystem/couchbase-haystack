@@ -12,7 +12,7 @@ def _send_telemetry() -> None:
             package_name="couchbase-haystack",
             package_version=_pkg_version,
         )
-        _logger.log_event()
+        _logger.log_event({"activity_type": "package_import"})
     except Exception:
         pass
 
