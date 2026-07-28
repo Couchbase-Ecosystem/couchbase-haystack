@@ -36,4 +36,4 @@ __all__ = [
 ]
 
 # --- Package-level telemetry (non-blocking, fire-and-forget) ---
-import couchbase_haystack.reo_telemetry  # noqa: F401, E402
+import couchbase_haystack.reo_telemetry  # noqa: F401
