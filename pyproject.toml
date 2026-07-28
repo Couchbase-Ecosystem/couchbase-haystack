@@ -59,6 +59,7 @@ extra-dependencies = [
     "pytest",
     "pandas",
     "sentence-transformers",
+    "sentence-transformers-haystack",
 ]
 
 [tool.hatch.envs.default.scripts]

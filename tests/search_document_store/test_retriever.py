@@ -12,8 +12,7 @@ from haystack.dataclasses import Document
 from haystack import GeneratedAnswer, Pipeline
 from haystack.components.builders.answer_builder import AnswerBuilder
 from haystack.components.builders.prompt_builder import PromptBuilder
-from haystack.components.embedders import SentenceTransformersTextEmbedder
-from haystack.components.generators import HuggingFaceAPIGenerator
+from haystack_integrations.components.embedders.sentence_transformers import SentenceTransformersTextEmbedder
 import couchbase.search as search
 from couchbase.search import SearchQuery
 from tests.common.common import IS_GLOBAL_LEVEL_INDEX

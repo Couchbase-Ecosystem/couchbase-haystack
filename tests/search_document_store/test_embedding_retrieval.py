@@ -12,7 +12,7 @@ from couchbase_haystack import CouchbaseSearchDocumentStore, CouchbasePasswordAu
 from couchbase.cluster import Cluster, ClusterOptions
 from couchbase.options import ClusterOptions, KnownConfigProfiles
 from couchbase.auth import PasswordAuthenticator
-from couchbase.management.logic.search_index_logic import SearchIndex
+from couchbase.management.search import SearchIndex
 from couchbase.exceptions import SearchIndexNotFoundException
 from couchbase import search
 from couchbase_haystack.document_stores.search_filters import NumericRangeQuery
