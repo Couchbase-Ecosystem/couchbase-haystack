@@ -110,7 +110,7 @@ Couchbase supports three types of vector indexes. This library currently support
 
 ```bash
 pip install --upgrade pip # optional
-pip install sentence-transformers # required in order to run pipeline examples given below
+pip install sentence-transformers-haystack # required in order to run pipeline examples given below
 pip install couchbase-haystack
 ```
 
@@ -211,7 +211,7 @@ If you intend to obtain embeddings before writing documents use the following co
 from haystack import Document
 
 # import one of the available document embedders
-from haystack.components.embedders import SentenceTransformersDocumentEmbedder 
+from haystack_integrations.components.embedders.sentence_transformers import SentenceTransformersDocumentEmbedder
 
 documents = [Document(content="Alice has been living in New York City for the past 5 years.")]
 
@@ -276,7 +276,7 @@ With Haystack you can use [DocumentWriter](https://docs.haystack.deepset.ai/docs
 
 ```python
 from haystack import Document
-from haystack.components.embedders import SentenceTransformersDocumentEmbedder
+from haystack_integrations.components.embedders.sentence_transformers import SentenceTransformersDocumentEmbedder
 from haystack.components.writers import DocumentWriter
 from haystack.pipeline import Pipeline
 from haystack.utils.auth import Secret
@@ -320,7 +320,7 @@ indexing_pipeline.run({"embedder": {"documents": documents}})
 from typing import List
 from haystack.utils.auth import Secret
 from haystack import Document, Pipeline
-from haystack.components.embedders import SentenceTransformersDocumentEmbedder, SentenceTransformersTextEmbedder
+from haystack_integrations.components.embedders.sentence_transformers import SentenceTransformersDocumentEmbedder, SentenceTransformersTextEmbedder
 
 from couchbase_haystack.document_store import CouchbaseSearchDocumentStore, CouchbasePasswordAuthenticator
 from couchbase_haystack.component.retriever import CouchbaseSearchEmbeddingRetriever
@@ -456,7 +456,7 @@ document_store_hyperscale = CouchbaseQueryDocumentStore(
 
 ```python
 from haystack import Document
-from haystack.components.embedders import SentenceTransformersDocumentEmbedder
+from haystack_integrations.components.embedders.sentence_transformers import SentenceTransformersDocumentEmbedder
 from haystack.components.writers import DocumentWriter
 from haystack.pipeline import Pipeline
 from haystack.utils.auth import Secret
@@ -500,7 +500,7 @@ The `CouchbaseQueryEmbeddingRetriever` uses SQL++ queries with vector functions 
 ```python
 from typing import List
 from haystack import Document, Pipeline
-from haystack.components.embedders import SentenceTransformersDocumentEmbedder, SentenceTransformersTextEmbedder
+from haystack_integrations.components.embedders.sentence_transformers import SentenceTransformersDocumentEmbedder, SentenceTransformersTextEmbedder
 from haystack.utils.auth import Secret
 
 from couchbase_haystack import CouchbaseQueryDocumentStore, CouchbaseQueryEmbeddingRetriever, CouchbasePasswordAuthenticator, QueryVectorSearchType

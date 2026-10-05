@@ -3,11 +3,11 @@ import os
 from haystack import GeneratedAnswer, Pipeline
 from haystack.components.builders.answer_builder import AnswerBuilder
 from haystack.components.builders.chat_prompt_builder import ChatPromptBuilder
-from haystack.components.embedders import SentenceTransformersTextEmbedder
-from haystack.components.generators.chat import HuggingFaceAPIChatGenerator
 from haystack.dataclasses import ChatMessage
 from haystack.utils import Secret
-from haystack.utils.hf import HFGenerationAPIType
+from haystack_integrations.common.huggingface_api.utils import HFGenerationAPIType
+from haystack_integrations.components.embedders.sentence_transformers import SentenceTransformersTextEmbedder
+from haystack_integrations.components.generators.huggingface_api import HuggingFaceAPIChatGenerator
 
 from couchbase_haystack import CouchbasePasswordAuthenticator, CouchbaseSearchDocumentStore, CouchbaseSearchEmbeddingRetriever
 

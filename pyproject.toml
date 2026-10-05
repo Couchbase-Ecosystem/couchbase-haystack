@@ -60,6 +60,7 @@ extra-dependencies = [
     "pandas",
     "sentence-transformers",
     "sentence-transformers-haystack",
+    "huggingface-api-haystack",
 ]
 
 [tool.hatch.envs.default.scripts]

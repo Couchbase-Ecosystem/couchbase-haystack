@@ -26,9 +26,7 @@ class DateRangeQuery(search.DateRangeQuery):
         return self._json_.get("inclusive_start", None)
 
     @inclusive_start.setter
-    def inclusive_start(
-        self, value  # type: bool
-    ) -> None:
+    def inclusive_start(self, value: bool) -> None:
         self.set_prop("inclusive_start", value)
 
     @property
@@ -36,9 +34,7 @@ class DateRangeQuery(search.DateRangeQuery):
         return self._json_.get("inclusive_end", None)
 
     @inclusive_end.setter
-    def inclusive_end(
-        self, value  # type: bool
-    ) -> None:
+    def inclusive_end(self, value: bool) -> None:
         self.set_prop("inclusive_end", value)
 
 
@@ -48,9 +44,7 @@ class NumericRangeQuery(search.NumericRangeQuery):
         return self._json_.get("inclusive_min", None)
 
     @inclusive_min.setter
-    def inclusive_min(
-        self, value  # type: bool
-    ) -> None:
+    def inclusive_min(self, value: bool) -> None:
         self.set_prop("inclusive_min", value)
 
     @property
@@ -58,9 +52,7 @@ class NumericRangeQuery(search.NumericRangeQuery):
         return self._json_.get("inclusive_max", None)
 
     @inclusive_max.setter
-    def inclusive_max(
-        self, value  # type: bool
-    ) -> None:
+    def inclusive_max(self, value: bool) -> None:
         self.set_prop("inclusive_max", value)
 
 

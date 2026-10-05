@@ -7,10 +7,10 @@ from pathlib import Path
 import requests
 from haystack import Pipeline
 from haystack.components.converters import TextFileToDocument
-from haystack.components.embedders import SentenceTransformersDocumentEmbedder
 from haystack.components.preprocessors import DocumentCleaner, DocumentSplitter
 from haystack.components.writers import DocumentWriter
 from haystack.utils import Secret
+from haystack_integrations.components.embedders.sentence_transformers import SentenceTransformersDocumentEmbedder
 
 from couchbase_haystack import CouchbasePasswordAuthenticator, CouchbaseSearchDocumentStore
 
