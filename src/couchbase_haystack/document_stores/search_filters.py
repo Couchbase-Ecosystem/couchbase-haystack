@@ -2,11 +2,11 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from backports.datetime_fromisoformat import MonkeyPatch
 from couchbase import search
-from couchbase.logic.search_queries import SearchQuery
+from couchbase.search import DateRangeQuery, NumericRangeQuery, SearchQuery
 from haystack.errors import FilterError
 
 try:
@@ -16,52 +16,11 @@ try:
 except ImportError:
     DataFrame = type(None)
 
+# DateRangeQuery and NumericRangeQuery are re-exported from the public SDK module (couchbase.search); since
+# couchbase 4.3.6 they natively support inclusive_start/inclusive_end and inclusive_min/inclusive_max.
+__all__ = ["DateRangeQuery", "NumericRangeQuery", "_normalize_filters"]
 
 MonkeyPatch.patch_fromisoformat()
-
-
-class DateRangeQuery(search.DateRangeQuery):
-    @property
-    def inclusive_start(self) -> Optional[bool]:
-        return self._json_.get("inclusive_start", None)
-
-    @inclusive_start.setter
-    def inclusive_start(
-        self, value  # type: bool
-    ) -> None:
-        self.set_prop("inclusive_start", value)
-
-    @property
-    def inclusive_end(self) -> Optional[bool]:
-        return self._json_.get("inclusive_end", None)
-
-    @inclusive_end.setter
-    def inclusive_end(
-        self, value  # type: bool
-    ) -> None:
-        self.set_prop("inclusive_end", value)
-
-
-class NumericRangeQuery(search.NumericRangeQuery):
-    @property
-    def inclusive_min(self) -> Optional[bool]:
-        return self._json_.get("inclusive_min", None)
-
-    @inclusive_min.setter
-    def inclusive_min(
-        self, value  # type: bool
-    ) -> None:
-        self.set_prop("inclusive_min", value)
-
-    @property
-    def inclusive_max(self) -> Optional[bool]:
-        return self._json_.get("inclusive_max", None)
-
-    @inclusive_max.setter
-    def inclusive_max(
-        self, value  # type: bool
-    ) -> None:
-        self.set_prop("inclusive_max", value)
 
 
 def _normalize_filters(filters: Dict[str, Any]) -> SearchQuery:
@@ -141,7 +100,7 @@ def _greater_than(field: str, value: Any) -> Dict[str, Any]:
     if isinstance(value, str):
         try:
             datetime.fromisoformat(value)
-            return search.DateRangeQuery(start=value, field=field)
+            return DateRangeQuery(start=value, field=field)
         except (ValueError, TypeError) as exc:
             msg = (
                 "Can't compare strings using operators '>', '>=', '<', '<='. "
@@ -189,7 +148,7 @@ def _less_than(field: str, value: Any) -> Dict[str, Any]:
     if isinstance(value, str):
         try:
             datetime.fromisoformat(value)
-            return search.DateRangeQuery(end=value, field=field)
+            return DateRangeQuery(end=value, field=field)
         except (ValueError, TypeError) as exc:
             msg = (
                 "Can't compare strings using operators '>', '>=', '<', '<='. "
